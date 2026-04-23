@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>ExpensePal</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  html, body {
+    margin: 0; padding: 0; min-height: 100vh; overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  }
+  body { background: #E5E5EA; }
+  * { box-sizing: border-box; }
+  ::-webkit-scrollbar { display: none; }
+  button { font-family: inherit; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="src/ios-frame.jsx"></script>
+<script type="text/babel" src="src/tokens.jsx"></script>
+<script type="text/babel" src="src/icons.jsx"></script>
+<script type="text/babel" src="src/components.jsx"></script>
+<script type="text/babel" src="src/today.jsx"></script>
+<script type="text/babel" src="src/screens.jsx"></script>
+<script type="text/babel" src="src/ai-screens.jsx"></script>
+<script type="text/babel" src="src/workout-data.jsx"></script>
+<script type="text/babel" src="src/workout-screens.jsx"></script>
+<script type="text/babel" src="src/workout-screens2.jsx"></script>
+<script type="text/babel" src="src/tab-landings.jsx"></script>
+<script type="text/babel" src="src/email-sync.jsx"></script>
+
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "themeKey": "light",
+  "showBothDevices": false,
+  "accent": "indigo"
+}/*EDITMODE-END*/;
+
+const ACCENT_SWATCHES = {
+  blue:   { light: '#007AFF', dark: '#0A84FF' },
+  indigo: { light: '#5856D6', dark: '#5E5CE6' },
+  purple: { light: '#AF52DE', dark: '#BF5AF2' },
+  pink:   { light: '#FF2D55', dark: '#FF375F' },
+  orange: { light: '#FF9500', dark: '#FF9F0A' },
+  green:  { light: '#34C759', dark: '#30D158' },
+  teal:   { light: '#30B0C7', dark: '#40C8E0' },
+  graphite: { light: '#1C1C1E', dark: '#F5F5F7' },
+};
+
+function TweaksPanel({ open, themeKey, setThemeKey, accent, setAccent, showBoth, setShowBoth, onClose }) {
+  if (!open) return null;
+  const Option = ({ active, onClick, children }) => (
+    <button onClick={onClick} style={{
+      padding: '7px 12px', borderRadius: 8,
+      background: active ? '#1C1C1E' : '#F2F2F7',
+      color: active ? '#fff' : '#1C1C1E',
+      border: 'none', fontSize: 13, fontWeight: 500, cursor: 'pointer',
+      fontFamily: '-apple-system, system-ui, sans-serif', letterSpacing: -0.15,
+    }}>{children}</button>
+  );
+  return (
+    <div style={{
+      position: 'fixed', bottom: 24, right: 24, zIndex: 1000,
+      width: 280, background: '#FFFFFF',
+      borderRadius: 16, padding: 16,
+      boxShadow: '0 12px 48px rgba(0,0,0,0.2), 0 0 0 0.5px rgba(0,0,0,0.08)',
+      fontFamily: '-apple-system, system-ui, sans-serif',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#1C1C1E' }}>Tweaks</div>
+        <button onClick={onClose} style={{
+          background: '#F2F2F7', border: 'none', borderRadius: '50%',
+          width: 24, height: 24, cursor: 'pointer', color: '#8E8E93', fontSize: 14,
+        }}>×</button>
+      </div>
+
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 12, color: '#8E8E93', marginBottom: 8, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5 }}>Appearance</div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {Object.keys(window.THEMES).map(k => (
+            <Option key={k} active={themeKey === k} onClick={() => setThemeKey(k)}>
+              {window.THEMES[k].name}
+            </Option>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 12, color: '#8E8E93', marginBottom: 8, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5 }}>Accent</div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {Object.entries(ACCENT_SWATCHES).map(([k, v]) => (
+            <button key={k} onClick={() => setAccent(k)} style={{
+              width: 26, height: 26, borderRadius: '50%',
+              background: v[themeKey] || v.light,
+              border: accent === k ? '2.5px solid #1C1C1E' : '2.5px solid transparent',
+              boxShadow: accent === k ? '0 0 0 1px #fff inset' : 'none',
+              cursor: 'pointer',
+            }} title={k} />
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <div style={{ fontSize: 12, color: '#8E8E93', marginBottom: 8, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5 }}>Layout</div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <Option active={showBoth} onClick={() => setShowBoth(true)}>All screens</Option>
+          <Option active={!showBoth} onClick={() => setShowBoth(false)}>Single</Option>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [themeKey, setThemeKey] = React.useState(TWEAK_DEFAULTS.themeKey);
+  const [accent, setAccent] = React.useState(TWEAK_DEFAULTS.accent);
+  const [showBoth, setShowBoth] = React.useState(TWEAK_DEFAULTS.showBothDevices);
+  const [tweaksOpen, setTweaksOpen] = React.useState(false);
+
+  // Apply accent override
+  const baseTheme = window.THEMES[themeKey];
+  const theme = React.useMemo(() => {
+    const swatch = ACCENT_SWATCHES[accent];
+    if (!swatch) return baseTheme;
+    const a = swatch[themeKey] || swatch.light;
+    const tint = a + (themeKey === 'dark' ? '33' : '22');
+    return { ...baseTheme, accent: a, accentTint: tint };
+  }, [baseTheme, accent, themeKey]);
+
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (e.data?.type === '__activate_edit_mode') setTweaksOpen(true);
+      if (e.data?.type === '__deactivate_edit_mode') setTweaksOpen(false);
+    };
+    window.addEventListener('message', handler);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  const persist = (edits) => window.parent.postMessage({ type: '__edit_mode_set_keys', edits }, '*');
+  const updateTheme = (k) => { setThemeKey(k); persist({ themeKey: k }); };
+  const updateAccent = (k) => { setAccent(k); persist({ accent: k }); };
+  const updateShowBoth = (b) => { setShowBoth(b); persist({ showBothDevices: b }); };
+
+  return (
+    <>
+      <CanvasApp theme={theme} themeKey={themeKey} showBoth={showBoth} />
+      <TweaksPanel open={tweaksOpen}
+        themeKey={themeKey} setThemeKey={updateTheme}
+        accent={accent} setAccent={updateAccent}
+        showBoth={showBoth} setShowBoth={updateShowBoth}
+        onClose={() => setTweaksOpen(false)} />
+    </>
+  );
+}
+
+function Device({ theme, themeKey, initialTab = 'today', initialDetail = null, onboardingStep = 0, addOpenInit = false, quickOpenInit = false, label }) {
+  const detailValid = typeof initialDetail === 'string' && ['money', 'move', 'rituals'].includes(initialDetail);
+  const [tab, setTab] = React.useState(initialTab);
+  const [detailType, setDetailType] = React.useState(detailValid ? initialDetail : null);
+  const [addOpen, setAddOpen] = React.useState(addOpenInit);
+  const [quickOpen, setQuickOpen] = React.useState(quickOpenInit);
+
+  const handleTab = (t) => {
+    if (t === 'add') { setQuickOpen(true); return; }
+    setTab(t); setDetailType(null);
+  };
+
+  // Which tab-bar pill to highlight for each screen
+  const tabToActive = {
+    today: 'today', ask: 'today',
+    move: 'move', preworkout: 'move', active: 'move', post: 'move',
+    'routine-edit': 'move', 'exercise-lib': 'move', 'workout-detail': 'move',
+    rituals: 'rituals', 'rituals-builder': 'rituals',
+    profile: 'profile', week: 'profile', monthly: 'profile', stats: 'profile',
+    'email-empty': 'profile', 'email-connect': 'profile', 'email-synced': 'profile',
+  };
+
+  let screen = null;
+  if (detailType) {
+    screen = <DetailScreen theme={theme} type={detailType} onBack={() => setDetailType(null)} />;
+  } else if (tab === 'today') {
+    screen = <TodayScreen theme={theme}
+      onOpenDetail={setDetailType} onOpenAdd={() => setAddOpen(true)} />;
+  } else if (tab === 'week') {
+    screen = <WeekScreen theme={theme} />;
+  } else if (tab === 'stats') {
+    screen = <StatsScreen theme={theme} />;
+  } else if (tab === 'ask') {
+    screen = <AskPalScreen theme={theme} />;
+  } else if (tab === 'onboarding') {
+    screen = <OnboardingScreen theme={theme} step={onboardingStep} />;
+  } else if (tab === 'monthly') {
+    screen = <MonthlyReviewScreen theme={theme} />;
+  } else if (tab === 'move') {
+    screen = <MoveTabScreen theme={theme}
+      onStart={() => setTab('preworkout')}
+      onHistory={() => setTab('workout-detail')}
+      onRoutines={() => setTab('routine-edit')}
+      onLibrary={() => setTab('exercise-lib')}
+      onDetail={() => setTab('workout-detail')} />;
+  } else if (tab === 'rituals') {
+    screen = <RitualsTabScreen theme={theme} onBuilder={() => setTab('rituals-builder')} />;
+  } else if (tab === 'rituals-builder') {
+    screen = <RitualsBuilderScreen theme={theme} onBack={() => setTab('rituals')} />;
+  } else if (tab === 'profile') {
+    screen = <YouTabScreen theme={theme}
+      onWeek={() => setTab('week')}
+      onMonthly={() => setTab('monthly')}
+      onStats={() => setTab('stats')}
+      onEmailSync={() => setTab('email-empty')} />;
+  } else if (tab === 'preworkout') {
+    screen = <PreWorkoutScreen theme={theme} onStart={() => setTab('active')} onBack={() => setTab('move')} />;
+  } else if (tab === 'active') {
+    screen = <ActiveSessionScreen theme={theme} routineId="push-a"
+      onFinish={() => setTab('post')} onBack={() => setTab('preworkout')} />;
+  } else if (tab === 'post') {
+    screen = <PostWorkoutScreen theme={theme} onDone={() => setTab('move')} />;
+  } else if (tab === 'routine-edit') {
+    screen = <RoutineEditorScreen theme={theme} routineId="push-a" onBack={() => setTab('move')} />;
+  } else if (tab === 'exercise-lib') {
+    screen = <ExerciseLibraryScreen theme={theme} onBack={() => setTab('move')} />;
+  } else if (tab === 'email-empty') {
+    screen = <EmailSyncEmptyScreen theme={theme} onConnect={() => setTab('email-connect')} onBack={() => setTab('profile')} />;
+  } else if (tab === 'email-connect') {
+    screen = <EmailSyncConnectScreen theme={theme} onAuthorize={() => setTab('email-synced')} onCancel={() => setTab('email-empty')} />;
+  } else if (tab === 'email-synced') {
+    screen = <EmailSyncedScreen theme={theme} onBack={() => setTab('profile')} />;
+  }
+
+  const hideTabBar = tab === 'onboarding' || tab === 'active' || tab === 'post';
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+      <div data-screen-label={label} style={{ position: 'relative' }}>
+        <IOSDevice width={390} height={844} dark={themeKey === 'dark'}>
+          <div style={{ height: '100%', overflow: 'auto', background: theme.bg, position: 'relative' }}>
+            {screen}
+          </div>
+          {!hideTabBar && <TabBar active={detailType ? 'today' : (tabToActive[tab] || tab)} onTab={handleTab} theme={theme} />}
+          {quickOpen && <QuickActionSheet theme={theme}
+            onClose={() => setQuickOpen(false)}
+            onLog={() => { setQuickOpen(false); setAddOpen(true); }}
+            onWorkout={() => { setQuickOpen(false); setTab('preworkout'); setDetailType(null); }}
+            onAsk={() => { setQuickOpen(false); setTab('ask'); setDetailType(null); }} />}
+          {addOpen && <AddSheet theme={theme}
+            onClose={() => setAddOpen(false)}
+            onSubmit={() => setAddOpen(false)} />}
+        </IOSDevice>
+      </div>
+      {label && (
+        <div style={{
+          fontFamily: '-apple-system, system-ui, sans-serif',
+          fontSize: 12, letterSpacing: 0.5, color: themeKey === 'dark' ? 'rgba(255,255,255,0.5)' : '#8E8E93',
+          fontWeight: 500,
+        }}>{label}</div>
+      )}
+    </div>
+  );
+}
+
+function CanvasApp({ theme, themeKey, showBoth }) {
+  const ref = React.useRef(null);
+  const [scale, setScale] = React.useState(1);
+  const DW = 390, DH = 844, GAP = 48;
+
+  React.useEffect(() => {
+    const update = () => {
+      const vw = window.innerWidth, vh = window.innerHeight;
+      if (showBoth) {
+        const cols = 6, rows = 3;
+        const neededW = cols * DW + (cols - 1) * GAP;
+        const neededH = rows * (DH + 40) + (rows - 1) * GAP;
+        const sx = (vw - 80) / neededW;
+        const sy = (vh - 140) / neededH;
+        setScale(Math.min(sx, sy, 1));
+      } else {
+        setScale(Math.min((vw - 40) / (DW + 40), (vh - 80) / (DH + 40), 1));
+      }
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, [showBoth]);
+
+  const canvasBg = themeKey === 'dark' ? '#0B0B0D' : '#E5E5EA';
+  const headText = themeKey === 'dark' ? '#F5F5F7' : '#1C1C1E';
+  const headSub = themeKey === 'dark' ? 'rgba(255,255,255,0.5)' : '#8E8E93';
+
+  if (!showBoth) {
+    return (
+      <div ref={ref} style={{
+        minHeight: '100vh', background: canvasBg,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <div style={{ transform: `scale(${scale})`, transformOrigin: 'center' }}>
+          <Device theme={theme} themeKey={themeKey} initialTab="today" label="01 Today" />
+        </div>
+      </div>
+    );
+  }
+
+  const screens = [
+    { tab: 'onboarding', label: '01 Onboarding', onboardingStep: 1 },
+    { tab: 'today',   label: '02 Today' },
+    { tab: 'today',   label: '03 Quick Actions', quickOpenInit: true },
+    { tab: 'today',   label: '04 Log Entry', addOpenInit: true },
+    { tab: 'ask',     label: '05 Ask Pal' },
+    { tab: 'today',   label: '06 Spending', initialDetail: 'money' },
+    { tab: 'move',    label: '07 Move Tab' },
+    { tab: 'preworkout',    label: '08 Start Workout' },
+    { tab: 'active',        label: '09 Active Session' },
+    { tab: 'post',          label: '10 Post-Workout' },
+    { tab: 'exercise-lib',  label: '11 Exercise Library' },
+    { tab: 'workout-detail',label: '12 Workout Detail' },
+    { tab: 'rituals', label: '13 Rituals Tab' },
+    { tab: 'monthly', label: '14 Monthly Review' },
+    { tab: 'profile', label: '15 You' },
+    { tab: 'email-empty',   label: '16 Email Sync · Intro' },
+    { tab: 'email-connect', label: '17 Email Sync · Setup' },
+    { tab: 'email-synced',  label: '18 Email Sync · Dashboard' },
+  ];
+
+  return (
+    <div ref={ref} style={{
+      minHeight: '100vh', width: '100vw', overflow: 'hidden', background: canvasBg,
+      display: 'flex', flexDirection: 'column', padding: '28px 24px 20px',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+        marginBottom: 16, color: headText,
+      }}>
+        <div>
+          <div style={{ fontSize: 11, letterSpacing: 2, color: headSub, textTransform: 'uppercase', fontWeight: 600 }}>
+            EXPENSEPAL · iOS
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 700, marginTop: 4, letterSpacing: -0.5 }}>
+            Money · Movement · Routine
+          </div>
+        </div>
+        <div style={{ fontSize: 11, color: headSub, textAlign: 'right', lineHeight: 1.6 }}>
+            {theme.name} · {theme.accent}<br/>
+            18 screens · Money · Gym · Rituals · Email · AI
+          </div>
+      </div>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        <div style={{
+          width: (6 * DW + 5 * GAP) * scale,
+          height: (3 * (DH + 40) + 2 * GAP) * scale,
+          position: 'relative',
+        }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(6, ${DW}px)`,
+            gridTemplateRows: `repeat(3, ${DH + 40}px)`,
+            columnGap: GAP, rowGap: GAP,
+            transform: `scale(${scale})`, transformOrigin: 'top left',
+            position: 'absolute', top: 0, left: 0,
+          }}>
+            {screens.map(s => (
+              <Device key={s.label} theme={theme} themeKey={themeKey}
+                initialTab={s.tab} label={s.label}
+                initialDetail={s.initialDetail}
+                onboardingStep={s.onboardingStep}
+                addOpenInit={s.addOpenInit}
+                quickOpenInit={s.quickOpenInit} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+</body>
+</html>

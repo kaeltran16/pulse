@@ -1,0 +1,58 @@
+# Xcode
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcworkspace/xcshareddata/xcschemes/
+DerivedData/
+build/
+*.ipa
+*.dSYM.zip
+*.dSYM
+*.moved-aside
+*.hmap
+*.ipa
+*.xcarchive
+
+# Swift Package Manager
+.build/
+.swiftpm/config/registries.json
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+.netrc
+
+# CocoaPods
+Pods/
+Podfile.lock
+
+# Carthage
+Carthage/Build/
+
+# SPM resolved (keep Package.resolved in version control)
+# Package.resolved  ← intentionally not ignored
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Xcode user settings
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+
+# Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# Secrets / config (never commit)
+Secrets.swift
+Config.xcconfig
+GoogleService-Info.plist
+secrets.json
+.env
+.env.*
+
+# Test output
+*.xcresult
+test-output/
