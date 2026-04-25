@@ -121,3 +121,47 @@ describe('editorStore exercise mutators', () => {
     expect(useEditorStore.getState().draft!.exercises[0].restSeconds).toBeNull();
   });
 });
+
+describe('editorStore set mutators', () => {
+  beforeEach(() => {
+    useEditorStore.getState().clearDraft();
+    useEditorStore.getState().loadDraft(fakeFull);
+  });
+
+  it('addSet appends with id=null, copies last set targets', () => {
+    useEditorStore.getState().addSet(0);
+    const sets = useEditorStore.getState().draft!.exercises[0].sets;
+    expect(sets).toHaveLength(2);
+    expect(sets[1].id).toBeNull();
+    expect(sets[1].position).toBe(1);
+    expect(sets[1].targetReps).toBe(5);
+    expect(sets[1].targetWeightKg).toBe(60);
+  });
+
+  it('removeSet renumbers densely', () => {
+    useEditorStore.getState().addSet(0);
+    useEditorStore.getState().addSet(0);
+    useEditorStore.getState().removeSet(0, 1);
+    const sets = useEditorStore.getState().draft!.exercises[0].sets;
+    expect(sets.map((s) => s.position)).toEqual([0, 1]);
+  });
+
+  it('updateSet patches reps and weight without touching id', () => {
+    useEditorStore.getState().updateSet(0, 0, { targetReps: 12, targetWeightKg: 65 });
+    const s = useEditorStore.getState().draft!.exercises[0].sets[0];
+    expect(s.id).toBe(100);
+    expect(s.targetReps).toBe(12);
+    expect(s.targetWeightKg).toBe(65);
+  });
+
+  it('reorderSets moves and renumbers; no-op for invalid args', () => {
+    useEditorStore.getState().addSet(0);
+    useEditorStore.getState().addSet(0);
+    useEditorStore.getState().reorderSets(0, 2, 0);
+    const sets = useEditorStore.getState().draft!.exercises[0].sets;
+    expect(sets.map((s) => s.position)).toEqual([0, 1, 2]);
+    useEditorStore.getState().reorderSets(0, 0, 0);
+    useEditorStore.getState().reorderSets(0, -1, 1);
+    useEditorStore.getState().reorderSets(0, 0, 99);
+  });
+});
