@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { ChatRequest } from "@api-types";
 
-const Entry = z.object({ id: z.string(), kind: z.enum(["food", "workout", "spend"]), at: z.string(), note: z.string().optional() });
+const Entry = z.object({ id: z.string(), kind: z.enum(["workout", "spend"]), at: z.string(), note: z.string().optional() });
 const TodaySummary = z.object({
   date: z.string(),
   rings: z.object({ move: z.number().optional(), exercise: z.number().optional(), stand: z.number().optional() }).optional(),

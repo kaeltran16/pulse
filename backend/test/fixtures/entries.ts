@@ -1,7 +1,7 @@
 import type { Entry, TodaySummary } from "@api-types";
 
 export const sampleEntries: Entry[] = [
-  { id: "e1", kind: "food", at: "2026-04-25T08:30:00Z", note: "oatmeal" },
+  { id: "e1", kind: "workout", at: "2026-04-25T08:30:00Z", note: "oatmeal" },
   { id: "e2", kind: "spend", at: "2026-04-25T11:00:00Z", note: "coffee" },
 ];
 

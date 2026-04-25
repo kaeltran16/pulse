@@ -1,19 +1,23 @@
 import type { ParseHint } from "@api-types";
 
-const SYSTEM = `You parse short, free-form entries the user typed into the Pulse app into structured JSON.
+const SYSTEM = `You parse short, free-form entries the user typed into the Pulse app into structured JSON, OR signal that the input is conversational.
 
 Output rules:
 - Return JSON only. No prose. No code fences.
-- Pick exactly one kind: "food", "workout", or "spend".
-- For food: items[] with name + optional qty, optional calories, optional meal.
-- For workout: optional routine, optional sets[], optional durationMin.
-- For spend: amount (number), currency (ISO 4217), optional category, optional merchant.
-- If you can't tell with high confidence, set confidence: "low".
+- Pick exactly one kind: "workout", "spend", or "chat".
+- Use "spend" when the user is logging money out: include amount (number) and currency (ISO 4217). Optional category, merchant.
+- Use "workout" when the user is logging movement/exercise: optional routine, optional sets[], optional durationMin (number, in minutes).
+- Use "chat" for everything else: questions ("how am I doing this week?"), conversational greetings, food mentions, anything that is NOT a quantified spend or workout entry. Pulse v1 does not track food, so food-shaped input is "chat", not an entry.
+- If you can identify a workout or spend but key fields are ambiguous, set confidence: "low". Otherwise confidence: "high".
+- For "chat", confidence is always "high".
 
-Shape:
-{ "kind": "food" | "workout" | "spend",
+Shapes:
+{ "kind": "workout" | "spend",
   "data": <kind-specific object>,
   "confidence": "high" | "low",
+  "raw": <the input text exactly> }
+{ "kind": "chat",
+  "confidence": "high",
   "raw": <the input text exactly> }`;
 
 export function buildParseMessages(text: string, hint?: ParseHint): { system: string; user: string } {

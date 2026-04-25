@@ -22,14 +22,22 @@ describe("buildChatSystemPrompt", () => {
 
 describe("buildParseMessages", () => {
   it("includes the input text and the parse instruction", () => {
-    const m = buildParseMessages("ate 2 eggs and toast");
+    const m = buildParseMessages("verve coffee 5.75");
     expect(m.system).toMatch(/JSON/);
-    expect(m.user).toContain("ate 2 eggs and toast");
+    expect(m.user).toContain("verve coffee 5.75");
   });
 
   it("includes the hint when provided", () => {
     const m = buildParseMessages("hex bar 5x5", "workout");
     expect(m.user).toMatch(/hint.*workout/i);
+  });
+
+  it("system prompt covers workout, spend, chat — not food", () => {
+    const { system } = buildParseMessages("x");
+    expect(system).toContain('"workout"');
+    expect(system).toContain('"spend"');
+    expect(system).toContain('"chat"');
+    expect(system).not.toMatch(/"food"/);
   });
 });
 
