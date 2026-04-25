@@ -20,6 +20,9 @@ export interface RoutineFull {
   tag: string;
   color: string;
   position: number;
+  restDefaultSeconds: number;
+  warmupReminder: boolean;
+  autoProgress: boolean;
   exercises: Array<{
     id: number;
     position: number;
@@ -112,6 +115,9 @@ export async function getRoutineWithSets(db: AnyDb, routineId: number): Promise<
     tag: head.tag,
     color: head.color,
     position: head.position,
+    restDefaultSeconds: head.restDefaultSeconds,
+    warmupReminder: Boolean(head.warmupReminder),
+    autoProgress: Boolean(head.autoProgress),
     exercises: reRows
       .filter((row: { routine_exercises: { id: number } }) => reIds.includes(row.routine_exercises.id))
       .map((row: {

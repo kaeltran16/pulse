@@ -75,4 +75,16 @@ describe('getRoutineWithSets', () => {
     expect(r!.exercises[0].sets[0].targetWeightKg).toBe(80);
     expect(r!.exercises[r!.exercises.length - 1].exercise.id).toBe('tricep-rope');
   });
+
+  it('exposes session settings on the hydrated routine', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const all = await listRoutines(db);
+    const id = all[0].id;
+    const r = await getRoutineWithSets(db, id);
+    expect(r).not.toBeNull();
+    expect(r!.restDefaultSeconds).toBe(120);
+    expect(r!.warmupReminder).toBe(false);
+    expect(r!.autoProgress).toBe(false);
+  });
 });
