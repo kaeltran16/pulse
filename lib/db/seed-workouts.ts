@@ -1,6 +1,9 @@
 // Source of truth for the seeded exercise catalog and starter routines.
 // Mirrors design_handoff/src/workout-data.jsx EXERCISES + ROUTINES.
 
+import { type AnyDb } from './queries/onboarding';
+import { exercises, routines, routineExercises, routineSets } from './schema';
+
 export interface SeededExercise {
   id: string;
   name: string;
@@ -156,4 +159,75 @@ export const SEEDED_ROUTINES: readonly SeededRoutine[] = [
 
 export function isStrengthSet(s: SeededRoutineSet): s is SeededRoutineSetStrength {
   return (s as SeededRoutineSetStrength).reps !== undefined;
+}
+
+/**
+ * Idempotent seeder. Exercises use INSERT OR IGNORE on the slug PK; routines
+ * are only seeded when the routines table is empty so the seeder never
+ * clobbers user edits.
+ */
+export function seedWorkouts(db: AnyDb): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (db as any).transaction((tx: any) => {
+    for (const ex of SEEDED_EXERCISES) {
+      tx.insert(exercises).values({
+        id: ex.id,
+        name: ex.name,
+        group: ex.group,
+        muscle: ex.muscle,
+        equipment: ex.equipment,
+        kind: ex.kind,
+        sfSymbol: ex.sfSymbol,
+      }).onConflictDoNothing().run();
+    }
+
+    const existing = tx.select({ id: routines.id }).from(routines).limit(1).all();
+    if (existing.length > 0) return;
+
+    for (const r of SEEDED_ROUTINES) {
+      const inserted = tx.insert(routines).values({
+        name: r.name,
+        tag: r.tag,
+        color: r.color,
+        position: r.position,
+      }).returning({ id: routines.id }).all();
+      const routineId = inserted[0].id;
+
+      let exPos = 0;
+      for (const re of r.exercises) {
+        const insertedRe = tx.insert(routineExercises).values({
+          routineId,
+          exerciseId: re.exerciseId,
+          position: exPos,
+          restSeconds: re.restSeconds ?? null,
+        }).returning({ id: routineExercises.id }).all();
+        const routineExerciseId = insertedRe[0].id;
+
+        let setPos = 0;
+        for (const s of re.sets) {
+          if (isStrengthSet(s)) {
+            tx.insert(routineSets).values({
+              routineExerciseId,
+              position: setPos,
+              targetReps: s.reps,
+              targetWeightKg: s.weightKg,
+              targetDurationSeconds: null,
+              targetDistanceKm: null,
+            }).run();
+          } else {
+            tx.insert(routineSets).values({
+              routineExerciseId,
+              position: setPos,
+              targetReps: null,
+              targetWeightKg: null,
+              targetDurationSeconds: s.durationSeconds,
+              targetDistanceKm: s.distanceKm,
+            }).run();
+          }
+          setPos += 1;
+        }
+        exPos += 1;
+      }
+    }
+  });
 }
