@@ -1,6 +1,7 @@
 /** @jest-environment node */
-import { parse } from '../client';
+import { parse, chatStream } from '../client';
 import { AuthError, NetworkError, RateLimitError, UpstreamError, ValidationError } from '../errors';
+import type { SSEHandle } from '../sse';
 
 const BASE = 'http://test.local';
 const TOKEN = 'tok-abc';
@@ -66,5 +67,58 @@ describe('parse()', () => {
   it('throws NetworkError when fetch rejects', async () => {
     fetchMock.mockRejectedValue(new TypeError('fetch failed'));
     await expect(parse('x')).rejects.toBeInstanceOf(NetworkError);
+  });
+});
+
+class FakeSSE implements SSEHandle {
+  listeners = new Map<string, (ev: { data?: string }) => void>();
+  closed = false;
+  addEventListener(name: string, cb: (ev: { data?: string }) => void) {
+    this.listeners.set(name, cb);
+  }
+  close() { this.closed = true; }
+  fire(name: string, data?: string) { this.listeners.get(name)?.({ data }); }
+}
+
+describe('chatStream()', () => {
+  it('opens SSE to /chat with bearer + body, dispatches chunk/done', () => {
+    const fake = new FakeSSE();
+    const onChunk = jest.fn();
+    const onDone = jest.fn();
+    const onError = jest.fn();
+
+    const ctrl = chatStream(
+      { messages: [{ role: 'user', content: 'hi' }] },
+      { onChunk, onDone, onError },
+      () => fake,
+    );
+
+    fake.fire('chunk', JSON.stringify({ delta: 'Hel' }));
+    fake.fire('chunk', JSON.stringify({ delta: 'lo.' }));
+    fake.fire('done', JSON.stringify({ usage: { input_tokens: 1, output_tokens: 2 } }));
+
+    expect(onChunk).toHaveBeenNthCalledWith(1, 'Hel');
+    expect(onChunk).toHaveBeenNthCalledWith(2, 'lo.');
+    expect(onDone).toHaveBeenCalledWith({ input_tokens: 1, output_tokens: 2 });
+    expect(onError).not.toHaveBeenCalled();
+    ctrl.abort();
+    expect(fake.closed).toBe(true);
+  });
+
+  it('dispatches error event with code+message', () => {
+    const fake = new FakeSSE();
+    const cb = { onChunk: jest.fn(), onDone: jest.fn(), onError: jest.fn() };
+    chatStream({ messages: [{ role: 'user', content: 'hi' }] }, cb, () => fake);
+    fake.fire('error', JSON.stringify({ code: 'upstream_error', message: 'down', requestId: 'r' }));
+    expect(cb.onError).toHaveBeenCalledWith('upstream_error', 'down');
+  });
+
+  it('abort closes the underlying source without firing onDone', () => {
+    const fake = new FakeSSE();
+    const cb = { onChunk: jest.fn(), onDone: jest.fn(), onError: jest.fn() };
+    const ctrl = chatStream({ messages: [{ role: 'user', content: 'hi' }] }, cb, () => fake);
+    ctrl.abort();
+    expect(fake.closed).toBe(true);
+    expect(cb.onDone).not.toHaveBeenCalled();
   });
 });
