@@ -41,3 +41,36 @@ describe('editorStore', () => {
     expect(s.isDirty).toBe(false);
   });
 });
+
+describe('editorStore top-level mutators', () => {
+  beforeEach(() => {
+    useEditorStore.getState().clearDraft();
+    useEditorStore.getState().loadDraft(fakeFull);
+  });
+
+  it('setName flips isDirty and updates value', () => {
+    useEditorStore.getState().setName('Renamed');
+    expect(useEditorStore.getState().draft!.name).toBe('Renamed');
+    expect(useEditorStore.getState().isDirty).toBe(true);
+  });
+
+  it('setTag, setRestDefault, setWarmupReminder, setAutoProgress all set isDirty', () => {
+    useEditorStore.getState().setTag('Lower');
+    useEditorStore.getState().setRestDefault(60);
+    useEditorStore.getState().setWarmupReminder(true);
+    useEditorStore.getState().setAutoProgress(true);
+    const d = useEditorStore.getState().draft!;
+    expect(d.tag).toBe('Lower');
+    expect(d.restDefaultSeconds).toBe(60);
+    expect(d.warmupReminder).toBe(true);
+    expect(d.autoProgress).toBe(true);
+    expect(useEditorStore.getState().isDirty).toBe(true);
+  });
+
+  it('mutators on null draft are no-ops', () => {
+    useEditorStore.getState().clearDraft();
+    useEditorStore.getState().setName('X');
+    expect(useEditorStore.getState().draft).toBeNull();
+    expect(useEditorStore.getState().isDirty).toBe(false);
+  });
+});
