@@ -2,11 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Prove the Windows-only Expo dev pipeline end-to-end. Default `create-expo-app` starter runs in an Android emulator on Windows AND in Expo Go on the user's iPhone, both updating on hot reload.
+**Goal:** Prove the Windows-only Expo dev pipeline end-to-end. Default `create-expo-app` starter runs in Expo Go on the user's iPhone, updating on hot reload.
 
-**Architecture:** No application code. Install toolchain, scaffold Expo SDK 55 into the existing `pulse/` repo, configure bundle identifier, verify both runtimes connect to the dev server.
+**Architecture:** No application code. Install toolchain, scaffold Expo into the existing `pulse/` repo, configure bundle identifier, verify the iPhone runtime connects to the dev server.
 
-**Tech Stack:** Node.js LTS, Android Studio (Pixel 7 / API 34 emulator), Expo CLI, Expo SDK 55 (RN 0.83, TypeScript, New Architecture), Expo Go on iPhone.
+**Tech Stack:** Node.js LTS, Expo CLI, Expo SDK 54 (TypeScript, New Architecture), Expo Go on iPhone.
+
+> **Scope change 2026-04-25:** Android emulator path skipped — Pulse is iPhone-first (HealthKit forces this), so Android Studio install + Pixel 7 emulator + Task 9 (Android run) are dropped. Tasks 1–3 are also moot: Node was already installed (v22.14), and Tasks 2–3 covered Android Studio. SDK landed as **54** (latest as of today), not 55 as the plan originally guessed.
 
 ---
 
