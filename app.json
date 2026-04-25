@@ -1,17 +1,19 @@
 {
   "expo": {
-    "name": "pulse-scaffold",
-    "slug": "pulse-scaffold",
+    "name": "Pulse",
+    "slug": "pulse",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "pulsescaffold",
+    "scheme": "pulse",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
+      "bundleIdentifier": "com.kael.pulse",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.kael.pulse",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
