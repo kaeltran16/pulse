@@ -46,10 +46,16 @@ describe('tokens.ts ⇔ tailwind.config.js parity', () => {
   });
 
   describe('typography — every type key matches', () => {
-    const expected = buildFontSizeMap();
+    const expected = buildFontSizeMap() as Record<
+      string,
+      [string, { lineHeight: string; fontWeight: string }]
+    >;
     for (const key of Object.keys(type) as (keyof typeof type)[]) {
       it(`fontSize.${key} matches`, () => {
-        const got = resolved.theme.fontSize[key];
+        const got = resolved.theme.fontSize[key] as [
+          string,
+          { lineHeight: string; fontWeight: string },
+        ];
         const exp = expected[key];
         // Tailwind shape: ['17px', { lineHeight: '22px', fontWeight: '400' }]
         expect(got[0]).toBe(exp[0]);
