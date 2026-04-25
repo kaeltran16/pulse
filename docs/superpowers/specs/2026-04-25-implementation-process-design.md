@@ -219,8 +219,8 @@ Explicitly deferred or cut from v1–v3, to be revisited only if the user opts i
 | 0 | Pipeline pre-flight | ✅ Complete 2026-04-25 — Expo SDK 54 scaffold, hot reload verified on web target. Android path dropped (iPhone-first); iPhone Expo Go verification deferred (not blocking; will be exercised in sub-project 1). |
 | 1 | Design system | ✅ Complete 2026-04-25 — `tokens.ts` source of truth, NativeWind v4 wired via CSS variables, `ThemeProvider` with Light/Dark/System toggle, 33-assertion parity test passing, preview screen verified on web. iPhone Expo Go verification deferred (not blocking). |
 | 2 | Backend v1 (AI proxy) | ✅ Code complete 2026-04-25 — 49 tests green, code review accepted (`docs/superpowers/reviews/2026-04-25-backend-v1-ai-proxy-review.md`), droplet bootstrapped (`root@178.128.81.14`), GH Action `deploy-backend.yml` wired. Live deploy pending: set `OPENROUTER_API_KEY` in `/etc/pulse-backend.env` and push to `main`. |
-| 3a | iOS v1 — data + shell | ⏳ Next |
-| 3b | iOS v1 — entry + Pal | Not started |
+| 3a | iOS v1 — data + shell | ✅ Complete 2026-04-25 — Drizzle schema with 5 tables, generated migrations bundle, TDD'd aggregates + streak math (54 tests green, including DST cases), 4-step onboarding, 4-tab shell with 3 stubs, Today rings against live SQLite via `useLiveQuery`, dev seed flow. Type-check clean. iPhone Expo Go verification deferred per SP1 precedent (Skia requires custom dev client). |
+| 3b | iOS v1 — entry + Pal | ⏳ Next |
 | 4 | iOS v2 — workouts | Not started |
 | 5 | Backend v2 + iOS v3 — email + review | Not started |
 | 6 | Polish | Not started |
