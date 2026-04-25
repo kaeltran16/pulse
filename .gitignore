@@ -1,58 +1,46 @@
-# Xcode
-*.xcodeproj/xcuserdata/
-*.xcworkspace/xcuserdata/
-*.xcworkspace/xcshareddata/xcschemes/
-DerivedData/
-build/
-*.ipa
-*.dSYM.zip
-*.dSYM
-*.moved-aside
-*.hmap
-*.ipa
-*.xcarchive
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
-# Swift Package Manager
-.build/
-.swiftpm/config/registries.json
-.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
-.netrc
+# dependencies
+node_modules/
 
-# CocoaPods
-Pods/
-Podfile.lock
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
 
-# Carthage
-Carthage/Build/
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
 
-# SPM resolved (keep Package.resolved in version control)
-# Package.resolved  ← intentionally not ignored
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
 
 # macOS
 .DS_Store
-.AppleDouble
-.LSOverride
-._*
-.Spotlight-V100
-.Trashes
+*.pem
 
-# Xcode user settings
-xcuserdata/
-*.xcuserstate
-*.xcuserdatad/
-
-# Playgrounds
-timeline.xctimeline
-playground.xcworkspace
-
-# Secrets / config (never commit)
-Secrets.swift
-Config.xcconfig
-GoogleService-Info.plist
-secrets.json
+# local env files
 .env
 .env.*
+.env*.local
+secrets.json
 
-# Test output
-*.xcresult
-test-output/
+# typescript
+*.tsbuildinfo
+
+app-example
+
+# generated native folders
+/ios
+/android
