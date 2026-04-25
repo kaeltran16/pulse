@@ -1,1 +1,44 @@
-console.log("pulse-backend boot stub");
+import express, { type Express } from "express";
+import { loadConfig, type Config } from "./config.js";
+import { createLogger, type Logger } from "./lib/logger.js";
+import { requestId } from "./middleware/requestId.js";
+import { errorHandler } from "./middleware/errorHandler.js";
+import { healthRouter } from "./routes/health.js";
+import type { LlmClient } from "./lib/openrouter.js";
+import { createOpenRouterClient } from "./lib/openrouter.js";
+
+export type AppDeps = {
+  config: Config;
+  logger: Logger;
+  llm: LlmClient;
+};
+
+export function createApp(deps: AppDeps): Express {
+  const { logger } = deps;
+  const app = express();
+  app.disable("x-powered-by");
+  app.use(requestId);
+  app.use(express.json({ limit: "256kb" }));
+
+  app.use(healthRouter());
+
+  app.use(errorHandler(logger));
+  return app;
+}
+
+async function main() {
+  const config = loadConfig();
+  const logger = createLogger(config.logLevel);
+  const llm = createOpenRouterClient(config.openrouterApiKey);
+  const app = createApp({ config, logger, llm });
+  app.listen(config.port, () => {
+    logger.info({ port: config.port }, "pulse-backend listening");
+  });
+}
+
+if (process.env.NODE_ENV !== "test" && import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
