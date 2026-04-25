@@ -45,7 +45,7 @@
 - Create: `lib/workouts/rest-defaults.ts`
 - Test:   `lib/workouts/__tests__/rest-defaults.test.ts`
 
-- [ ] **Step 1: Create the test directory and write the failing test**
+- [x] **Step 1: Create the test directory and write the failing test**
 
 ```ts
 // lib/workouts/__tests__/rest-defaults.test.ts
@@ -76,12 +76,12 @@ describe('getRestSeconds', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npx jest lib/workouts/__tests__/rest-defaults.test.ts`
 Expected: FAIL — cannot find module `../rest-defaults`.
 
-- [ ] **Step 3: Implement the module**
+- [x] **Step 3: Implement the module**
 
 ```ts
 // lib/workouts/rest-defaults.ts
@@ -101,12 +101,12 @@ export function getRestSeconds(group: ExerciseGroup, override: number | null): n
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `npx jest lib/workouts/__tests__/rest-defaults.test.ts`
 Expected: PASS — 3 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/workouts/rest-defaults.ts lib/workouts/__tests__/rest-defaults.test.ts
@@ -121,7 +121,7 @@ git commit -m "feat(workouts): rest-defaults pure module"
 - Create: `lib/workouts/volume.ts`
 - Test:   `lib/workouts/__tests__/volume.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // lib/workouts/__tests__/volume.test.ts
@@ -165,12 +165,12 @@ describe('computeStrengthVolume', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npx jest lib/workouts/__tests__/volume.test.ts`
 Expected: FAIL — cannot find module `../volume`.
 
-- [ ] **Step 3: Implement the module**
+- [x] **Step 3: Implement the module**
 
 ```ts
 // lib/workouts/volume.ts
@@ -189,12 +189,12 @@ export function computeStrengthVolume(sets: StrengthSet[]): number {
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `npx jest lib/workouts/__tests__/volume.test.ts`
 Expected: PASS — 5 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/workouts/volume.ts lib/workouts/__tests__/volume.test.ts
@@ -209,7 +209,7 @@ git commit -m "feat(workouts): strength volume pure module"
 - Create: `lib/workouts/pr-detection.ts`
 - Test:   `lib/workouts/__tests__/pr-detection.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // lib/workouts/__tests__/pr-detection.test.ts
@@ -296,12 +296,12 @@ describe('detectSessionPRs', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npx jest lib/workouts/__tests__/pr-detection.test.ts`
 Expected: FAIL — cannot find module `../pr-detection`.
 
-- [ ] **Step 3: Implement the module**
+- [x] **Step 3: Implement the module**
 
 ```ts
 // lib/workouts/pr-detection.ts
@@ -346,12 +346,12 @@ export function detectSessionPRs(
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `npx jest lib/workouts/__tests__/pr-detection.test.ts`
 Expected: PASS — 7 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/workouts/pr-detection.ts lib/workouts/__tests__/pr-detection.test.ts
@@ -365,7 +365,7 @@ git commit -m "feat(workouts): PR detection pure module"
 **Files:**
 - Modify: `lib/db/schema.ts` (append after `ritualEntries`)
 
-- [ ] **Step 1: Append the new tables to `lib/db/schema.ts`**
+- [x] **Step 1: Append the new tables to `lib/db/schema.ts`**
 
 Open `lib/db/schema.ts`. After the existing `ritualEntries` table and before the `export type` block, insert:
 
@@ -504,12 +504,12 @@ Also add `real` to the existing import:
 import { integer, real, sqliteTable, text, index } from 'drizzle-orm/sqlite-core';
 ```
 
-- [ ] **Step 2: Type-check the schema**
+- [x] **Step 2: Type-check the schema**
 
 Run: `npx tsc --noEmit`
 Expected: PASS — no TypeScript errors. (Schema is the only thing changed; consumers haven't been touched yet.)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/db/schema.ts
@@ -525,12 +525,12 @@ git commit -m "feat(db): extend schema with workout tables"
 - Modify: `lib/db/migrations/migrations.js`
 - Modify: `lib/db/migrations/meta/_journal.json` (auto-updated by drizzle-kit)
 
-- [ ] **Step 1: Generate the migration SQL**
+- [x] **Step 1: Generate the migration SQL**
 
 Run: `npm run db:generate`
 Expected output: drizzle-kit prints "1 file(s) created" and writes `lib/db/migrations/0001_workouts.sql` plus updates `meta/_journal.json` with a new entry. The file should contain `CREATE TABLE` statements for `exercises`, `routines`, `routine_exercises`, `routine_sets`, `sessions`, `session_sets`, `prs`, plus the indexes from the schema.
 
-- [ ] **Step 2: Inspect the generated SQL**
+- [x] **Step 2: Inspect the generated SQL**
 
 Run: `git diff lib/db/migrations/`
 Confirm the diff:
@@ -540,7 +540,7 @@ Confirm the diff:
 
 If anything looks wrong (e.g. an unintended ALTER), stop and reconcile the schema. Do not proceed.
 
-- [ ] **Step 3: Register the new SQL in the migrations bundle**
+- [x] **Step 3: Register the new SQL in the migrations bundle**
 
 Modify `lib/db/migrations/migrations.js` to import and register `m0001`:
 
@@ -560,7 +560,7 @@ import m0001 from './0001_workouts.sql';
   }
 ```
 
-- [ ] **Step 4: Write the migration test**
+- [x] **Step 4: Write the migration test**
 
 ```ts
 // lib/db/__tests__/migrations-workouts.test.ts
@@ -640,12 +640,12 @@ describe('SP4a migration', () => {
 });
 ```
 
-- [ ] **Step 5: Run all DB tests to verify nothing else broke**
+- [x] **Step 5: Run all DB tests to verify nothing else broke**
 
 Run: `npx jest lib/db/__tests__/`
 Expected: PASS — all SP3a tests still green, plus the 4 new tests in `migrations-workouts.test.ts`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/db/schema.ts lib/db/migrations/ lib/db/__tests__/migrations-workouts.test.ts
@@ -661,7 +661,7 @@ git commit -m "feat(db): generate workouts migration; verify schema"
 
 This task adds **only constants and types** — no insert logic, no test. The seeder runner and its test come in Task 7.
 
-- [ ] **Step 1: Create the constants file**
+- [x] **Step 1: Create the constants file**
 
 ```ts
 // lib/db/seed-workouts.ts
@@ -828,12 +828,12 @@ export function isStrengthSet(s: SeededRoutineSet): s is SeededRoutineSetStrengt
 }
 ```
 
-- [ ] **Step 2: Type-check the new file**
+- [x] **Step 2: Type-check the new file**
 
 Run: `npx tsc --noEmit`
 Expected: PASS — no errors.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/db/seed-workouts.ts
@@ -848,7 +848,7 @@ git commit -m "feat(db): seeded exercise catalog and starter routines (constants
 - Modify: `lib/db/seed-workouts.ts` (append `seedWorkouts` runner)
 - Create: `lib/db/__tests__/seed-workouts.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // lib/db/__tests__/seed-workouts.test.ts
@@ -927,12 +927,12 @@ describe('seedWorkouts', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npx jest lib/db/__tests__/seed-workouts.test.ts`
 Expected: FAIL — `seedWorkouts` is not exported.
 
-- [ ] **Step 3: Append the seeder runner to `lib/db/seed-workouts.ts`**
+- [x] **Step 3: Append the seeder runner to `lib/db/seed-workouts.ts`**
 
 Add these imports at the top of the file (after the existing interface declarations would still keep it a constants-first file, but the imports come at the top):
 
@@ -1024,17 +1024,17 @@ export function seedWorkouts(db: AnyDb): void {
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `npx jest lib/db/__tests__/seed-workouts.test.ts`
 Expected: PASS — 6 tests.
 
-- [ ] **Step 5: Run all tests to confirm nothing else broke**
+- [x] **Step 5: Run all tests to confirm nothing else broke**
 
 Run: `npm test`
 Expected: PASS — every existing test plus the new ones.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/db/seed-workouts.ts lib/db/__tests__/seed-workouts.test.ts
@@ -1049,7 +1049,7 @@ git commit -m "feat(db): idempotent workout seeder"
 - Create: `lib/db/queries/routines.ts`
 - Test:   `lib/db/__tests__/routines.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // lib/db/__tests__/routines.test.ts
@@ -1134,12 +1134,12 @@ describe('getRoutineWithSets', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npx jest lib/db/__tests__/routines.test.ts`
 Expected: FAIL — cannot find module `../queries/routines`.
 
-- [ ] **Step 3: Implement the module**
+- [x] **Step 3: Implement the module**
 
 ```ts
 // lib/db/queries/routines.ts
@@ -1276,17 +1276,17 @@ export async function getRoutineWithSets(db: AnyDb, routineId: number): Promise<
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `npx jest lib/db/__tests__/routines.test.ts`
 Expected: PASS — 5 tests.
 
-- [ ] **Step 5: Run all tests to confirm regression-free**
+- [x] **Step 5: Run all tests to confirm regression-free**
 
 Run: `npm test`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/db/queries/routines.ts lib/db/__tests__/routines.test.ts
@@ -1301,7 +1301,7 @@ git commit -m "feat(db): listRoutines + getRoutineWithSets queries"
 - Create: `lib/db/queries/prs.ts`
 - Test:   `lib/db/__tests__/prs.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // lib/db/__tests__/prs.test.ts
@@ -1349,12 +1349,12 @@ describe('getPRsForExercises', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npx jest lib/db/__tests__/prs.test.ts`
 Expected: FAIL — cannot find module `../queries/prs`.
 
-- [ ] **Step 3: Implement the module**
+- [x] **Step 3: Implement the module**
 
 ```ts
 // lib/db/queries/prs.ts
@@ -1382,12 +1382,12 @@ export async function getPRsForExercises(db: AnyDb, exerciseIds: string[]): Prom
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `npx jest lib/db/__tests__/prs.test.ts`
 Expected: PASS — 3 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/queries/prs.ts lib/db/__tests__/prs.test.ts
@@ -1404,7 +1404,7 @@ git commit -m "feat(db): getPRsForExercises query"
 
 This is the heaviest task. The transaction inserts `sessions`, `session_sets`, upserts `prs`, and inserts a `movement_entries` row — all atomically.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // lib/db/__tests__/sessions.test.ts
@@ -1589,12 +1589,12 @@ describe('listSessions / getSession', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npx jest lib/db/__tests__/sessions.test.ts`
 Expected: FAIL — cannot find module `../queries/sessions`.
 
-- [ ] **Step 3: Implement the module**
+- [x] **Step 3: Implement the module**
 
 ```ts
 // lib/db/queries/sessions.ts
@@ -1796,7 +1796,7 @@ export async function getSession(db: AnyDb, sessionId: number): Promise<SessionF
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `npx jest lib/db/__tests__/sessions.test.ts`
 Expected: PASS — 10 tests.
@@ -1809,17 +1809,17 @@ await expect(insertCompletedSession(db, bad)).rejects.toThrow();
 
 and re-run. Pick whichever the implementation actually produces — both are valid as long as no rows are written. The behavior contract is "atomic"; the API surface is "throws or rejects."
 
-- [ ] **Step 5: Run the full test suite**
+- [x] **Step 5: Run the full test suite**
 
 Run: `npm test`
 Expected: PASS — every existing test plus all SP4a tests.
 
-- [ ] **Step 6: Type-check**
+- [x] **Step 6: Type-check**
 
 Run: `npx tsc --noEmit`
 Expected: PASS — no errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add lib/db/queries/sessions.ts lib/db/__tests__/sessions.test.ts
@@ -1835,7 +1835,7 @@ git commit -m "feat(db): insertCompletedSession (atomic) + listSessions + getSes
 
 The migration hook already runs on app start; this task ensures `seedWorkouts(db)` runs once per app launch (it's idempotent). SP3a's onboarding flow seeds `goals` and `rituals` on demand from the user; workout exercises and starter routines should be there before the user opens the workouts tab.
 
-- [ ] **Step 1: Read the current migrate hook**
+- [x] **Step 1: Read the current migrate hook**
 
 ```bash
 cat lib/db/migrate.ts
@@ -1853,7 +1853,7 @@ export function useDbMigrations() {
 }
 ```
 
-- [ ] **Step 2: Replace it with a hook that also runs the seeder once migrations succeed**
+- [x] **Step 2: Replace it with a hook that also runs the seeder once migrations succeed**
 
 ```ts
 // lib/db/migrate.ts
@@ -1882,17 +1882,17 @@ export function useDbMigrations() {
 }
 ```
 
-- [ ] **Step 3: Type-check**
+- [x] **Step 3: Type-check**
 
 Run: `npx tsc --noEmit`
 Expected: PASS.
 
-- [ ] **Step 4: Run the full test suite**
+- [x] **Step 4: Run the full test suite**
 
 Run: `npm test`
 Expected: PASS — no test touches `migrate.ts` directly; this is a runtime wiring change.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/migrate.ts
@@ -1912,7 +1912,7 @@ The first two are covered by Tasks 5 and 7. The third is covered by `sessions.te
 **Files:**
 - Create: `scripts/smoke-sp4a.ts`
 
-- [ ] **Step 1: Write the smoke script**
+- [x] **Step 1: Write the smoke script**
 
 ```ts
 // scripts/smoke-sp4a.ts
@@ -1965,7 +1965,7 @@ main().catch((e) => {
 });
 ```
 
-- [ ] **Step 2: Add a script entry to `package.json`**
+- [x] **Step 2: Add a script entry to `package.json`**
 
 In `package.json`, under `"scripts"`, add:
 
@@ -1973,18 +1973,18 @@ In `package.json`, under `"scripts"`, add:
 "smoke:sp4a": "tsx scripts/smoke-sp4a.ts"
 ```
 
-- [ ] **Step 3: Install `tsx` if not already present**
+- [x] **Step 3: Install `tsx` if not already present**
 
 Run: `npx tsx --version`
 
 If "command not found", install: `npm install --save-dev tsx`
 
-- [ ] **Step 4: Run the smoke test**
+- [x] **Step 4: Run the smoke test**
 
 Run: `npm run smoke:sp4a`
 Expected: prints `SP4a smoke test OK { exercises: 21, routines: 6, session: { sessionId: 1, prCount: 1, totalVolumeKg: 850 } }` and exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/smoke-sp4a.ts package.json package-lock.json
