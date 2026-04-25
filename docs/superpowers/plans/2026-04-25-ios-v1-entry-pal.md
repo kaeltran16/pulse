@@ -1,6 +1,6 @@
 # SP3b — iOS v1: Entry + Pal Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Ship PalComposer (unified log-or-ask sheet) and Spending Detail. Wire the FAB on Today; route user input through `/parse` (with chat fallback) into either SQLite entries or streamed `/chat` answers.
 
@@ -60,7 +60,7 @@
 **Files:**
 - Modify: `lib/api-types.ts`
 
-- [ ] **Step 1: Update `ParseResponse` and remove food types**
+- [x] **Step 1: Update `ParseResponse` and remove food types**
 
 Replace the food/workout/spend block and the `Entry` declaration with:
 
@@ -101,12 +101,12 @@ export type ParseResponse =
 
 Delete any remaining `FoodEntry` type or `food` literal.
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `npx tsc --noEmit`
 Expected: failures will appear in backend & tests that still reference food. They will be fixed in Tasks 2–4. Continue regardless.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/api-types.ts
@@ -121,7 +121,7 @@ git commit -m "feat(api-types): drop food kind, add chat kind to ParseResponse"
 - Modify: `backend/src/schemas/parse.ts`
 - Modify: `backend/test/unit/schemas.test.ts` (or create a new schema test file if absent)
 
-- [ ] **Step 1: Write failing schema tests**
+- [x] **Step 1: Write failing schema tests**
 
 Open `backend/test/unit/schemas.test.ts`. Find any food test (e.g. `it(... "food schema" ...)`) and replace with:
 
@@ -171,12 +171,12 @@ describe("ParseResponseSchema", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests — should fail**
+- [x] **Step 2: Run tests — should fail**
 
 Run: `cd backend && npm test -- schemas`
 Expected: chat & rejection tests fail (food still present, chat not yet defined).
 
-- [ ] **Step 3: Update the schema**
+- [x] **Step 3: Update the schema**
 
 Replace `backend/src/schemas/parse.ts` entirely with:
 
@@ -211,12 +211,12 @@ export const ParseResponseSchema: z.ZodType<ParseResponse> = z.discriminatedUnio
 ]);
 ```
 
-- [ ] **Step 4: Run tests — should pass**
+- [x] **Step 4: Run tests — should pass**
 
 Run: `cd backend && npm test -- schemas`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/schemas/parse.ts backend/test/unit/schemas.test.ts
@@ -231,7 +231,7 @@ git commit -m "feat(backend): drop food, add chat to ParseResponseSchema"
 - Modify: `backend/src/lib/prompts/parse.ts`
 - Modify: `backend/test/unit/prompts.test.ts` (if it asserts the prompt content)
 
-- [ ] **Step 1: Replace the prompt**
+- [x] **Step 1: Replace the prompt**
 
 ```ts
 import type { ParseHint } from "@api-types";
@@ -263,7 +263,7 @@ export function buildParseMessages(text: string, hint?: ParseHint): { system: st
 }
 ```
 
-- [ ] **Step 2: Update prompt unit test if it exists**
+- [x] **Step 2: Update prompt unit test if it exists**
 
 Open `backend/test/unit/prompts.test.ts`. If it asserts substrings like `"food"`, replace those expectations with assertions like:
 
@@ -274,12 +274,12 @@ expect(system).toContain('"chat"');
 expect(system).not.toContain('"food"');
 ```
 
-- [ ] **Step 3: Run unit tests**
+- [x] **Step 3: Run unit tests**
 
 Run: `cd backend && npm test -- prompts`
 Expected: PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add backend/src/lib/prompts/parse.ts backend/test/unit/prompts.test.ts
@@ -293,7 +293,7 @@ git commit -m "feat(backend): parse prompt routes food-shaped input to chat"
 **Files:**
 - Modify: `backend/test/integration/parse.test.ts`
 
-- [ ] **Step 1: Replace the file**
+- [x] **Step 1: Replace the file**
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -426,17 +426,17 @@ describe("POST /parse", () => {
 });
 ```
 
-- [ ] **Step 2: Run integration tests**
+- [x] **Step 2: Run integration tests**
 
 Run: `cd backend && npm test -- parse`
 Expected: PASS.
 
-- [ ] **Step 3: Run the full backend suite**
+- [x] **Step 3: Run the full backend suite**
 
 Run: `cd backend && npm test`
 Expected: PASS. If anything else still references `food` (e.g. example data in chat tests), update those references to `spend` or `workout`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add backend/test/integration/parse.test.ts
@@ -451,12 +451,12 @@ git commit -m "test(backend): parse integration covers spend, low-confidence wor
 - Modify: `package.json`
 - Modify: `.env.example`
 
-- [ ] **Step 1: Install**
+- [x] **Step 1: Install**
 
 Run: `npm install react-native-sse`
 Expected: package added; lockfile updated.
 
-- [ ] **Step 2: Update `.env.example`**
+- [x] **Step 2: Update `.env.example`**
 
 Append (create the file if missing):
 
@@ -465,11 +465,11 @@ EXPO_PUBLIC_PAL_BASE_URL=http://localhost:3000
 EXPO_PUBLIC_PAL_TOKEN=paste-dev-token-here
 ```
 
-- [ ] **Step 3: Update `app.config.ts` or `app.json` to expose env to the runtime**
+- [x] **Step 3: Update `app.config.ts` or `app.json` to expose env to the runtime**
 
 If `app.config.ts` does not exist yet, create it (and delete the `expo` field from `app.json` per Expo's app-config rules, OR leave `app.json` and read directly via `process.env.EXPO_PUBLIC_*`). The simplest path uses Expo's `EXPO_PUBLIC_*` mechanism, which exposes vars to the bundle automatically. **No app config changes needed** — `process.env.EXPO_PUBLIC_PAL_BASE_URL` works directly in `lib/pal/config.ts`. Skip this step if so.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add package.json package-lock.json .env.example
@@ -484,7 +484,7 @@ git commit -m "chore: add react-native-sse + EXPO_PUBLIC_PAL_* env vars"
 - Create: `lib/pal/config.ts`
 - Create: `lib/pal/errors.ts`
 
-- [ ] **Step 1: Write `lib/pal/config.ts`**
+- [x] **Step 1: Write `lib/pal/config.ts`**
 
 ```ts
 const baseUrl = process.env.EXPO_PUBLIC_PAL_BASE_URL ?? "";
@@ -497,7 +497,7 @@ export const PAL_BASE_URL = baseUrl;
 export const PAL_TOKEN = token;
 ```
 
-- [ ] **Step 2: Write `lib/pal/errors.ts`**
+- [x] **Step 2: Write `lib/pal/errors.ts`**
 
 ```ts
 export class PalError extends Error {
@@ -522,7 +522,7 @@ export function messageFor(e: unknown): string {
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/pal/config.ts lib/pal/errors.ts
@@ -537,7 +537,7 @@ git commit -m "feat(pal): config + typed errors"
 - Create: `lib/pal/client.ts` (parse function only this task)
 - Create: `lib/pal/__tests__/client.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 ```ts
 /** @jest-environment node */
@@ -612,12 +612,12 @@ describe('parse()', () => {
 });
 ```
 
-- [ ] **Step 2: Run — fails (parse not exported)**
+- [x] **Step 2: Run — fails (parse not exported)**
 
 Run: `npm test -- client.test`
 Expected: FAIL "Cannot find module '../client'".
 
-- [ ] **Step 3: Implement `lib/pal/client.ts`**
+- [x] **Step 3: Implement `lib/pal/client.ts`**
 
 ```ts
 import type { ParseResponse, ParseHint } from '@/lib/api-types';
@@ -660,12 +660,12 @@ export async function parse(text: string, hint?: ParseHint): Promise<ParseRespon
 }
 ```
 
-- [ ] **Step 4: Run — passes**
+- [x] **Step 4: Run — passes**
 
 Run: `npm test -- client.test`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/pal/client.ts lib/pal/__tests__/client.test.ts
@@ -681,7 +681,7 @@ git commit -m "feat(pal): client.parse() with typed error mapping"
 - Create: `lib/pal/sse.ts` (test-friendly indirection over react-native-sse)
 - Modify: `lib/pal/__tests__/client.test.ts`
 
-- [ ] **Step 1: Write `lib/pal/sse.ts` (thin DI seam)**
+- [x] **Step 1: Write `lib/pal/sse.ts` (thin DI seam)**
 
 ```ts
 // Indirection over react-native-sse so tests can swap in a fake EventSource.
@@ -713,7 +713,7 @@ export const realSSE: SSEFactory = (url, init) => {
 };
 ```
 
-- [ ] **Step 2: Append failing test to `client.test.ts`**
+- [x] **Step 2: Append failing test to `client.test.ts`**
 
 ```ts
 import { chatStream } from '../client';
@@ -773,12 +773,12 @@ describe('chatStream()', () => {
 });
 ```
 
-- [ ] **Step 3: Run — fails**
+- [x] **Step 3: Run — fails**
 
 Run: `npm test -- client.test`
 Expected: FAIL ("chatStream is not a function").
 
-- [ ] **Step 4: Implement `chatStream` in `lib/pal/client.ts`**
+- [x] **Step 4: Implement `chatStream` in `lib/pal/client.ts`**
 
 Append to `lib/pal/client.ts`:
 
@@ -834,12 +834,12 @@ export function chatStream(
 }
 ```
 
-- [ ] **Step 5: Run — passes**
+- [x] **Step 5: Run — passes**
 
 Run: `npm test -- client.test`
 Expected: PASS (all 11 tests across parse + chatStream).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/pal/client.ts lib/pal/sse.ts lib/pal/__tests__/client.test.ts
@@ -854,7 +854,7 @@ git commit -m "feat(pal): chatStream() with SSE factory + abort"
 - Create: `lib/db/queries/insertEntry.ts`
 - Create: `lib/db/__tests__/insertEntry.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 ```ts
 /** @jest-environment node */
@@ -963,12 +963,12 @@ describe('insertEntry (writes)', () => {
 });
 ```
 
-- [ ] **Step 2: Run — fails**
+- [x] **Step 2: Run — fails**
 
 Run: `npm test -- insertEntry`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement `lib/db/queries/insertEntry.ts`**
+- [x] **Step 3: Implement `lib/db/queries/insertEntry.ts`**
 
 ```ts
 import type { ParseResponse } from '@/lib/api-types';
@@ -1029,12 +1029,12 @@ export async function insertEntry(db: AnyDb, parsed: ParseResponse, occurredAt =
 }
 ```
 
-- [ ] **Step 4: Run — passes**
+- [x] **Step 4: Run — passes**
 
 Run: `npm test -- insertEntry`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/queries/insertEntry.ts lib/db/__tests__/insertEntry.test.ts
@@ -1049,7 +1049,7 @@ git commit -m "feat(db): insertEntry maps ParseResponse to spending/movement row
 - Create: `lib/db/queries/recentEntries.ts`
 - Create: `lib/db/__tests__/recentEntries.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 ```ts
 /** @jest-environment node */
@@ -1106,12 +1106,12 @@ describe('getRecentEntries', () => {
 });
 ```
 
-- [ ] **Step 2: Run — fails**
+- [x] **Step 2: Run — fails**
 
 Run: `npm test -- recentEntries`
 Expected: FAIL (module missing).
 
-- [ ] **Step 3: Implement `lib/db/queries/recentEntries.ts`**
+- [x] **Step 3: Implement `lib/db/queries/recentEntries.ts`**
 
 ```ts
 import { desc, eq } from 'drizzle-orm';
@@ -1166,12 +1166,12 @@ export async function getRecentEntries(db: AnyDb, limit: number): Promise<Recent
 }
 ```
 
-- [ ] **Step 4: Run — passes**
+- [x] **Step 4: Run — passes**
 
 Run: `npm test -- recentEntries`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/queries/recentEntries.ts lib/db/__tests__/recentEntries.test.ts
@@ -1186,7 +1186,7 @@ git commit -m "feat(db): getRecentEntries merges three entry tables"
 - Create: `lib/db/queries/todaySpend.ts`
 - Create: `lib/db/__tests__/todaySpend.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 ```ts
 /** @jest-environment node */
@@ -1222,12 +1222,12 @@ describe('getTodaySpend', () => {
 });
 ```
 
-- [ ] **Step 2: Run — fails**
+- [x] **Step 2: Run — fails**
 
 Run: `npm test -- todaySpend`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement `lib/db/queries/todaySpend.ts`**
+- [x] **Step 3: Implement `lib/db/queries/todaySpend.ts`**
 
 ```ts
 import { and, desc, eq, gte, lt } from 'drizzle-orm';
@@ -1265,12 +1265,12 @@ export async function getTodaySpend(db: AnyDb, asOf: Date): Promise<TodaySpend> 
 }
 ```
 
-- [ ] **Step 4: Run — passes**
+- [x] **Step 4: Run — passes**
 
 Run: `npm test -- todaySpend`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/queries/todaySpend.ts lib/db/__tests__/todaySpend.test.ts
@@ -1285,7 +1285,7 @@ git commit -m "feat(db): getTodaySpend aggregates today's spending + reads budge
 - Create: `lib/pal/context.ts`
 - Create: `lib/pal/__tests__/context.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 ```ts
 /** @jest-environment node */
@@ -1312,12 +1312,12 @@ describe('buildContext', () => {
 });
 ```
 
-- [ ] **Step 2: Run — fails**
+- [x] **Step 2: Run — fails**
 
 Run: `npm test -- pal/__tests__/context`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement `lib/pal/context.ts`**
+- [x] **Step 3: Implement `lib/pal/context.ts`**
 
 ```ts
 import { eq } from 'drizzle-orm';
@@ -1358,12 +1358,12 @@ export async function buildContext(db: AnyDb, asOf: Date = new Date()): Promise<
 }
 ```
 
-- [ ] **Step 4: Run — passes**
+- [x] **Step 4: Run — passes**
 
 Run: `npm test -- pal/__tests__/context`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/pal/context.ts lib/pal/__tests__/context.test.ts
@@ -1378,7 +1378,7 @@ git commit -m "feat(pal): buildContext composes today + recent entries"
 - Create: `lib/pal/route.ts`
 - Create: `lib/pal/__tests__/route.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 ```ts
 /** @jest-environment node */
@@ -1461,12 +1461,12 @@ describe('route()', () => {
 });
 ```
 
-- [ ] **Step 2: Run — fails**
+- [x] **Step 2: Run — fails**
 
 Run: `npm test -- pal/__tests__/route`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement `lib/pal/route.ts`**
+- [x] **Step 3: Implement `lib/pal/route.ts`**
 
 ```ts
 import type { ParseResponse } from '@/lib/api-types';
@@ -1538,12 +1538,12 @@ export async function route(
 }
 ```
 
-- [ ] **Step 4: Run — passes**
+- [x] **Step 4: Run — passes**
 
 Run: `npm test -- pal/__tests__/route`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/pal/route.ts lib/pal/__tests__/route.test.ts
@@ -1558,7 +1558,7 @@ git commit -m "feat(pal): route() parse-first orchestrator with chat fallback"
 - Create: `components/pal/Bubble.tsx`
 - Create: `components/pal/TypingDots.tsx`
 
-- [ ] **Step 1: Write `components/pal/TypingDots.tsx`**
+- [x] **Step 1: Write `components/pal/TypingDots.tsx`**
 
 ```tsx
 import { useEffect, useState } from 'react';
@@ -1581,7 +1581,7 @@ export function TypingDots() {
 }
 ```
 
-- [ ] **Step 2: Write `components/pal/Bubble.tsx`**
+- [x] **Step 2: Write `components/pal/Bubble.tsx`**
 
 ```tsx
 import { Text, View } from 'react-native';
@@ -1604,7 +1604,7 @@ export function Bubble({ role, text }: { role: 'user' | 'assistant'; text: strin
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add components/pal/Bubble.tsx components/pal/TypingDots.tsx
@@ -1618,7 +1618,7 @@ git commit -m "feat(pal-ui): Bubble + TypingDots"
 **Files:**
 - Create: `components/pal/StarterChips.tsx`
 
-- [ ] **Step 1: Write the file**
+- [x] **Step 1: Write the file**
 
 ```tsx
 import { Pressable, Text, View } from 'react-native';
@@ -1657,7 +1657,7 @@ export function StarterChips({ onPick }: { onPick: (text: string) => void }) {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add components/pal/StarterChips.tsx
@@ -1671,7 +1671,7 @@ git commit -m "feat(pal-ui): StarterChips"
 **Files:**
 - Create: `components/pal/ConfirmEntryBubble.tsx`
 
-- [ ] **Step 1: Write the file**
+- [x] **Step 1: Write the file**
 
 ```tsx
 import { useState } from 'react';
@@ -1785,7 +1785,7 @@ function Field({ label, value, onChangeText, disabled, keyboardType }: {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add components/pal/ConfirmEntryBubble.tsx
@@ -1799,7 +1799,7 @@ git commit -m "feat(pal-ui): ConfirmEntryBubble (spend + workout) with edit + co
 **Files:**
 - Create: `components/PalComposer.tsx`
 
-- [ ] **Step 1: Write the file**
+- [x] **Step 1: Write the file**
 
 ```tsx
 import { useEffect, useRef, useState } from 'react';
@@ -1992,7 +1992,7 @@ export function PalComposer({ visible, onClose }: { visible: boolean; onClose: (
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add components/PalComposer.tsx
@@ -2008,11 +2008,11 @@ git commit -m "feat(pal): PalComposer modal sheet wires route + confirm flow"
 - Create: `app/(tabs)/today/_layout.tsx`
 - Create: `app/(tabs)/today/index.tsx` *(content moved from old `today.tsx`)*
 
-- [ ] **Step 1: Move existing screen body**
+- [x] **Step 1: Move existing screen body**
 
 Read `app/(tabs)/today.tsx` (whatever SP3a put there — likely a stub or rings preview). Copy its content verbatim into a new file `app/(tabs)/today/index.tsx`.
 
-- [ ] **Step 2: Add a FAB and money tap-through to `app/(tabs)/today/index.tsx`**
+- [x] **Step 2: Add a FAB and money tap-through to `app/(tabs)/today/index.tsx`**
 
 At the top of the file:
 
@@ -2052,7 +2052,7 @@ If the existing screen is a bare stub (no money block yet), add a placeholder pr
 </Pressable>
 ```
 
-- [ ] **Step 3: Write `app/(tabs)/today/_layout.tsx`**
+- [x] **Step 3: Write `app/(tabs)/today/_layout.tsx`**
 
 ```tsx
 import { Stack } from 'expo-router';
@@ -2062,18 +2062,18 @@ export default function TodayLayout() {
 }
 ```
 
-- [ ] **Step 4: Delete the old `app/(tabs)/today.tsx`**
+- [x] **Step 4: Delete the old `app/(tabs)/today.tsx`**
 
 ```bash
 git rm app/(tabs)/today.tsx
 ```
 
-- [ ] **Step 5: Verify dev server starts and Today still routes**
+- [x] **Step 5: Verify dev server starts and Today still routes**
 
 Run: `npm run web` (in another terminal)
 Open the app: Today tab still renders. FAB visible. Tap FAB → composer opens compact with starter chips.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/\(tabs\)/today
@@ -2087,7 +2087,7 @@ git commit -m "feat(today): stack layout + FAB hosting PalComposer + spending ta
 **Files:**
 - Create: `app/(tabs)/today/spending.tsx`
 
-- [ ] **Step 1: Write the file**
+- [x] **Step 1: Write the file**
 
 ```tsx
 import { useEffect, useState } from 'react';
@@ -2172,11 +2172,11 @@ export default function SpendingDetail() {
 }
 ```
 
-- [ ] **Step 2: Verify route works**
+- [x] **Step 2: Verify route works**
 
 In the running dev server, tap the money block on Today → Spending Detail renders. Empty state if no entries; back-swipe (or the `‹` button) returns to Today.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/\(tabs\)/today/spending.tsx
@@ -2190,7 +2190,7 @@ git commit -m "feat(today): Spending Detail screen"
 **Files:**
 - Modify: `docs/superpowers/specs/2026-04-25-implementation-process-design.md`
 
-- [ ] **Step 1: Run automated verification**
+- [x] **Step 1: Run automated verification**
 
 Run (from project root):
 
@@ -2206,7 +2206,7 @@ cd backend && npm test && cd ..
 
 Expected: PASS for all vitest suites including the updated parse tests.
 
-- [ ] **Step 2: Run the smoke test on web**
+- [x] **Step 2: Run the smoke test on web**
 
 ```bash
 npm run web
@@ -2223,11 +2223,11 @@ Walk through, in order:
 7. Back on Today, tap the money block → Spending Detail shows the Verve entry, today's total, and budget bar.
 8. Force backend offline (stop the dev backend) → submit text → an error bubble appears, input is restored to the textarea.
 
-- [ ] **Step 3: (Best-effort) iPhone Expo Go**
+- [x] **Step 3: (Best-effort) iPhone Expo Go**
 
 If iPhone available: scan the Metro QR with Expo Go and re-run the smoke test on device. Note any platform-specific regressions. Not blocking SP3b sign-off.
 
-- [ ] **Step 4: Update meta-spec status row for SP3b**
+- [x] **Step 4: Update meta-spec status row for SP3b**
 
 In `docs/superpowers/specs/2026-04-25-implementation-process-design.md`, replace the SP3b row:
 
@@ -2235,7 +2235,7 @@ In `docs/superpowers/specs/2026-04-25-implementation-process-design.md`, replace
 | 3b | iOS v1 — entry + Pal | ✅ Code complete 2026-04-25 — PalComposer wired with parse-first router; Spending Detail shipped. Backend `/parse` amended (food dropped, chat added). Smoke test verified on web. iPhone Expo Go verification deferred (not blocking). |
 ```
 
-- [ ] **Step 5: Final commit**
+- [x] **Step 5: Final commit**
 
 ```bash
 git add docs/superpowers/specs/2026-04-25-implementation-process-design.md
