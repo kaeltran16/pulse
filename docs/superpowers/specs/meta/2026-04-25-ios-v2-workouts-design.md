@@ -57,6 +57,13 @@ Seven child sub-projects. Order is dependency-driven; each from 4c onward consum
 - **4f after 4e.** Generator depends on 4a (save target) and 4c (where saved routines render). It does not depend on 4d/4e, so it could in principle move earlier; it's placed late because it's the only network-dependent slice and we want the local flow proven first.
 - **4g last.** Smallest scope, deferred verification, safest to slip if SP4 runs long.
 
+### Sub-slice status
+
+- **4a** ✅ Code complete 2026-04-25.
+- **4b** ✅ Windows-side complete 2026-04-25 — HealthKit shell + dev smoke screen; iPhone dev-client verification deferred.
+- **4c** ✅ Code complete 2026-04-25 — three-screen flow shipped, Zustand editor store, transactional `updateRoutine`, full CRUD + duplicate + rename. Migration `0002_late_tempest` adds `rest_default_seconds` / `warmup_reminder` / `auto_progress` to `routines`. 162 tests passing. iPhone Expo Go verification deferred (carries until 4b dev client lands).
+- **4d–4g** Pending.
+
 ---
 
 ## 4. Cross-cutting dependencies

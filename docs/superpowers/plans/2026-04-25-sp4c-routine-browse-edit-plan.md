@@ -58,20 +58,20 @@
 - Modify: `package.json`
 - Modify: `package-lock.json` (auto)
 
-- [ ] **Step 1:** Install Zustand at the version compatible with React 19 / RN 0.83.
+- [x] **Step 1:** Install Zustand at the version compatible with React 19 / RN 0.83.
 
 ```bash
 npm install zustand@^5.0.0
 ```
 
-- [ ] **Step 2:** Verify the install.
+- [x] **Step 2:** Verify the install.
 
 ```bash
 node -e "console.log(require('zustand/package.json').version)"
 ```
 Expected: `5.x.x`.
 
-- [ ] **Step 3:** Commit.
+- [x] **Step 3:** Commit.
 
 ```bash
 git add package.json package-lock.json
@@ -86,7 +86,7 @@ git commit -m "chore(sp4c): add zustand dep"
 - Modify: `lib/db/schema.ts`
 - Create: `lib/db/migrations/0002_<generated>.sql` (via drizzle-kit)
 
-- [ ] **Step 1:** Edit `lib/db/schema.ts`. Find the `routines` table (line 76) and add three columns at the bottom of the table object (after `createdAt`):
+- [x] **Step 1:** Edit `lib/db/schema.ts`. Find the `routines` table (line 76) and add three columns at the bottom of the table object (after `createdAt`):
 
 ```ts
 export const routines = sqliteTable('routines', {
@@ -102,21 +102,21 @@ export const routines = sqliteTable('routines', {
 });
 ```
 
-- [ ] **Step 2:** Generate the migration.
+- [x] **Step 2:** Generate the migration.
 
 ```bash
 npm run db:generate
 ```
 Expected: a new file `lib/db/migrations/0002_<adjective>_<noun>.sql` is created. Inspect it; it should contain three `ALTER TABLE routines ADD COLUMN ...` statements with defaults `120`, `0`, `0`.
 
-- [ ] **Step 3:** Run the migrate test to confirm migrations apply cleanly.
+- [x] **Step 3:** Run the migrate test to confirm migrations apply cleanly.
 
 ```bash
 npm test -- migrate.test
 ```
 Expected: PASS.
 
-- [ ] **Step 4:** Commit.
+- [x] **Step 4:** Commit.
 
 ```bash
 git add lib/db/schema.ts lib/db/migrations
@@ -131,7 +131,7 @@ git commit -m "feat(sp4c): add rest_default_seconds, warmup_reminder, auto_progr
 - Modify: `lib/db/seed-workouts.ts`
 - Modify: `lib/db/__tests__/seed-workouts.test.ts`
 
-- [ ] **Step 1:** Open `lib/db/seed-workouts.ts`, find the `tx.insert(routines).values({...})` block (around line 188). Add the three new fields. Inferred defaults for each seeded routine: `restDefaultSeconds: 120`, `warmupReminder: false`, `autoProgress: false`. The block becomes:
+- [x] **Step 1:** Open `lib/db/seed-workouts.ts`, find the `tx.insert(routines).values({...})` block (around line 188). Add the three new fields. Inferred defaults for each seeded routine: `restDefaultSeconds: 120`, `warmupReminder: false`, `autoProgress: false`. The block becomes:
 
 ```ts
 const inserted = tx.insert(routines).values({
@@ -147,7 +147,7 @@ const inserted = tx.insert(routines).values({
 
 (Match exact existing structure — only add the three new fields.)
 
-- [ ] **Step 2:** Open `lib/db/__tests__/seed-workouts.test.ts` and add a test asserting defaults:
+- [x] **Step 2:** Open `lib/db/__tests__/seed-workouts.test.ts` and add a test asserting defaults:
 
 ```ts
 it('seeds routines with default session settings', async () => {
@@ -171,14 +171,14 @@ it('seeds routines with default session settings', async () => {
 
 Add `routines` to the existing import from `'../schema'` if not already imported.
 
-- [ ] **Step 3:** Run.
+- [x] **Step 3:** Run.
 
 ```bash
 npm test -- seed-workouts
 ```
 Expected: PASS, including the new test.
 
-- [ ] **Step 4:** Commit.
+- [x] **Step 4:** Commit.
 
 ```bash
 git add lib/db/seed-workouts.ts lib/db/__tests__/seed-workouts.test.ts
@@ -192,7 +192,7 @@ git commit -m "feat(sp4c): seed routine session-setting defaults"
 **Files:**
 - Modify: `lib/db/queries/routines.ts`
 
-- [ ] **Step 1:** In `lib/db/queries/routines.ts`, extend the `RoutineFull` interface (currently lines 17–30) with three fields and the `createdAt`:
+- [x] **Step 1:** In `lib/db/queries/routines.ts`, extend the `RoutineFull` interface (currently lines 17–30) with three fields and the `createdAt`:
 
 ```ts
 export interface RoutineFull {
@@ -214,7 +214,7 @@ export interface RoutineFull {
 }
 ```
 
-- [ ] **Step 2:** Update `getRoutineWithSets` so the returned object passes through the new fields. Find the `return { id: head.id, ... }` block (around line 109) and add the three:
+- [x] **Step 2:** Update `getRoutineWithSets` so the returned object passes through the new fields. Find the `return { id: head.id, ... }` block (around line 109) and add the three:
 
 ```ts
 return {
@@ -233,7 +233,7 @@ return {
 
 (The Drizzle `mode: 'boolean'` typing should already give booleans, but `Boolean(...)` makes the contract explicit and tolerant of raw 0/1 from older rows.)
 
-- [ ] **Step 3:** Add a unit test in `lib/db/__tests__/routines.test.ts` (append to the existing `describe('getRoutineWithSets')` block, or add one if absent):
+- [x] **Step 3:** Add a unit test in `lib/db/__tests__/routines.test.ts` (append to the existing `describe('getRoutineWithSets')` block, or add one if absent):
 
 ```ts
 describe('getRoutineWithSets', () => {
@@ -258,14 +258,14 @@ describe('getRoutineWithSets', () => {
 });
 ```
 
-- [ ] **Step 4:** Run.
+- [x] **Step 4:** Run.
 
 ```bash
 npm test -- routines.test
 ```
 Expected: PASS.
 
-- [ ] **Step 5:** Commit.
+- [x] **Step 5:** Commit.
 
 ```bash
 git add lib/db/queries/routines.ts lib/db/__tests__/routines.test.ts
@@ -280,7 +280,7 @@ git commit -m "feat(sp4c): expose session settings on RoutineFull"
 - Modify: `lib/db/queries/routines.ts`
 - Modify: `lib/db/__tests__/routines.test.ts`
 
-- [ ] **Step 1: Write failing test.** Append to `routines.test.ts`:
+- [x] **Step 1: Write failing test.** Append to `routines.test.ts`:
 
 ```ts
 import { createEmptyRoutine } from '../queries/routines';
@@ -325,14 +325,14 @@ describe('createEmptyRoutine', () => {
 
 (Add `eq` and `routines` to the test file's imports.)
 
-- [ ] **Step 2: Run — expect FAIL.**
+- [x] **Step 2: Run — expect FAIL.**
 
 ```bash
 npm test -- routines.test
 ```
 Expected: 3 failing tests (createEmptyRoutine is undefined).
 
-- [ ] **Step 3: Implement.** Append to `lib/db/queries/routines.ts`:
+- [x] **Step 3: Implement.** Append to `lib/db/queries/routines.ts`:
 
 ```ts
 export async function createEmptyRoutine(
@@ -362,14 +362,14 @@ export async function createEmptyRoutine(
 }
 ```
 
-- [ ] **Step 4: Run — expect PASS.**
+- [x] **Step 4: Run — expect PASS.**
 
 ```bash
 npm test -- routines.test
 ```
 Expected: PASS.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add lib/db/queries/routines.ts lib/db/__tests__/routines.test.ts
@@ -384,7 +384,7 @@ git commit -m "feat(sp4c): createEmptyRoutine"
 - Modify: `lib/db/queries/routines.ts`
 - Modify: `lib/db/__tests__/routines.test.ts`
 
-- [ ] **Step 1: Write failing tests.**
+- [x] **Step 1: Write failing tests.**
 
 ```ts
 import { deleteRoutine } from '../queries/routines';
@@ -431,13 +431,13 @@ describe('deleteRoutine', () => {
 
 (Add `routineExercises` to imports.)
 
-- [ ] **Step 2: Run — FAIL.**
+- [x] **Step 2: Run — FAIL.**
 
 ```bash
 npm test -- routines.test
 ```
 
-- [ ] **Step 3: Implement.** Append to `lib/db/queries/routines.ts`:
+- [x] **Step 3: Implement.** Append to `lib/db/queries/routines.ts`:
 
 ```ts
 export async function deleteRoutine(db: AnyDb, id: number): Promise<void> {
@@ -448,13 +448,13 @@ export async function deleteRoutine(db: AnyDb, id: number): Promise<void> {
 
 (`routine_exercises` and `routine_sets` cascade via FK; `sessions.routine_id` SET NULL via FK.)
 
-- [ ] **Step 4: Run — PASS.**
+- [x] **Step 4: Run — PASS.**
 
 ```bash
 npm test -- routines.test
 ```
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add lib/db/queries/routines.ts lib/db/__tests__/routines.test.ts
@@ -469,7 +469,7 @@ git commit -m "feat(sp4c): deleteRoutine with cascade"
 - Modify: `lib/db/queries/routines.ts`
 - Modify: `lib/db/__tests__/routines.test.ts`
 
-- [ ] **Step 1: Write failing tests.**
+- [x] **Step 1: Write failing tests.**
 
 ```ts
 import { duplicateRoutine } from '../queries/routines';
@@ -513,13 +513,13 @@ describe('duplicateRoutine', () => {
 });
 ```
 
-- [ ] **Step 2: Run — FAIL.**
+- [x] **Step 2: Run — FAIL.**
 
 ```bash
 npm test -- routines.test
 ```
 
-- [ ] **Step 3: Implement.** Append to `lib/db/queries/routines.ts`:
+- [x] **Step 3: Implement.** Append to `lib/db/queries/routines.ts`:
 
 ```ts
 function nextCopyName(existingNames: string[], baseName: string): string {
@@ -584,13 +584,13 @@ export async function duplicateRoutine(db: AnyDb, sourceId: number): Promise<num
 }
 ```
 
-- [ ] **Step 4: Run — PASS.**
+- [x] **Step 4: Run — PASS.**
 
 ```bash
 npm test -- routines.test
 ```
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add lib/db/queries/routines.ts lib/db/__tests__/routines.test.ts
@@ -607,7 +607,7 @@ git commit -m "feat(sp4c): duplicateRoutine with name suffixing"
 
 This is the largest query task. The function takes the full `Draft` from the editor store and reconciles persisted state to match.
 
-- [ ] **Step 1: Define the input type.** Add to `lib/db/queries/routines.ts`:
+- [x] **Step 1: Define the input type.** Add to `lib/db/queries/routines.ts`:
 
 ```ts
 export interface DraftSetInput {
@@ -636,7 +636,7 @@ export interface DraftInput {
 }
 ```
 
-- [ ] **Step 2: Write failing tests.**
+- [x] **Step 2: Write failing tests.**
 
 ```ts
 import { updateRoutine, type DraftInput } from '../queries/routines';
@@ -763,13 +763,13 @@ describe('updateRoutine', () => {
 });
 ```
 
-- [ ] **Step 3: Run — FAIL.**
+- [x] **Step 3: Run — FAIL.**
 
 ```bash
 npm test -- routines.test
 ```
 
-- [ ] **Step 4: Implement.** Append to `lib/db/queries/routines.ts`:
+- [x] **Step 4: Implement.** Append to `lib/db/queries/routines.ts`:
 
 ```ts
 export async function updateRoutine(db: AnyDb, draft: DraftInput): Promise<void> {
@@ -866,13 +866,13 @@ export async function updateRoutine(db: AnyDb, draft: DraftInput): Promise<void>
 }
 ```
 
-- [ ] **Step 5: Run — PASS.**
+- [x] **Step 5: Run — PASS.**
 
 ```bash
 npm test -- routines.test
 ```
 
-- [ ] **Step 6: Commit.**
+- [x] **Step 6: Commit.**
 
 ```bash
 git add lib/db/queries/routines.ts lib/db/__tests__/routines.test.ts
@@ -887,7 +887,7 @@ git commit -m "feat(sp4c): updateRoutine transactional diff"
 - Create: `lib/state/editorStore.ts`
 - Create: `lib/state/__tests__/editorStore.test.ts`
 
-- [ ] **Step 1: Write the failing test.**
+- [x] **Step 1: Write the failing test.**
 
 ```ts
 /** @jest-environment node */
@@ -935,13 +935,13 @@ describe('editorStore', () => {
 });
 ```
 
-- [ ] **Step 2: Run — FAIL** (module missing).
+- [x] **Step 2: Run — FAIL** (module missing).
 
 ```bash
 npm test -- editorStore
 ```
 
-- [ ] **Step 3: Implement.** Create `lib/state/editorStore.ts`:
+- [x] **Step 3: Implement.** Create `lib/state/editorStore.ts`:
 
 ```ts
 import { create } from 'zustand';
@@ -1108,13 +1108,13 @@ export const useEditorStore = create<EditorState>()((set) => {
 });
 ```
 
-- [ ] **Step 4: Run — PASS** (the three baseline tests).
+- [x] **Step 4: Run — PASS** (the three baseline tests).
 
 ```bash
 npm test -- editorStore
 ```
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add lib/state/editorStore.ts lib/state/__tests__/editorStore.test.ts
@@ -1128,7 +1128,7 @@ git commit -m "feat(sp4c): editor Zustand store skeleton"
 **Files:**
 - Modify: `lib/state/__tests__/editorStore.test.ts`
 
-- [ ] **Step 1: Append tests** for setters that touch top-level fields:
+- [x] **Step 1: Append tests** for setters that touch top-level fields:
 
 ```ts
 describe('editorStore top-level mutators', () => {
@@ -1165,13 +1165,13 @@ describe('editorStore top-level mutators', () => {
 });
 ```
 
-- [ ] **Step 2: Run — PASS.**
+- [x] **Step 2: Run — PASS.**
 
 ```bash
 npm test -- editorStore
 ```
 
-- [ ] **Step 3: Commit.**
+- [x] **Step 3: Commit.**
 
 ```bash
 git add lib/state/__tests__/editorStore.test.ts
@@ -1185,7 +1185,7 @@ git commit -m "test(sp4c): editor store top-level mutators"
 **Files:**
 - Modify: `lib/state/__tests__/editorStore.test.ts`
 
-- [ ] **Step 1: Append tests.**
+- [x] **Step 1: Append tests.**
 
 ```ts
 describe('editorStore exercise mutators', () => {
@@ -1237,13 +1237,13 @@ describe('editorStore exercise mutators', () => {
 });
 ```
 
-- [ ] **Step 2: Run — PASS.**
+- [x] **Step 2: Run — PASS.**
 
 ```bash
 npm test -- editorStore
 ```
 
-- [ ] **Step 3: Commit.**
+- [x] **Step 3: Commit.**
 
 ```bash
 git add lib/state/__tests__/editorStore.test.ts
@@ -1257,7 +1257,7 @@ git commit -m "test(sp4c): editor store exercise mutators"
 **Files:**
 - Modify: `lib/state/__tests__/editorStore.test.ts`
 
-- [ ] **Step 1: Append tests.**
+- [x] **Step 1: Append tests.**
 
 ```ts
 describe('editorStore set mutators', () => {
@@ -1306,13 +1306,13 @@ describe('editorStore set mutators', () => {
 });
 ```
 
-- [ ] **Step 2: Run — PASS.**
+- [x] **Step 2: Run — PASS.**
 
 ```bash
 npm test -- editorStore
 ```
 
-- [ ] **Step 3: Commit.**
+- [x] **Step 3: Commit.**
 
 ```bash
 git add lib/state/__tests__/editorStore.test.ts
@@ -1328,7 +1328,7 @@ git commit -m "test(sp4c): editor store set mutators"
 - Create: `app/(tabs)/move/_layout.tsx`
 - Create: `app/(tabs)/move/index.tsx` (placeholder for now; replaced in Task 17)
 
-- [ ] **Step 1: Delete the existing move.tsx.**
+- [x] **Step 1: Delete the existing move.tsx.**
 
 ```bash
 git rm app/\(tabs\)/move.tsx
@@ -1336,7 +1336,7 @@ git rm app/\(tabs\)/move.tsx
 
 (In bash on Windows, escaping the parens with backslashes — or quote the path: `git rm "app/(tabs)/move.tsx"`.)
 
-- [ ] **Step 2: Create the layout.** `app/(tabs)/move/_layout.tsx`:
+- [x] **Step 2: Create the layout.** `app/(tabs)/move/_layout.tsx`:
 
 ```tsx
 import { Stack } from 'expo-router';
@@ -1346,7 +1346,7 @@ export default function MoveLayout() {
 }
 ```
 
-- [ ] **Step 3: Create a temporary index.** `app/(tabs)/move/index.tsx`:
+- [x] **Step 3: Create a temporary index.** `app/(tabs)/move/index.tsx`:
 
 ```tsx
 import { StubTab } from '@/components/StubTab';
@@ -1355,21 +1355,21 @@ export default function MoveIndex() {
 }
 ```
 
-- [ ] **Step 4: Type-check.**
+- [x] **Step 4: Type-check.**
 
 ```bash
 npm run typecheck
 ```
 Expected: clean.
 
-- [ ] **Step 5: Run app on web** (manual smoke; non-blocking — confirms the tab still renders).
+- [x] **Step 5: Run app on web** (manual smoke; non-blocking — confirms the tab still renders).
 
 ```bash
 npx expo start --web
 ```
 Expected: Move tab loads without error. Stop the server.
 
-- [ ] **Step 6: Commit.**
+- [x] **Step 6: Commit.**
 
 ```bash
 git add app/\(tabs\)/move
@@ -1389,7 +1389,7 @@ git commit -m "refactor(sp4c): convert move tab to stack group"
 
 Visuals follow `design_handoff/src/workout-screens.jsx` and `workout-screens2.jsx`. NativeWind classes. Existing project pattern uses `useTheme()` from `@/lib/theme/provider` and `colors[resolved]` palette.
 
-- [ ] **Step 1: TagPills.** `components/workouts/TagPills.tsx`:
+- [x] **Step 1: TagPills.** `components/workouts/TagPills.tsx`:
 
 ```tsx
 import { Pressable, Text, View } from 'react-native';
@@ -1436,7 +1436,7 @@ export function TagPills({
 }
 ```
 
-- [ ] **Step 2: SetChip.** `components/workouts/SetChip.tsx`:
+- [x] **Step 2: SetChip.** `components/workouts/SetChip.tsx`:
 
 ```tsx
 import { Pressable, Text } from 'react-native';
@@ -1472,7 +1472,7 @@ export function SetChip({
 }
 ```
 
-- [ ] **Step 3: ExerciseRow.** `components/workouts/ExerciseRow.tsx`:
+- [x] **Step 3: ExerciseRow.** `components/workouts/ExerciseRow.tsx`:
 
 ```tsx
 import { Pressable, Text, View } from 'react-native';
@@ -1530,7 +1530,7 @@ export function ExerciseRow(props: ExerciseRowProps) {
 }
 ```
 
-- [ ] **Step 4: RoutineCard.** `components/workouts/RoutineCard.tsx`:
+- [x] **Step 4: RoutineCard.** `components/workouts/RoutineCard.tsx`:
 
 ```tsx
 import { Pressable, Text, View } from 'react-native';
@@ -1572,7 +1572,7 @@ export function RoutineCard({
 }
 ```
 
-- [ ] **Step 5: CardioRow.** `components/workouts/CardioRow.tsx`:
+- [x] **Step 5: CardioRow.** `components/workouts/CardioRow.tsx`:
 
 ```tsx
 import { Pressable, Text, View } from 'react-native';
@@ -1602,14 +1602,14 @@ export function CardioRow({ routine, onPress }: { routine: RoutineSummary; onPre
 }
 ```
 
-- [ ] **Step 6: Type-check.**
+- [x] **Step 6: Type-check.**
 
 ```bash
 npm run typecheck
 ```
 Expected: clean.
 
-- [ ] **Step 7: Commit.**
+- [x] **Step 7: Commit.**
 
 ```bash
 git add components/workouts
@@ -1627,7 +1627,7 @@ git commit -m "feat(sp4c): shared workout components"
 
 All three follow the `<Modal animationType="slide" transparent>` pattern from `components/PalComposer.tsx`.
 
-- [ ] **Step 1: SetEditSheet.** `components/workouts/SetEditSheet.tsx`:
+- [x] **Step 1: SetEditSheet.** `components/workouts/SetEditSheet.tsx`:
 
 ```tsx
 import { useEffect, useState } from 'react';
@@ -1710,7 +1710,7 @@ export function SetEditSheet({
 }
 ```
 
-- [ ] **Step 2: ExerciseSettingsSheet.** `components/workouts/ExerciseSettingsSheet.tsx`:
+- [x] **Step 2: ExerciseSettingsSheet.** `components/workouts/ExerciseSettingsSheet.tsx`:
 
 ```tsx
 import { useEffect, useState } from 'react';
@@ -1780,7 +1780,7 @@ export function ExerciseSettingsSheet({
 }
 ```
 
-- [ ] **Step 3: RenameRoutineSheet.** `components/workouts/RenameRoutineSheet.tsx`:
+- [x] **Step 3: RenameRoutineSheet.** `components/workouts/RenameRoutineSheet.tsx`:
 
 ```tsx
 import { useEffect, useState } from 'react';
@@ -1842,13 +1842,13 @@ export function RenameRoutineSheet({
 }
 ```
 
-- [ ] **Step 4: Type-check.**
+- [x] **Step 4: Type-check.**
 
 ```bash
 npm run typecheck
 ```
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add components/workouts
@@ -1865,7 +1865,7 @@ git commit -m "feat(sp4c): editor modal sheets"
 
 The action sheet is a custom modal (cross-platform, since `ActionSheetIOS` isn't on web). Three actions: Duplicate / Rename / Delete. The hook exposes them.
 
-- [ ] **Step 1: RoutineActionSheet.** `components/workouts/RoutineActionSheet.tsx`:
+- [x] **Step 1: RoutineActionSheet.** `components/workouts/RoutineActionSheet.tsx`:
 
 ```tsx
 import { Modal, Pressable, Text, View } from 'react-native';
@@ -1910,7 +1910,7 @@ export function RoutineActionSheet({
 }
 ```
 
-- [ ] **Step 2: useRoutineActions hook.** `lib/hooks/useRoutineActions.ts`:
+- [x] **Step 2: useRoutineActions hook.** `lib/hooks/useRoutineActions.ts`:
 
 ```ts
 import { Alert } from 'react-native';
@@ -1974,13 +1974,13 @@ export function useRoutineActions() {
 
 (`useDb` and `lib/db/provider` come from SP3a — verify the exact import path. If the project uses a different name like `useDatabase` or imports `db` directly, update accordingly.)
 
-- [ ] **Step 3: Type-check.**
+- [x] **Step 3: Type-check.**
 
 ```bash
 npm run typecheck
 ```
 
-- [ ] **Step 4: Commit.**
+- [x] **Step 4: Commit.**
 
 ```bash
 git add components/workouts/RoutineActionSheet.tsx lib/hooks/useRoutineActions.ts
@@ -1994,7 +1994,7 @@ git commit -m "feat(sp4c): routine action sheet + handlers hook"
 **Files:**
 - Modify: `app/(tabs)/move/index.tsx` (replace stub from Task 13)
 
-- [ ] **Step 1: Implement.** Replace the file's contents:
+- [x] **Step 1: Implement.** Replace the file's contents:
 
 ```tsx
 import { useState } from 'react';
@@ -2106,13 +2106,13 @@ export default function PreWorkout() {
 
 (If `useLiveQuery`'s actual signature in this project's drizzle version doesn't accept the listRoutines join shape, simplify by selecting `.from(routines).orderBy(asc(routines.position))` directly inside `useLiveQuery` and computing `exerciseCount` and `estMinutes` per-row in JS. The plan keeps the spec-level interface but allows this fallback.)
 
-- [ ] **Step 2: Type-check.**
+- [x] **Step 2: Type-check.**
 
 ```bash
 npm run typecheck
 ```
 
-- [ ] **Step 3: Manual smoke (web).**
+- [x] **Step 3: Manual smoke (web).**
 
 ```bash
 npx expo start --web
@@ -2128,7 +2128,7 @@ Steps:
 
 Stop server.
 
-- [ ] **Step 4: Commit.**
+- [x] **Step 4: Commit.**
 
 ```bash
 git add app/\(tabs\)/move/index.tsx
@@ -2142,7 +2142,7 @@ git commit -m "feat(sp4c): PreWorkout screen"
 **Files:**
 - Create: `app/(tabs)/move/[routineId]/edit.tsx`
 
-- [ ] **Step 1: Implement.**
+- [x] **Step 1: Implement.**
 
 ```tsx
 import { useEffect, useState } from 'react';
@@ -2395,13 +2395,13 @@ export default function RoutineEditor() {
 
 (Note: the `import { seedWorkoutsExercises } from '@/lib/db/seed-workouts'` is not needed — the editor pulls exercise meta directly from the `exercises` table. Remove the line if your IDE flags it as unused.)
 
-- [ ] **Step 2: Type-check.**
+- [x] **Step 2: Type-check.**
 
 ```bash
 npm run typecheck
 ```
 
-- [ ] **Step 3: Commit.**
+- [x] **Step 3: Commit.**
 
 ```bash
 git add app/\(tabs\)/move/\[routineId\]
@@ -2415,7 +2415,7 @@ git commit -m "feat(sp4c): RoutineEditor screen"
 **Files:**
 - Create: `app/(tabs)/move/library.tsx`
 
-- [ ] **Step 1: Implement.**
+- [x] **Step 1: Implement.**
 
 ```tsx
 import { useEffect, useState } from 'react';
@@ -2531,13 +2531,13 @@ export default function ExerciseLibrary() {
 }
 ```
 
-- [ ] **Step 2: Type-check.**
+- [x] **Step 2: Type-check.**
 
 ```bash
 npm run typecheck
 ```
 
-- [ ] **Step 3: Commit.**
+- [x] **Step 3: Commit.**
 
 ```bash
 git add app/\(tabs\)/move/library.tsx
@@ -2551,7 +2551,7 @@ git commit -m "feat(sp4c): ExerciseLibrary browse + picker"
 **Files:**
 - Create: `app/(tabs)/move/generate.tsx`
 
-- [ ] **Step 1: Implement.**
+- [x] **Step 1: Implement.**
 
 ```tsx
 import { Pressable, Text, View } from 'react-native';
@@ -2577,13 +2577,13 @@ export default function GenerateStub() {
 }
 ```
 
-- [ ] **Step 2: Type-check.**
+- [x] **Step 2: Type-check.**
 
 ```bash
 npm run typecheck
 ```
 
-- [ ] **Step 3: Commit.**
+- [x] **Step 3: Commit.**
 
 ```bash
 git add app/\(tabs\)/move/generate.tsx
@@ -2599,21 +2599,21 @@ git commit -m "feat(sp4c): generator stub for SP4f"
 - Modify: `docs/superpowers/specs/meta/2026-04-25-implementation-process-design.md` (sub-project 4 status update)
 - Modify: `docs/superpowers/plans/2026-04-25-sp4c-routine-browse-edit-plan.md` (tick all task checkboxes)
 
-- [ ] **Step 1: Run the full test suite.**
+- [x] **Step 1: Run the full test suite.**
 
 ```bash
 npm test
 ```
 Expected: all green, including new `routines.test.ts` cases and `editorStore.test.ts`.
 
-- [ ] **Step 2: Type-check.**
+- [x] **Step 2: Type-check.**
 
 ```bash
 npm run typecheck
 ```
 Expected: clean.
 
-- [ ] **Step 3: Manual smoke (web).** Start `npx expo start --web` and walk through the 10-step smoke from the spec §1:
+- [x] **Step 3: Manual smoke (web).** Start `npx expo start --web` and walk through the 10-step smoke from the spec §1:
 
 1. Open Move tab → seeded routines render in Strength + Cardio sections.
 2. Tap "+ New" → empty editor opens.
@@ -2628,7 +2628,7 @@ Expected: clean.
 
 If any step fails, diagnose and fix in the corresponding earlier task before moving on.
 
-- [ ] **Step 4: Update SP4 meta-spec status.** In `docs/superpowers/specs/meta/2026-04-25-ios-v2-workouts-design.md`, change the `4c` status to:
+- [x] **Step 4: Update SP4 meta-spec status.** In `docs/superpowers/specs/meta/2026-04-25-ios-v2-workouts-design.md`, change the `4c` status to:
 
 ```
 | **4c** | Code complete 2026-04-25 — three-screen flow shipped, Zustand editor store, transactional `updateRoutine`, full CRUD + duplicate + rename. Migration `0002_*` adds `rest_default_seconds` / `warmup_reminder` / `auto_progress` to `routines`. NN tests passing. iPhone Expo Go verification deferred (carries until 4b dev client lands). |
@@ -2636,11 +2636,11 @@ If any step fails, diagnose and fix in the corresponding earlier task before mov
 
 (Replace `NN` with the actual passing-test count from Step 1.)
 
-- [ ] **Step 5: Update parent meta-spec.** In `docs/superpowers/specs/meta/2026-04-25-implementation-process-design.md`, the `§8a` row for sub-project 4 — update the in-progress note to mention 4c is complete (alongside 4a). Append: "4c (routine browse + edit) ✅ code complete 2026-04-25."
+- [x] **Step 5: Update parent meta-spec.** In `docs/superpowers/specs/meta/2026-04-25-implementation-process-design.md`, the `§8a` row for sub-project 4 — update the in-progress note to mention 4c is complete (alongside 4a). Append: "4c (routine browse + edit) ✅ code complete 2026-04-25."
 
-- [ ] **Step 6: Tick the plan checkboxes.** Mark every `- [ ]` in this plan as `- [x]` for tasks completed.
+- [x] **Step 6: Tick the plan checkboxes.** Mark every `- [ ]` in this plan as `- [x]` for tasks completed.
 
-- [ ] **Step 7: Final commit.**
+- [x] **Step 7: Final commit.**
 
 ```bash
 git add docs/superpowers/specs/meta docs/superpowers/plans/2026-04-25-sp4c-routine-browse-edit-plan.md
