@@ -34,6 +34,7 @@ yarn-error.*
 .env
 .env.*
 .env*.local
+!.env.example
 secrets.json
 
 # typescript
@@ -44,3 +45,4 @@ app-example
 # generated native folders
 /ios
 /android
+/.claude
