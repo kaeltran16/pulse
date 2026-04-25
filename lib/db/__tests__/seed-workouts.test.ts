@@ -54,6 +54,24 @@ describe('seedWorkouts', () => {
     expect(after).toBe(before);
   });
 
+  it('seeds routines with default session settings', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const all: Array<{ name: string; restDefaultSeconds: number; warmupReminder: boolean; autoProgress: boolean }> =
+      await (db as any).select({
+        name: routines.name,
+        restDefaultSeconds: routines.restDefaultSeconds,
+        warmupReminder: routines.warmupReminder,
+        autoProgress: routines.autoProgress,
+      }).from(routines);
+    for (const row of all) {
+      expect(row.restDefaultSeconds).toBe(120);
+      expect(row.warmupReminder).toBe(false);
+      expect(row.autoProgress).toBe(false);
+    }
+  });
+
   it('seeds the cardio routines with duration+distance and null reps/weight', async () => {
     const { db } = makeTestDb();
     seedWorkouts(db);

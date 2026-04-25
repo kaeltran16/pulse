@@ -190,6 +190,9 @@ export function seedWorkouts(db: AnyDb): void {
         tag: r.tag,
         color: r.color,
         position: r.position,
+        restDefaultSeconds: 120,
+        warmupReminder: false,
+        autoProgress: false,
       }).returning({ id: routines.id }).all();
       const routineId = inserted[0].id;
 
