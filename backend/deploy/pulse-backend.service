@@ -1,0 +1,25 @@
+[Unit]
+Description=Pulse backend (AI proxy)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pulse
+WorkingDirectory=/srv/pulse-backend
+EnvironmentFile=/etc/pulse-backend.env
+ExecStart=/usr/bin/node /srv/pulse-backend/dist/src/index.js
+Restart=on-failure
+RestartSec=2
+StandardOutput=journal
+StandardError=journal
+
+# Sandboxing
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/pulse-backend
+
+[Install]
+WantedBy=multi-user.target
