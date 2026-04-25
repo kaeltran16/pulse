@@ -9,9 +9,9 @@
 
 ## 1. What ships
 
-- **PreWorkout** at `/(tabs)/workouts` — landing for the Workouts tab. Lists all strength routines as cards and cardio routines as rows. Entry points: tap routine → editor; long-press → action sheet (Duplicate / Rename / Delete); "+ New" → empty routine; "Browse exercise library" → library; "Generate routine with AI" → stub for 4f.
-- **RoutineEditor** at `/(tabs)/workouts/[routineId]/edit` — strength-routine editor only. Edits name, tag, ordered exercises, ordered sets per exercise, per-exercise rest, three session settings. Save commits a transactional diff. Cancel discards (with confirm if dirty). Footer "Delete routine" with confirm.
-- **ExerciseLibrary** at `/(tabs)/workouts/library` — dual-mode. **Browse mode** (default) shows the seeded catalog, filterable by group, tap → exercise detail (description + muscles, no actions). **Picker mode** (`?pick=1`) tap → write to editor draft → `router.back()`.
+- **PreWorkout** at `/(tabs)/move` — landing for the Move tab (the workouts tab in this codebase). Lists all strength routines as cards and cardio routines as rows. Entry points: tap routine → editor; long-press → action sheet (Duplicate / Rename / Delete); "+ New" → empty routine; "Browse exercise library" → library; "Generate routine with AI" → stub for 4f.
+- **RoutineEditor** at `/(tabs)/move/[routineId]/edit` — strength-routine editor only. Edits name, tag, ordered exercises, ordered sets per exercise, per-exercise rest, three session settings. Save commits a transactional diff. Cancel discards (with confirm if dirty). Footer "Delete routine" with confirm.
+- **ExerciseLibrary** at `/(tabs)/move/library` — dual-mode. **Browse mode** (default) shows the seeded catalog, filterable by group, tap → exercise detail (description + muscles, no actions). **Picker mode** (`?pick=1`) tap → write to editor draft → `router.back()`.
 
 ### Smoke test (per SP4 meta §3 row 4c)
 
@@ -78,7 +78,7 @@ No other schema changes. No table renames. No column removals.
 ### Routes (Expo Router file structure)
 
 ```
-app/(tabs)/workouts/
+app/(tabs)/move/
   index.tsx                  // PreWorkout
   [routineId]/
     edit.tsx                 // RoutineEditor
@@ -86,7 +86,7 @@ app/(tabs)/workouts/
   generate.tsx               // Stub for 4f
 ```
 
-`(tabs)/workouts/_layout.tsx` is a `Stack` so editor and library push above the tab.
+`(tabs)/move/_layout.tsx` is a `Stack` so editor and library push above the tab.
 
 ### State
 
@@ -168,7 +168,7 @@ export async function deleteRoutine(db, id: number): Promise<void>;
 ### Components
 
 ```
-components/workouts/
+components/move/
   RoutineCard.tsx            // strength routine in PreWorkout
   CardioRow.tsx              // cardio routine in PreWorkout
   ExerciseRow.tsx            // exercise in RoutineEditor (with set chips)
@@ -201,9 +201,9 @@ Web target uses a tap-and-hold menu (CSS `touch-action: none` + a synthetic long
 
 **Cancel:** `isDirty` ? `Alert.alert("Discard changes?", …)` then `clearDraft()` + back : back directly.
 
-**Picker round-trip:** editor → `router.push('/workouts/library?pick=1')` → tap exercise → `editorStore.addExercise(exerciseId)` → `router.back()`.
+**Picker round-trip:** editor → `router.push('/move/library?pick=1')` → tap exercise → `editorStore.addExercise(exerciseId)` → `router.back()`.
 
-**Create:** PreWorkout "+ New" → `createEmptyRoutine(db, { name: 'New routine', tag: 'Custom' })` → returns id → `router.push('/workouts/{id}/edit')`.
+**Create:** PreWorkout "+ New" → `createEmptyRoutine(db, { name: 'New routine', tag: 'Custom' })` → returns id → `router.push('/move/{id}/edit')`.
 
 **Duplicate:** action sheet → `duplicateRoutine(db, id)` → list re-renders.
 
