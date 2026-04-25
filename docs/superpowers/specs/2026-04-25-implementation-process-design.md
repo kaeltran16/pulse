@@ -218,7 +218,7 @@ Explicitly deferred or cut from v1–v3, to be revisited only if the user opts i
 |---|---|---|
 | 0 | Pipeline pre-flight | ✅ Complete 2026-04-25 — Expo SDK 54 scaffold, hot reload verified on web target. Android path dropped (iPhone-first); iPhone Expo Go verification deferred (not blocking; will be exercised in sub-project 1). |
 | 1 | Design system | ✅ Complete 2026-04-25 — `tokens.ts` source of truth, NativeWind v4 wired via CSS variables, `ThemeProvider` with Light/Dark/System toggle, 33-assertion parity test passing, preview screen verified on web. iPhone Expo Go verification deferred (not blocking). |
-| 2 | Backend v1 (AI proxy) | 🔀 Handled outside this workstream — skip in this repo's plan track |
+| 2 | Backend v1 (AI proxy) | ✅ Code complete 2026-04-25 — 49 tests green, code review accepted (`docs/superpowers/reviews/2026-04-25-backend-v1-ai-proxy-review.md`), droplet bootstrapped (`root@178.128.81.14`), GH Action `deploy-backend.yml` wired. Live deploy pending: set `OPENROUTER_API_KEY` in `/etc/pulse-backend.env` and push to `main`. |
 | 3a | iOS v1 — data + shell | ⏳ Next |
 | 3b | iOS v1 — entry + Pal | Not started |
 | 4 | iOS v2 — workouts | Not started |
