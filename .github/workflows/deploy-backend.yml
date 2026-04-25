@@ -1,0 +1,71 @@
+name: Deploy backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'lib/api-types.ts'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_HOST: root@178.128.81.14
+      DEPLOY_PATH: /srv/pulse-backend
+      DROPLET_IP: 178.128.81.14
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$DROPLET_IP" >> ~/.ssh/known_hosts
+        working-directory: .
+
+      - name: Rsync to droplet
+        run: |
+          rsync -avz --delete \
+            --exclude node_modules \
+            --exclude .env \
+            --exclude .env.local \
+            --exclude test \
+            dist/ package.json package-lock.json deploy/ scripts/ \
+            "$DEPLOY_HOST:$DEPLOY_PATH/"
+
+      - name: Install prod deps + restart service
+        run: |
+          ssh "$DEPLOY_HOST" "set -e; cd $DEPLOY_PATH && npm ci --omit=dev && systemctl restart pulse-backend && sleep 2 && systemctl is-active pulse-backend"
+
+      - name: Smoke test
+        env:
+          BASE_URL: http://178.128.81.14:3000
+          DEV_JWT: ${{ secrets.DEV_JWT }}
+        run: bash scripts/smoke.sh
