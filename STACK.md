@@ -1,5 +1,7 @@
 # Pulse — Tech Stack & Dev Setup
 
+> **Stack pivoted from SwiftUI to React Native + Expo on 2026-04-25.** See `docs/superpowers/specs/2026-04-25-implementation-process-design.md` for the current stack. The SwiftUI stack below is preserved for historical context but is no longer authoritative.
+
 ## What the app is
 
 Pulse is a unified iOS tracker for money, movement, and daily rituals. Single timeline, AI companion (Pal) for coaching and entry parsing, workout tracking with live rest timers, and email receipt auto-import.
