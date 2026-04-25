@@ -52,7 +52,7 @@ The user works primarily on Windows but has a Mac for iOS. Tasks 1–8 are Windo
 **Files:**
 - Modify: `package.json`
 
-- [ ] **Step 1: Install runtime deps**
+- [x] **Step 1: Install runtime deps**
 
 Run from project root:
 
@@ -62,7 +62,7 @@ npm install @kingstinct/react-native-healthkit react-native-nitro-modules
 
 Expected: both packages added to `dependencies` in `package.json`. No errors. (Peer-dep warnings about iOS-only are normal — nothing wired up yet.)
 
-- [ ] **Step 2: Verify install + lockfile updated**
+- [x] **Step 2: Verify install + lockfile updated**
 
 ```bash
 npm ls @kingstinct/react-native-healthkit react-native-nitro-modules
@@ -70,7 +70,7 @@ npm ls @kingstinct/react-native-healthkit react-native-nitro-modules
 
 Expected: both resolve to single versions. If `npm ls` reports peer-dep conflicts with `expo@~54.0.33`, stop and surface the conflict before continuing — see spec §6 risk row 2.
 
-- [ ] **Step 3: Add `ios:prebuild` script to `package.json`**
+- [x] **Step 3: Add `ios:prebuild` script to `package.json`**
 
 In the `"scripts"` block, add:
 
@@ -78,7 +78,7 @@ In the `"scripts"` block, add:
 "ios:prebuild": "expo prebuild --platform ios --clean"
 ```
 
-- [ ] **Step 4: Type-check**
+- [x] **Step 4: Type-check**
 
 ```bash
 npx tsc --noEmit
@@ -86,7 +86,7 @@ npx tsc --noEmit
 
 Expected: no errors. (Adding deps doesn't change TS surface yet.)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add package.json package-lock.json
@@ -101,7 +101,7 @@ git commit -m "chore(sp4b): add HealthKit deps (kingstinct + nitro)"
 - Modify: `app.json`
 - Modify: `.gitignore`
 
-- [ ] **Step 1: Add the plugin entry to `app.json`**
+- [x] **Step 1: Add the plugin entry to `app.json`**
 
 In `expo.plugins`, after the existing entries, add the kingstinct plugin block. The full `plugins` array should now read:
 
@@ -133,7 +133,7 @@ Notes:
 - `background: true` is **not** set. Background delivery may need a paid Apple Developer account (spec §6) and SP4b doesn't require it.
 - The plugin auto-injects `HealthKit` capability into the generated entitlements file; we do not edit `app.json` to add a separate entitlements key.
 
-- [ ] **Step 2: Confirm `.gitignore` excludes generated native dirs**
+- [x] **Step 2: Confirm `.gitignore` excludes generated native dirs**
 
 Open `.gitignore` and verify these lines exist (add if missing):
 
@@ -144,7 +144,7 @@ android/
 
 If `ios/` is currently committed, that's a separate concern — for SP4b it should be gitignored. If you discover `ios/` is checked in, stop and ask the user before deleting it.
 
-- [ ] **Step 3: Type-check + lint**
+- [x] **Step 3: Type-check + lint**
 
 ```bash
 npx tsc --noEmit
@@ -153,7 +153,7 @@ npm run lint
 
 Expected: no errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app.json .gitignore
@@ -168,7 +168,7 @@ git commit -m "chore(sp4b): configure kingstinct healthkit plugin + usage string
 - Create: `lib/health/types.ts`
 - Create: `__tests__/health.types.test.ts`
 
-- [ ] **Step 1: Write the failing shape test**
+- [x] **Step 1: Write the failing shape test**
 
 Create `__tests__/health.types.test.ts`:
 
@@ -201,7 +201,7 @@ describe('health types', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 ```bash
 npx jest __tests__/health.types.test.ts
@@ -209,7 +209,7 @@ npx jest __tests__/health.types.test.ts
 
 Expected: FAIL — module `@/lib/health/types` not found (or TS errors on the imports).
 
-- [ ] **Step 3: Implement the types module**
+- [x] **Step 3: Implement the types module**
 
 Create `lib/health/types.ts`:
 
@@ -232,7 +232,7 @@ export type HRSample = {
 };
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 ```bash
 npx jest __tests__/health.types.test.ts
@@ -240,7 +240,7 @@ npx jest __tests__/health.types.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/health/types.ts __tests__/health.types.test.ts
@@ -256,7 +256,7 @@ git commit -m "feat(sp4b): health types — WorkoutWritePayload, HRSample, HKAct
 
 The wrapper is a thin pass-through. It cannot be unit-tested without the native module (mocking would be testing the mock). The smoke test in Task 12 is the real verification. Honest tasks, no fake tests.
 
-- [ ] **Step 1: Implement `lib/health/permissions.ts`**
+- [x] **Step 1: Implement `lib/health/permissions.ts`**
 
 ```ts
 import { requestAuthorization } from '@kingstinct/react-native-healthkit';
@@ -284,7 +284,7 @@ node -e "console.log(Object.keys(require('@kingstinct/react-native-healthkit')))
 
 If `requestAuthorization` is not exported but a different imperative function is (e.g. `requestAuthorizationAsync`), use that name and update the import. Do not switch to the hook variant — the smoke screen calls this from a button handler, which a hook can't model cleanly.
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 ```bash
 npx tsc --noEmit
@@ -292,7 +292,7 @@ npx tsc --noEmit
 
 Expected: no errors. The native lib's `.d.ts` resolves cleanly on Windows even without the native binary.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/health/permissions.ts
@@ -306,7 +306,7 @@ git commit -m "feat(sp4b): requestPermissions wrapper"
 **Files:**
 - Create: `lib/health/workouts.ts`
 
-- [ ] **Step 1: Implement `lib/health/workouts.ts`**
+- [x] **Step 1: Implement `lib/health/workouts.ts`**
 
 ```ts
 import { saveWorkoutSample } from '@kingstinct/react-native-healthkit';
@@ -329,7 +329,7 @@ export async function writeWorkout(p: WorkoutWritePayload): Promise<void> {
 
 If the installed library version exports `saveWorkoutSample` under a different name (e.g. `HealthKit.saveWorkoutSample` namespace import), adjust the import accordingly — the same `node -e` introspection from Task 4 Step 1 surfaces it.
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 ```bash
 npx tsc --noEmit
@@ -337,7 +337,7 @@ npx tsc --noEmit
 
 Expected: no errors.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/health/workouts.ts
@@ -351,7 +351,7 @@ git commit -m "feat(sp4b): writeWorkout wrapper"
 **Files:**
 - Create: `lib/health/heart-rate.ts`
 
-- [ ] **Step 1: Implement `lib/health/heart-rate.ts`**
+- [x] **Step 1: Implement `lib/health/heart-rate.ts`**
 
 ```ts
 import { useState } from 'react';
@@ -392,7 +392,7 @@ Notes:
 - The kingstinct hook returns a sample shaped like `{ quantity: number, startDate, endDate, ... }`. If the installed version uses different field names (e.g. `value` instead of `quantity`), adjust at implementation time — TS errors will tell you exactly what to change.
 - We don't drop the underlying subscription on `stop()`; we just stop reporting. Idempotent toggling is fine for the smoke screen.
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 ```bash
 npx tsc --noEmit
@@ -400,7 +400,7 @@ npx tsc --noEmit
 
 Expected: no errors. If TS complains about `sample.quantity`, inspect the type and adjust the field name; commit either way.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/health/heart-rate.ts
@@ -414,7 +414,7 @@ git commit -m "feat(sp4b): useLiveHeartRate hook"
 **Files:**
 - Create: `lib/health/index.ts`
 
-- [ ] **Step 1: Write the barrel**
+- [x] **Step 1: Write the barrel**
 
 ```ts
 export { requestPermissions } from './permissions';
@@ -427,7 +427,7 @@ export type {
 } from './types';
 ```
 
-- [ ] **Step 2: Type-check + run all tests**
+- [x] **Step 2: Type-check + run all tests**
 
 ```bash
 npx tsc --noEmit
@@ -436,7 +436,7 @@ npx jest
 
 Expected: tsc clean, all existing tests still pass (SP3a/SP4a regression check).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/health/index.ts
@@ -450,7 +450,7 @@ git commit -m "feat(sp4b): public lib/health barrel"
 **Files:**
 - Create: `app/dev/healthkit.tsx`
 
-- [ ] **Step 1: Write the screen**
+- [x] **Step 1: Write the screen**
 
 ```tsx
 import { useState } from 'react';
@@ -542,7 +542,7 @@ export default function HealthKitDevScreen() {
 
 NativeWind classes are used per project convention. If a class fails to apply on iPhone, fall back to inline `style={{}}` — but verify the existing Today screen still uses NativeWind first.
 
-- [ ] **Step 2: Add a dev-only entry point**
+- [x] **Step 2: Add a dev-only entry point**
 
 The smallest reachable entry: in whichever screen contains `DevSeedButton`, add a sibling button (only render in `__DEV__`):
 
@@ -560,7 +560,7 @@ import { Link } from 'expo-router';
 
 If `DevSeedButton` is not yet on any visible screen (it was created in SP3a's plan but may live elsewhere), put the link directly on `app/(tabs)/today.tsx` inside a `{__DEV__ && ...}` guard.
 
-- [ ] **Step 3: Type-check + lint**
+- [x] **Step 3: Type-check + lint**
 
 ```bash
 npx tsc --noEmit
@@ -582,7 +582,7 @@ Open the dev screen. The page will render but the buttons will throw on tap (Hea
 
 Stop the web server.
 
-- [ ] **Step 5: Commit + push**
+- [x] **Step 5: Commit + push**
 
 ```bash
 git add app/dev/healthkit.tsx app/\(tabs\)/today.tsx
