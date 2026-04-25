@@ -7,6 +7,7 @@ import { authMiddleware } from "./middleware/auth.js";
 import { createRateLimit } from "./middleware/rateLimit.js";
 import { healthRouter } from "./routes/health.js";
 import { parseRouter } from "./routes/parse.js";
+import { chatRouter } from "./routes/chat.js";
 import type { LlmClient } from "./lib/openrouter.js";
 import { createOpenRouterClient } from "./lib/openrouter.js";
 
@@ -31,6 +32,12 @@ export function createApp(deps: AppDeps): Express {
     rateLimitMw,
     authMiddleware(config.jwtSecret, "parse"),
     parseRouter({ llm: deps.llm, modelId: config.modelId })
+  );
+  app.use(
+    "/chat",
+    rateLimitMw,
+    authMiddleware(config.jwtSecret, "chat"),
+    chatRouter({ llm: deps.llm, modelId: config.modelId })
   );
 
   app.use(errorHandler(logger));
