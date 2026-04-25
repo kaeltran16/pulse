@@ -7,7 +7,7 @@ export type Msg = { role: Role; content: string };
 export type Usage = { inputTokens: number; outputTokens: number };
 
 export interface LlmClient {
-  chatStream(args: { messages: Msg[]; model: string }): AsyncIterable<{ delta: string } | { done: Usage }>;
+  chatStream(args: { messages: Msg[]; model: string; signal?: AbortSignal }): AsyncIterable<{ delta: string } | { done: Usage }>;
   chatJson(args: { messages: Msg[]; model: string }): Promise<{ text: string; usage: Usage }>;
 }
 
@@ -18,10 +18,13 @@ export function createOpenRouterClient(apiKey: string): LlmClient {
   });
 
   return {
-    async *chatStream({ messages, model }) {
+    async *chatStream({ messages, model, signal }) {
       let stream;
       try {
-        stream = await client.chat.completions.create({ model, messages, stream: true });
+        stream = await client.chat.completions.create(
+          { model, messages, stream: true },
+          signal ? { signal } : undefined
+        );
       } catch (err) {
         throw new UpstreamError(`openrouter create failed: ${(err as Error).message}`);
       }

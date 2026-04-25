@@ -38,7 +38,7 @@ describe("POST /parse", () => {
     expect(res.body.error.code).toBe("validation_failed");
   });
 
-  it("returns 502 upstream_error when model emits non-JSON", async () => {
+  it("returns 400 validation_failed when model emits non-JSON", async () => {
     const { app } = buildTestApp({
       llm: { chatJson: async () => ({ text: "not json at all", usage: { inputTokens: 1, outputTokens: 1 } }) },
     });
@@ -47,11 +47,11 @@ describe("POST /parse", () => {
       .post("/parse")
       .set("Authorization", `Bearer ${token}`)
       .send({ text: "ate eggs" });
-    expect(res.status).toBe(502);
-    expect(res.body.error.code).toBe("upstream_error");
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe("validation_failed");
   });
 
-  it("returns 502 upstream_error when model JSON fails the schema", async () => {
+  it("returns 400 validation_failed when model JSON fails the schema", async () => {
     const bad = JSON.stringify({ kind: "food", data: { items: "not-an-array" }, confidence: "high", raw: "x" });
     const { app } = buildTestApp({
       llm: { chatJson: async () => ({ text: bad, usage: { inputTokens: 1, outputTokens: 1 } }) },
@@ -61,6 +61,24 @@ describe("POST /parse", () => {
       .post("/parse")
       .set("Authorization", `Bearer ${token}`)
       .send({ text: "x" });
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe("validation_failed");
+  });
+
+  it("returns 502 upstream_error when chatJson rejects", async () => {
+    const { app } = buildTestApp({
+      llm: {
+        chatJson: async () => {
+          const { UpstreamError } = await import("../../src/middleware/errorHandler.js");
+          throw new UpstreamError("network down");
+        },
+      },
+    });
+    const token = signTestToken();
+    const res = await request(app)
+      .post("/parse")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ text: "ate eggs" });
     expect(res.status).toBe(502);
     expect(res.body.error.code).toBe("upstream_error");
   });

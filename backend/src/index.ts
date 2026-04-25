@@ -32,7 +32,7 @@ export function createApp(deps: AppDeps): Express {
     "/parse",
     rateLimitMw,
     authMiddleware(config.jwtSecret, "parse"),
-    parseRouter({ llm: deps.llm, modelId: config.modelId })
+    parseRouter({ llm: deps.llm, modelId: config.modelId, logger })
   );
   app.use(
     "/chat",

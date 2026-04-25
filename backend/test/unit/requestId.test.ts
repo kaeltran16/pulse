@@ -25,13 +25,14 @@ describe("requestId", () => {
     expect(next).toHaveBeenCalled();
   });
 
-  it("respects an incoming X-Request-Id header", () => {
+  it("ignores client-supplied X-Request-Id and mints fresh", () => {
     const incoming = "11111111-2222-3333-4444-555555555555";
     const req = { headers: { "x-request-id": incoming } } as unknown as Request & { id?: string };
     const res = fakeRes();
     const next = vi.fn() as unknown as NextFunction;
 
     requestId(req, res, next);
-    expect(req.id).toBe(incoming);
+    expect(req.id).not.toBe(incoming);
+    expect(req.id).toMatch(/^[0-9a-f-]{36}$/);
   });
 });

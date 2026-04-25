@@ -58,7 +58,7 @@ ufw enable
 
 ```bash
 cd /srv/pulse-backend
-sudo -u pulse env $(cat /etc/pulse-backend.env | xargs) npx tsx scripts/issue-token.ts -- --sub kael --scope chat,parse,review
+sudo -u pulse bash -c 'set -a; . /etc/pulse-backend.env; set +a; npx tsx scripts/issue-token.ts -- --sub kael --scope chat,parse,review'
 ```
 
 Copy the printed token. It will be pasted into the iOS app (Keychain) and into the local dev `.env` of the Expo app.

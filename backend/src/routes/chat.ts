@@ -27,13 +27,15 @@ export function chatRouter(deps: { llm: LlmClient; modelId: string }): Router {
     res.setHeader("Connection", "keep-alive");
     res.flushHeaders?.();
 
+    const controller = new AbortController();
     let aborted = false;
     req.on("close", () => {
       aborted = true;
+      controller.abort();
     });
 
     try {
-      for await (const item of deps.llm.chatStream({ messages, model: deps.modelId })) {
+      for await (const item of deps.llm.chatStream({ messages, model: deps.modelId, signal: controller.signal })) {
         if (aborted) break;
         if ("delta" in item) {
           writeEvent(res, "chunk", { delta: item.delta });
@@ -42,11 +44,13 @@ export function chatRouter(deps: { llm: LlmClient; modelId: string }): Router {
         }
       }
     } catch (err) {
-      writeEvent(res, "error", {
-        code: "upstream_error",
-        message: (err as Error).message,
-        requestId: req.id,
-      });
+      if (!aborted) {
+        writeEvent(res, "error", {
+          code: "upstream_error",
+          message: (err as Error).message,
+          requestId: req.id,
+        });
+      }
     } finally {
       res.end();
     }

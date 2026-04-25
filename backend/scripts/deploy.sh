@@ -17,7 +17,7 @@ rsync -avz --delete \
   --exclude .env \
   --exclude .env.local \
   --exclude test \
-  dist/ package.json package-lock.json deploy/ scripts/ \
+  dist package.json package-lock.json deploy scripts \
   "${DEPLOY_HOST}:${DEPLOY_PATH}/"
 
 echo "==> Installing prod deps + restarting service"

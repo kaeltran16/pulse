@@ -9,11 +9,8 @@ declare global {
   }
 }
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 export function requestId(req: Request, res: Response, next: NextFunction): void {
-  const incoming = req.headers?.["x-request-id"];
-  const id = typeof incoming === "string" && UUID_RE.test(incoming) ? incoming : randomUUID();
+  const id = randomUUID();
   req.id = id;
   res.setHeader("X-Request-Id", id);
   next();

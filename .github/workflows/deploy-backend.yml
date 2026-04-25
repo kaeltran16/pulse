@@ -57,7 +57,7 @@ jobs:
             --exclude .env \
             --exclude .env.local \
             --exclude test \
-            dist/ package.json package-lock.json deploy/ scripts/ \
+            dist package.json package-lock.json deploy scripts \
             "$DEPLOY_HOST:$DEPLOY_PATH/"
 
       - name: Install prod deps + restart service
