@@ -158,3 +158,8 @@ export async function createEmptyRoutine(
     .get();
   return inserted.id as number;
 }
+
+export async function deleteRoutine(db: AnyDb, id: number): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (db as any).delete(routines).where(eq(routines.id, id)).run();
+}

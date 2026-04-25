@@ -134,3 +134,41 @@ describe('createEmptyRoutine', () => {
     expect(row[0].autoProgress).toBe(false);
   });
 });
+
+describe('deleteRoutine', () => {
+  it('removes the routine and cascades exercises + sets', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const all = await listRoutines(db);
+    const target = all[0].id;
+    await deleteRoutine(db, target);
+    const after = await listRoutines(db);
+    expect(after.find((r) => r.id === target)).toBeUndefined();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const reLeft = await (db as any).select().from(routineExercises).where(eq(routineExercises.routineId, target));
+    expect(reLeft).toHaveLength(0);
+  });
+
+  it('preserves past sessions with routine_id=NULL and snapshot intact', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const all = await listRoutines(db);
+    const target = all[0].id;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (db as any).insert(sessions).values({
+      routineId: target,
+      routineNameSnapshot: 'Push Day A',
+      startedAt: 1_700_000_000_000,
+      finishedAt: 1_700_000_900_000,
+      durationSeconds: 900,
+      totalVolumeKg: 1000,
+      prCount: 0,
+    }).run();
+    await deleteRoutine(db, target);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const surviving = await (db as any).select().from(sessions);
+    expect(surviving).toHaveLength(1);
+    expect(surviving[0].routineId).toBeNull();
+    expect(surviving[0].routineNameSnapshot).toBe('Push Day A');
+  });
+});
