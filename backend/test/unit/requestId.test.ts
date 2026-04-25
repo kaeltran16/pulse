@@ -21,8 +21,7 @@ describe("requestId", () => {
     requestId(req, res, next);
 
     expect(req.id).toMatch(/^[0-9a-f-]{36}$/);
-    // @ts-expect-error test helper
-    expect(res.headers["X-Request-Id"]).toBe(req.id);
+    expect((res as unknown as { headers: Record<string, string> }).headers["X-Request-Id"]).toBe(req.id);
     expect(next).toHaveBeenCalled();
   });
 
