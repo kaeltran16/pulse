@@ -21,7 +21,8 @@ export interface FinishOnboardingInput {
 }
 
 export async function isOnboardingComplete(db: AnyDb): Promise<boolean> {
-  const rows = await db.select({ id: goals.id }).from(goals).where(eq(goals.id, 1));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rows = await (db as any).select({ id: goals.id }).from(goals).where(eq(goals.id, 1));
   return rows.length > 0;
 }
 
