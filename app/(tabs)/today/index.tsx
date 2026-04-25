@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { eq } from 'drizzle-orm';
-import { useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 
 import { DevSeedButton } from '@/components/DevSeedButton';
 import { Fab } from '@/components/Fab';
@@ -82,6 +82,27 @@ export default function TodayTab() {
     <SafeAreaView className="flex-1 bg-bg">
       <View className="flex-1">
         <DevSeedButton topInset={insets.top} />
+        {__DEV__ && (
+          <Link
+            href="/dev/healthkit"
+            asChild
+          >
+            <Pressable
+              accessibilityRole="button"
+              className="rounded-full bg-fill"
+              style={{
+                position: 'absolute',
+                top: insets.top + 8,
+                right: 56,
+                paddingHorizontal: 8,
+                paddingVertical: 4,
+                zIndex: 10,
+              }}
+            >
+              <Text className="text-caption2 text-ink3">hk</Text>
+            </Pressable>
+          </Link>
+        )}
         <View className="px-6 pt-4">
           <Text className="text-caption1 text-ink3">{datePill}</Text>
           <Text className="text-largeTitle text-ink mt-1">Today</Text>
