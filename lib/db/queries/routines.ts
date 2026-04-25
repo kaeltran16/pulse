@@ -163,3 +163,63 @@ export async function deleteRoutine(db: AnyDb, id: number): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (db as any).delete(routines).where(eq(routines.id, id)).run();
 }
+
+function nextCopyName(existingNames: string[], baseName: string): string {
+  const m = baseName.match(/^(.*) copy(?: (\d+))?$/);
+  const root = m ? m[1] : baseName;
+  const taken = new Set(existingNames);
+  if (!taken.has(`${root} copy`)) return `${root} copy`;
+  for (let n = 2; n < 10000; n++) {
+    const cand = `${root} copy ${n}`;
+    if (!taken.has(cand)) return cand;
+  }
+  throw new Error('Too many copies');
+}
+
+export async function duplicateRoutine(db: AnyDb, sourceId: number): Promise<number> {
+  const src = await getRoutineWithSets(db, sourceId);
+  if (!src) throw new Error(`Routine ${sourceId} not found`);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const allNames: Array<{ name: string }> = await (db as any).select({ name: routines.name }).from(routines);
+  const newName = nextCopyName(allNames.map((r) => r.name), src.name);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const maxRow: Array<{ max: number | null }> = await (db as any)
+    .select({ max: sql<number | null>`MAX(${routines.position})` })
+    .from(routines);
+  const nextPos = (maxRow[0]?.max ?? -1) + 1;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const inserted = (db as any).insert(routines).values({
+    name: newName,
+    tag: src.tag,
+    color: src.color,
+    position: nextPos,
+    restDefaultSeconds: src.restDefaultSeconds,
+    warmupReminder: src.warmupReminder,
+    autoProgress: src.autoProgress,
+  }).returning({ id: routines.id }).get();
+  const newRoutineId = inserted.id as number;
+
+  for (const ex of src.exercises) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const insertedRe = (db as any).insert(routineExercises).values({
+      routineId: newRoutineId,
+      exerciseId: ex.exercise.id,
+      position: ex.position,
+      restSeconds: ex.restSeconds,
+    }).returning({ id: routineExercises.id }).get();
+    const newReId = insertedRe.id as number;
+    for (const s of ex.sets) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (db as any).insert(routineSets).values({
+        routineExerciseId: newReId,
+        position: s.position,
+        targetReps: s.targetReps,
+        targetWeightKg: s.targetWeightKg,
+        targetDurationSeconds: s.targetDurationSeconds,
+        targetDistanceKm: s.targetDistanceKm,
+      }).run();
+    }
+  }
+  return newRoutineId;
+}

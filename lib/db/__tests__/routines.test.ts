@@ -172,3 +172,41 @@ describe('deleteRoutine', () => {
     expect(surviving[0].routineNameSnapshot).toBe('Push Day A');
   });
 });
+
+describe('duplicateRoutine', () => {
+  it('clones routine + exercises + sets with new ids', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const all = await listRoutines(db);
+    const source = all.find((r) => r.name === 'Push Day A')!;
+    const newId = await duplicateRoutine(db, source.id);
+    expect(newId).not.toBe(source.id);
+    const src = await getRoutineWithSets(db, source.id);
+    const dup = await getRoutineWithSets(db, newId);
+    expect(dup!.exercises).toHaveLength(src!.exercises.length);
+    for (let i = 0; i < dup!.exercises.length; i++) {
+      expect(dup!.exercises[i].sets).toHaveLength(src!.exercises[i].sets.length);
+      expect(dup!.exercises[i].id).not.toBe(src!.exercises[i].id);
+    }
+  });
+
+  it('names "X" -> "X copy" -> "X copy 2" -> "X copy 3"', async () => {
+    const { db } = makeTestDb();
+    const id1 = await createEmptyRoutine(db, { name: 'Foo', tag: 'Custom' });
+    const id2 = await duplicateRoutine(db, id1);
+    const id3 = await duplicateRoutine(db, id2);
+    const id4 = await duplicateRoutine(db, id3);
+    const names = (await listRoutines(db)).map((r) => r.name).sort();
+    expect(names).toEqual(['Foo', 'Foo copy', 'Foo copy 2', 'Foo copy 3']);
+    void id4;
+  });
+
+  it('source is unchanged after duplicate', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const before = await getRoutineWithSets(db, (await listRoutines(db))[0].id);
+    await duplicateRoutine(db, before!.id);
+    const after = await getRoutineWithSets(db, before!.id);
+    expect(after).toEqual(before);
+  });
+});
