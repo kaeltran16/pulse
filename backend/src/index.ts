@@ -3,7 +3,10 @@ import { loadConfig, type Config } from "./config.js";
 import { createLogger, type Logger } from "./lib/logger.js";
 import { requestId } from "./middleware/requestId.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { authMiddleware } from "./middleware/auth.js";
+import { createRateLimit } from "./middleware/rateLimit.js";
 import { healthRouter } from "./routes/health.js";
+import { parseRouter } from "./routes/parse.js";
 import type { LlmClient } from "./lib/openrouter.js";
 import { createOpenRouterClient } from "./lib/openrouter.js";
 
@@ -14,13 +17,21 @@ export type AppDeps = {
 };
 
 export function createApp(deps: AppDeps): Express {
-  const { logger } = deps;
+  const { config, logger } = deps;
   const app = express();
   app.disable("x-powered-by");
   app.use(requestId);
   app.use(express.json({ limit: "256kb" }));
 
   app.use(healthRouter());
+
+  const rateLimitMw = createRateLimit(config.rateLimitPerMin);
+  app.use(
+    "/parse",
+    rateLimitMw,
+    authMiddleware(config.jwtSecret, "parse"),
+    parseRouter({ llm: deps.llm, modelId: config.modelId })
+  );
 
   app.use(errorHandler(logger));
   return app;
