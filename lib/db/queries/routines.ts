@@ -132,3 +132,29 @@ export async function getRoutineWithSets(db: AnyDb, routineId: number): Promise<
       })),
   };
 }
+
+export async function createEmptyRoutine(
+  db: AnyDb,
+  init: { name: string; tag: string; color?: string },
+): Promise<number> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const maxRow: Array<{ max: number | null }> = await (db as any)
+    .select({ max: sql<number | null>`MAX(${routines.position})` })
+    .from(routines);
+  const nextPos = (maxRow[0]?.max ?? -1) + 1;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const inserted = (db as any)
+    .insert(routines)
+    .values({
+      name: init.name,
+      tag: init.tag,
+      color: init.color ?? 'accent',
+      position: nextPos,
+      restDefaultSeconds: 120,
+      warmupReminder: false,
+      autoProgress: false,
+    })
+    .returning({ id: routines.id })
+    .get();
+  return inserted.id as number;
+}

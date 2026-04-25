@@ -1,6 +1,15 @@
 /** @jest-environment node */
-import { listRoutines, getRoutineWithSets } from '../queries/routines';
-import { sessions } from '../schema';
+import { eq } from 'drizzle-orm';
+import {
+  listRoutines,
+  getRoutineWithSets,
+  createEmptyRoutine,
+  deleteRoutine,
+  duplicateRoutine,
+  updateRoutine,
+  type DraftInput,
+} from '../queries/routines';
+import { routines, routineExercises, sessions } from '../schema';
 import { seedWorkouts } from '../seed-workouts';
 import { makeTestDb } from './test-helpers';
 
@@ -86,5 +95,42 @@ describe('getRoutineWithSets', () => {
     expect(r!.restDefaultSeconds).toBe(120);
     expect(r!.warmupReminder).toBe(false);
     expect(r!.autoProgress).toBe(false);
+  });
+});
+
+describe('createEmptyRoutine', () => {
+  it('inserts a routine and returns its id', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const before = await listRoutines(db);
+    const id = await createEmptyRoutine(db, { name: 'My routine', tag: 'Custom' });
+    expect(typeof id).toBe('number');
+    const after = await listRoutines(db);
+    expect(after).toHaveLength(before.length + 1);
+    const created = after.find((r) => r.id === id)!;
+    expect(created.name).toBe('My routine');
+    expect(created.tag).toBe('Custom');
+    expect(created.exerciseCount).toBe(0);
+  });
+
+  it('appends to the end (max position + 1)', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const before = await listRoutines(db);
+    const maxPos = Math.max(...before.map((r) => r.position));
+    const id = await createEmptyRoutine(db, { name: 'Z', tag: 'Custom' });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const row = await (db as any).select().from(routines).where(eq(routines.id, id));
+    expect(row[0].position).toBe(maxPos + 1);
+  });
+
+  it('uses default session settings', async () => {
+    const { db } = makeTestDb();
+    const id = await createEmptyRoutine(db, { name: 'X', tag: 'Custom' });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const row = await (db as any).select().from(routines).where(eq(routines.id, id));
+    expect(row[0].restDefaultSeconds).toBe(120);
+    expect(row[0].warmupReminder).toBe(false);
+    expect(row[0].autoProgress).toBe(false);
   });
 });
