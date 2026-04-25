@@ -1,11 +1,13 @@
-import { useMemo } from 'react';
-import { Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { eq } from 'drizzle-orm';
+import { useRouter } from 'expo-router';
 
 import { DevSeedButton } from '@/components/DevSeedButton';
 import { Fab } from '@/components/Fab';
+import { PalComposer } from '@/components/PalComposer';
 import { RingTriad } from '@/components/RingTriad';
 import { StatBlock } from '@/components/StatBlock';
 import { db } from '@/lib/db/client';
@@ -26,7 +28,10 @@ function dollars(cents: number) {
 }
 
 export default function TodayTab() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [palOpen, setPalOpen] = useState(false);
+
   const goalsQuery       = useLiveQuery(db.select().from(goals).where(eq(goals.id, 1)));
   const activeRitualsQuery = useLiveQuery(
     db.select().from(rituals).where(eq(rituals.active, true)),
@@ -85,12 +90,14 @@ export default function TodayTab() {
           <RingTriad money={moneyP} move={moveP} rituals={ritualsP} size={240} />
         </View>
         <View className="flex-row mt-10 px-4">
-          <StatBlock
-            label="MONEY"
-            value={dollars(aggregates.spentCents)}
-            goal={`/ ${dollars(goalsRow.dailyBudgetCents)}`}
-            toneClass="text-money"
-          />
+          <Pressable className="flex-1" onPress={() => router.push('/(tabs)/today/spending')}>
+            <StatBlock
+              label="MONEY"
+              value={dollars(aggregates.spentCents)}
+              goal={`/ ${dollars(goalsRow.dailyBudgetCents)}`}
+              toneClass="text-money"
+            />
+          </Pressable>
           <StatBlock
             label="MOVE"
             value={`${aggregates.moveMinutes}`}
@@ -104,7 +111,8 @@ export default function TodayTab() {
             toneClass="text-rituals"
           />
         </View>
-        <Fab onPress={() => console.log('Log entry — SP3b')} />
+        <Fab onPress={() => setPalOpen(true)} />
+        <PalComposer visible={palOpen} onClose={() => setPalOpen(false)} />
       </View>
     </SafeAreaView>
   );
