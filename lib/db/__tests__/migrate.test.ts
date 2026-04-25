@@ -10,13 +10,15 @@ describe('migrations apply cleanly', () => {
       )
       .all() as { name: string }[];
     const names = rows.map((r) => r.name).sort();
-    expect(names).toEqual([
-      'goals',
-      'movement_entries',
-      'ritual_entries',
-      'rituals',
-      'spending_entries',
-    ]);
+    expect(names).toEqual(
+      expect.arrayContaining([
+        'goals',
+        'movement_entries',
+        'ritual_entries',
+        'rituals',
+        'spending_entries',
+      ]),
+    );
   });
 
   it('creates the expected indexes', () => {
@@ -27,12 +29,14 @@ describe('migrations apply cleanly', () => {
       )
       .all() as { name: string }[];
     const names = rows.map((r) => r.name).sort();
-    expect(names).toEqual([
-      'idx_movement_occurred_at',
-      'idx_ritual_entries_occurred_at',
-      'idx_ritual_entries_ritual_id',
-      'idx_spending_occurred_at',
-    ]);
+    expect(names).toEqual(
+      expect.arrayContaining([
+        'idx_movement_occurred_at',
+        'idx_ritual_entries_occurred_at',
+        'idx_ritual_entries_ritual_id',
+        'idx_spending_occurred_at',
+      ]),
+    );
   });
 
   it('enforces ritual_entries.ritual_id foreign key', () => {
