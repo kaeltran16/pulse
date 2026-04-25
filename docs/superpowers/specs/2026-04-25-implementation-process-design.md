@@ -66,7 +66,7 @@ Seven sub-projects, executed in order. Each is a complete superpowers cycle.
 | # | Sub-project | Verification surface | TDD applies to |
 |---|---|---|---|
 | 0 | Pipeline pre-flight ✅ **Complete 2026-04-25** | Hello-world Expo app runs in Android emulator on Windows AND in Expo Go on the user's iPhone | None — success is binary |
-| 1 | Design system (tokens + theme) | Preview screen renders all color tokens and the type scale; Light/Dark/System toggle flips the theme; `npm test` passes the token parity test. Targets: web (primary on Windows) and Expo Go on iPhone when available. **Scope trimmed to tokens + ThemeProvider; the eight named components moved to their consumer sub-projects.** | Theme token parity (`tokens.ts` ⇔ resolved Tailwind config) |
+| 1 | Design system (tokens + theme) ✅ **Complete 2026-04-25** | Preview screen renders all color tokens and the type scale; Light/Dark/System toggle flips the theme; `npm test` passes the token parity test. Targets: web (primary on Windows) and Expo Go on iPhone when available. **Scope trimmed to tokens + ThemeProvider; the eight named components moved to their consumer sub-projects.** | Theme token parity (`tokens.ts` ⇔ resolved Tailwind config) |
 | 2 | Backend v1 (AI proxy) | `curl` against deployed `/chat`, `/parse`, `/review` endpoints returns expected shapes | All three endpoints + prompt-assembly + auth-header logic |
 | 3a | iOS v1 — data + shell | SQLite schema migrates cleanly; Today screen renders today's data; tab bar + FAB work; Onboarding completes and persists Goals | Drizzle schema, migrations, derived aggregates (today rings, basic streaks) |
 | 3b | iOS v1 — entry + Pal | Log Entry sheet logs all three entry types; Ask Pal round-trips through deployed backend v1; Spending Detail renders | Pal client (request shape, error handling), entry validation |
@@ -217,8 +217,8 @@ Explicitly deferred or cut from v1–v3, to be revisited only if the user opts i
 | # | Sub-project | Status |
 |---|---|---|
 | 0 | Pipeline pre-flight | ✅ Complete 2026-04-25 — Expo SDK 54 scaffold, hot reload verified on web target. Android path dropped (iPhone-first); iPhone Expo Go verification deferred (not blocking; will be exercised in sub-project 1). |
-| 1 | Design system | ⏳ Next |
-| 2 | Backend v1 (AI proxy) | Not started |
+| 1 | Design system | ✅ Complete 2026-04-25 — `tokens.ts` source of truth, NativeWind v4 wired via CSS variables, `ThemeProvider` with Light/Dark/System toggle, 33-assertion parity test passing, preview screen verified on web. iPhone Expo Go verification deferred (not blocking). |
+| 2 | Backend v1 (AI proxy) | ⏳ Next |
 | 3a | iOS v1 — data + shell | Not started |
 | 3b | iOS v1 — entry + Pal | Not started |
 | 4 | iOS v2 — workouts | Not started |
