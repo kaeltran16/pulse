@@ -80,6 +80,9 @@ export const routines = sqliteTable('routines', {
   color: text('color').notNull(),
   position: integer('position').notNull(),
   createdAt: integer('created_at').notNull().default(sql`(unixepoch() * 1000)`),
+  restDefaultSeconds: integer('rest_default_seconds').notNull().default(120),
+  warmupReminder: integer('warmup_reminder', { mode: 'boolean' }).notNull().default(false),
+  autoProgress: integer('auto_progress', { mode: 'boolean' }).notNull().default(false),
 });
 
 export const routineExercises = sqliteTable(

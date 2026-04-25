@@ -15,6 +15,13 @@
       "when": 1777112284072,
       "tag": "0001_perpetual_tempest",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1777132195366,
+      "tag": "0002_late_tempest",
+      "breakpoints": true
     }
   ]
 }
