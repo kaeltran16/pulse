@@ -65,7 +65,7 @@ Seven sub-projects, executed in order. Each is a complete superpowers cycle.
 
 | # | Sub-project | Verification surface | TDD applies to |
 |---|---|---|---|
-| 0 | Pipeline pre-flight | Hello-world Expo app runs in Android emulator on Windows AND in Expo Go on the user's iPhone | None — success is binary |
+| 0 | Pipeline pre-flight ✅ **Complete 2026-04-25** | Hello-world Expo app runs in Android emulator on Windows AND in Expo Go on the user's iPhone | None — success is binary |
 | 1 | Design system | Demo screen showing every shared component (NavBar, InsetSection, ListRow, TabBar, SummaryTile, **ActivityRings**, ProgressBar, CheckButton) in light + dark + all 8 accents, viewable in Android emulator and Expo Go | Theme token correctness; ring math |
 | 2 | Backend v1 (AI proxy) | `curl` against deployed `/chat`, `/parse`, `/review` endpoints returns expected shapes | All three endpoints + prompt-assembly + auth-header logic |
 | 3a | iOS v1 — data + shell | SQLite schema migrates cleanly; Today screen renders today's data; tab bar + FAB work; Onboarding completes and persists Goals | Drizzle schema, migrations, derived aggregates (today rings, basic streaks) |
@@ -208,6 +208,21 @@ Explicitly deferred or cut from v1–v3, to be revisited only if the user opts i
 - Not a product spec for any sub-project. Each sub-project gets its own.
 - Not an implementation plan. The next step (after user review) is invoking the writing-plans skill to produce the **plan for sub-project 0** (pipeline pre-flight). Each subsequent sub-project gets its own spec → plan cycle.
 - Not a schedule. No date estimates here. The user's pace is unknown and bounded by AI verification round-trips, not author-velocity.
+
+---
+
+## 8a. Sub-project status
+
+| # | Sub-project | Status |
+|---|---|---|
+| 0 | Pipeline pre-flight | ✅ Complete 2026-04-25 — Expo SDK 54 scaffold, hot reload verified on web target. Android path dropped (iPhone-first); iPhone Expo Go verification deferred (not blocking; will be exercised in sub-project 1). |
+| 1 | Design system | ⏳ Next |
+| 2 | Backend v1 (AI proxy) | Not started |
+| 3a | iOS v1 — data + shell | Not started |
+| 3b | iOS v1 — entry + Pal | Not started |
+| 4 | iOS v2 — workouts | Not started |
+| 5 | Backend v2 + iOS v3 — email + review | Not started |
+| 6 | Polish | Not started |
 
 ---
 
