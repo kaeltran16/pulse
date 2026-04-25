@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-25
 **Status:** Draft, pending user review
-**Parent:** `docs/superpowers/specs/2026-04-25-implementation-process-design.md` §3 row 4
+**Parent:** [`./2026-04-25-implementation-process-design.md`](./2026-04-25-implementation-process-design.md) §3 row 4
 **Scope:** Defines the decomposition of sub-project 4 (iOS v2 — workouts) into child sub-projects. This is a *map*, not a product spec. Each child below gets its own spec → plan → execute → review cycle.
 
 ---

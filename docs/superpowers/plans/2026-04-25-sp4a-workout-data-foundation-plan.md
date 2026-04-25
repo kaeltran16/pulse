@@ -8,7 +8,7 @@
 
 **Tech Stack:** TypeScript, Drizzle ORM 0.45, drizzle-kit 0.31, expo-sqlite (runtime) / better-sqlite3 (Jest), Jest 29, jest-expo. Pattern matches SP3a (`lib/db/queries/today.ts` for pure functions, `lib/db/queries/onboarding.ts` for DB-bound queries).
 
-**Spec:** `docs/superpowers/specs/2026-04-25-sp4a-workout-data-foundation-design.md`
+**Spec:** [`../specs/2026-04-25-sp4a-workout-data-foundation-design.md`](../specs/2026-04-25-sp4a-workout-data-foundation-design.md)
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-25
 **Status:** Draft, pending user review
-**Parent:** `docs/superpowers/specs/2026-04-25-ios-v2-workouts-design.md` (SP4 meta-spec, slice 4a)
+**Parent:** [`./meta/2026-04-25-ios-v2-workouts-design.md`](./meta/2026-04-25-ios-v2-workouts-design.md) (SP4 meta-spec, slice 4a)
 **Scope:** The Drizzle schema, seed data, queries, and pure-function math for the workout subsystem. No UI. No HealthKit. Pure data layer that 4b–4g consume.
 
 ---
