@@ -91,7 +91,7 @@ All non-2xx responses use the error envelope:
 
 Error codes: `unauthorized`, `forbidden`, `rate_limited`, `validation_failed`, `upstream_error`, `internal`.
 
-Shared TypeScript types live at repo root in `lib/api-types.ts`, imported by both `app/` (RN) and `backend/` (Express). Zod schemas in `backend/src/schemas/` are the runtime mirror; CI/test-time check ensures they stay in sync structurally.
+Shared TypeScript types live at repo root in `lib/api-types.ts`, imported by both `app/` (RN) and `backend/` (Express). Zod schemas in `backend/src/schemas/` are the runtime mirror, declared with `z.ZodType<TheTsType>` so a drift between the TS type and the Zod schema is a compile error in `backend/`. No separate CI check needed.
 
 > **Note on entity shapes.** `Entry`, `FoodEntry`, `WorkoutEntry`, `SpendEntry`, the `*Aggregate` types, and `TodaySummary` are stubbed in `lib/api-types.ts` for SP2 with minimal fields needed to validate request shape. SP3a (data model) tightens them. SP2 must not assume more structure than the stubs declare.
 
@@ -348,7 +348,7 @@ TDD applies to: all three route handlers, prompt assembly, JWT auth middleware. 
 - `buildParsePrompt(text, hint) → { system, user }` — same.
 - `buildReviewPrompt(month, aggregates) → string` — same.
 - Zod schemas — valid input passes, invalid input throws with expected error paths (one negative test per required field).
-- JWT helper — valid token → claims; expired/wrong-sig/missing-scope → throws specific error class.
+- JWT helper — valid token → claims; wrong-signature/missing-scope/malformed → throws specific error class. (No `exp` test in v1; tokens are unexpiring.)
 
 ### 11.2 Integration (Express + supertest, OpenRouter mocked)
 
