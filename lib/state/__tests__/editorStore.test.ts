@@ -74,3 +74,50 @@ describe('editorStore top-level mutators', () => {
     expect(useEditorStore.getState().isDirty).toBe(false);
   });
 });
+
+describe('editorStore exercise mutators', () => {
+  beforeEach(() => {
+    useEditorStore.getState().clearDraft();
+    useEditorStore.getState().loadDraft(fakeFull);
+  });
+
+  it('addExercise appends with id=null and 3 default sets', () => {
+    useEditorStore.getState().addExercise('ohp');
+    const ex = useEditorStore.getState().draft!.exercises;
+    expect(ex).toHaveLength(2);
+    expect(ex[1].id).toBeNull();
+    expect(ex[1].exerciseId).toBe('ohp');
+    expect(ex[1].position).toBe(1);
+    expect(ex[1].sets).toHaveLength(3);
+    expect(useEditorStore.getState().isDirty).toBe(true);
+  });
+
+  it('removeExercise renumbers positions densely', () => {
+    useEditorStore.getState().addExercise('ohp');
+    useEditorStore.getState().addExercise('incline-db');
+    useEditorStore.getState().removeExercise(0);
+    const ex = useEditorStore.getState().draft!.exercises;
+    expect(ex.map((e) => e.position)).toEqual([0, 1]);
+  });
+
+  it('reorderExercises moves and renumbers; no-op for invalid args', () => {
+    useEditorStore.getState().addExercise('ohp');
+    useEditorStore.getState().addExercise('incline-db');
+    useEditorStore.getState().reorderExercises(0, 2);
+    let ex = useEditorStore.getState().draft!.exercises;
+    expect(ex.map((e) => e.exerciseId)).toEqual(['ohp', 'incline-db', 'bench']);
+    expect(ex.map((e) => e.position)).toEqual([0, 1, 2]);
+    useEditorStore.getState().reorderExercises(0, 0);
+    useEditorStore.getState().reorderExercises(-1, 1);
+    useEditorStore.getState().reorderExercises(0, 99);
+    ex = useEditorStore.getState().draft!.exercises;
+    expect(ex.map((e) => e.exerciseId)).toEqual(['ohp', 'incline-db', 'bench']);
+  });
+
+  it('setExerciseRest accepts number and null', () => {
+    useEditorStore.getState().setExerciseRest(0, 90);
+    expect(useEditorStore.getState().draft!.exercises[0].restSeconds).toBe(90);
+    useEditorStore.getState().setExerciseRest(0, null);
+    expect(useEditorStore.getState().draft!.exercises[0].restSeconds).toBeNull();
+  });
+});
