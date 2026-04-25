@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { eq } from 'drizzle-orm';
 
@@ -26,6 +26,7 @@ function dollars(cents: number) {
 }
 
 export default function TodayTab() {
+  const insets = useSafeAreaInsets();
   const goalsQuery       = useLiveQuery(db.select().from(goals).where(eq(goals.id, 1)));
   const activeRitualsQuery = useLiveQuery(
     db.select().from(rituals).where(eq(rituals.active, true)),
@@ -75,7 +76,7 @@ export default function TodayTab() {
   return (
     <SafeAreaView className="flex-1 bg-bg">
       <View className="flex-1">
-        <DevSeedButton />
+        <DevSeedButton topInset={insets.top} />
         <View className="px-6 pt-4">
           <Text className="text-caption1 text-ink3">{datePill}</Text>
           <Text className="text-largeTitle text-ink mt-1">Today</Text>

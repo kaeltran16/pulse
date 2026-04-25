@@ -7,7 +7,7 @@ import { localDayBounds } from '@/lib/db/queries/today';
 
 const OPTIONS = ['Seed today (partial)', 'Seed today (full)', 'Clear today', 'Cancel'] as const;
 
-export function DevSeedButton() {
+export function DevSeedButton({ topInset = 0 }: { topInset?: number }) {
   if (!__DEV__) return null;
 
   const open = () => {
@@ -21,7 +21,6 @@ export function DevSeedButton() {
         },
       );
     } else {
-      // Web / Android fallback: cycle via simple Alert.
       Alert.alert('Dev seed', undefined, [
         { text: OPTIONS[0], onPress: () => void seedPartial() },
         { text: OPTIONS[1], onPress: () => void seedFull() },
@@ -35,7 +34,15 @@ export function DevSeedButton() {
     <Pressable
       onPress={open}
       accessibilityRole="button"
-      className="absolute top-2 right-2 px-2 py-1 rounded-full bg-fill"
+      className="rounded-full bg-fill"
+      style={{
+        position: 'absolute',
+        top: topInset + 8,
+        right: 8,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        zIndex: 10,
+      }}
     >
       <Text className="text-caption2 text-ink3">seed</Text>
     </Pressable>
