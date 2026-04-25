@@ -19,15 +19,9 @@ export type ErrorEnvelope = {
 
 export type Entry = {
   id: string;
-  kind: "food" | "workout" | "spend";
+  kind: "workout" | "spend";
   at: string; // ISO 8601
   note?: string;
-};
-
-export type FoodEntry = {
-  items: Array<{ name: string; qty?: string }>;
-  calories?: number;
-  meal?: "breakfast" | "lunch" | "dinner" | "snack";
 };
 
 export type WorkoutEntry = {
@@ -74,7 +68,7 @@ export type ChatStreamEvent =
 
 // --- /parse ---
 
-export type ParseHint = "food" | "workout" | "spend";
+export type ParseHint = "workout" | "spend";
 
 export type ParseRequest = {
   text: string;
@@ -84,9 +78,9 @@ export type ParseRequest = {
 export type ParseConfidence = "high" | "low";
 
 export type ParseResponse =
-  | { kind: "food"; data: FoodEntry; confidence: ParseConfidence; raw: string }
   | { kind: "workout"; data: WorkoutEntry; confidence: ParseConfidence; raw: string }
-  | { kind: "spend"; data: SpendEntry; confidence: ParseConfidence; raw: string };
+  | { kind: "spend"; data: SpendEntry; confidence: ParseConfidence; raw: string }
+  | { kind: "chat"; confidence: "high"; raw: string };
 
 // --- /review ---
 
