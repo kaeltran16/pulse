@@ -729,6 +729,40 @@ Write 1-2 sentences observing the trend and recommending one concrete change nex
 
 ---
 
+## Dynamic Island & Siri Shortcuts (iOS hardware integrations)
+
+The prototype's iPhone frame now models real-device chrome accurately. Two integration surfaces:
+
+### Dynamic Island Live Activities
+
+The notch (`126 × 37`, top: 11pt, centered) expands to **`280 × 37`** when an ExpensePal Live Activity is active. Sensor dots (proximity dot + camera lens with subtle blue catch-light) remain visible inside the pill at all times.
+
+| Trigger | Kind | Title | Value | Icon bg |
+|---|---|---|---|---|
+| Active workout (screen 09) | `workout` | "Push A" | "24:18" tabular-nums | `#FF453A` |
+| Workout just saved (screen 10) | `workout` | "Workout" | "Saved" | `#FF453A` |
+| Streak celebration (screen 15) | `streak` | "Streak" | "14 days" | `#FF9F0A` |
+| Pal composer open | `pal` | "Pal" | "Listening…" | accent |
+
+Implementation: **ActivityKit** Live Activity. State updates push to the Dynamic Island; tap = deep-link back into the source screen. Use `.compact` (default), `.minimal`, and `.expanded` presentations. The workout one should tick the timer in real time on the device.
+
+Width transition: `width 0.4s cubic-bezier(0.4, 0, 0.2, 1)`.
+
+### Siri Shortcut chip (Suggestion above the home indicator)
+
+A floating glass pill that surfaces a contextual Siri Shortcut. Position: centered, `bottom: 100pt` (clears the tab bar), `zIndex: 58`, `pointer-events: none`.
+
+Pill spec: 7px vertical / 14px-7px horizontal padding, radius 9999, blurred glass `rgba(255,255,255,0.78)` (or `rgba(28,28,30,0.78)` dark), `0 4px 16px rgba(0,0,0,0.10)` shadow, 0.5px inset hairline. Inside: 28×28 accent gradient circle with white glyph + 2-line label (13/600 + 10/500 uppercase tertiary "SIRI SHORTCUT" hint).
+
+| Screen | Label | Hint | Kind |
+|---|---|---|---|
+| Today | "Log expense" | "SIRI SHORTCUT" | `log` |
+| Move tab | "Start Push A" | "QUICK ACTION" | `workout` |
+
+Implementation: **AppIntents** framework. Donate `LogExpenseIntent` and `StartWorkoutIntent` so Siri/Spotlight surface them; the in-app chip is a visual hint pointing at the same intents. Tap = run intent, then deep-link.
+
+---
+
 ## Files in this bundle
 
 - `ExpensePal.html` — Entry point: canvas, Tweaks panel, device frames

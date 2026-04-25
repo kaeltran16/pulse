@@ -61,12 +61,24 @@ function Icon({ name, size = 20, color }) {
       return <svg viewBox="0 0 24 24" style={s} fill="currentColor"><path d="M12 8a4 4 0 100 8 4 4 0 000-8zm8.5 4a8.5 8.5 0 00-.1-1.3l2.2-1.7-2-3.4-2.6 1a8.5 8.5 0 00-2.3-1.3L15 2.5h-4l-.5 2.8a8.5 8.5 0 00-2.3 1.3l-2.6-1-2 3.4 2.2 1.7a8.5 8.5 0 000 2.6l-2.2 1.7 2 3.4 2.6-1a8.5 8.5 0 002.3 1.3l.4 2.8h4l.5-2.8a8.5 8.5 0 002.3-1.3l2.6 1 2-3.4-2.2-1.7c.1-.4.1-.9.1-1.3z"/></svg>;
     case 'arrow.right':
       return <svg viewBox="0 0 24 24" style={s} fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>;
+    case 'arrow.up':
+      return <svg viewBox="0 0 24 24" style={s} fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>;
+    case 'arrow.up.right':
+      return <svg viewBox="0 0 24 24" style={s} fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>;
+    case 'xmark':
+      return <svg viewBox="0 0 24 24" style={s} fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>;
     case 'target':
       return <svg viewBox="0 0 24 24" style={s} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>;
     case 'delete.left.fill':
       return <svg viewBox="0 0 24 24" style={s} fill="currentColor"><path d="M22 5H10L4 12l6 7h12a2 2 0 002-2V7a2 2 0 00-2-2zm-8 4l2.5 2.5L19 9l1.5 1.5L18 13l2.5 2.5L19 17l-2.5-2.5L14 17l-1.5-1.5L15 13l-2.5-2.5L14 9z"/></svg>;
     case 'checkmark':
       return <svg viewBox="0 0 24 24" style={s} fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7"/></svg>;
+    case 'moon.stars.fill':
+      return <svg viewBox="0 0 24 24" style={s} fill="currentColor"><path d="M20 14a8 8 0 01-10-10 8 8 0 1010 10z"/><circle cx="18" cy="6" r="1.2"/><circle cx="21" cy="9" r="0.8"/></svg>;
+    case 'music.note':
+      return <svg viewBox="0 0 24 24" style={s} fill="currentColor"><path d="M9 17V5l11-2v12" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/><circle cx="7" cy="17" r="3"/><circle cx="18" cy="15" r="3"/></svg>;
+    case 'square.grid.2x2.fill':
+      return <svg viewBox="0 0 24 24" style={s} fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>;
     case 'play.fill':
       return <svg viewBox="0 0 24 24" style={s} fill="currentColor"><path d="M7 4v16l14-8L7 4z"/></svg>;
     case 'pause.fill':

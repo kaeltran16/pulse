@@ -1,6 +1,6 @@
 // Today + Add screens — iOS system look
 
-function TodayScreen({ theme, onOpenDetail, onOpenAdd }) {
+function TodayScreen({ theme, onOpenDetail, onOpenAdd, onOpenPal, onOpenStreak, onOpenCloseout, onOpenInbox, onOpenBills }) {
   const entries = window.TODAY_ENTRIES;
   const moneySpent = entries.filter(e => e.type === 'money').reduce((s, e) => s + Math.abs(e.value), 0);
   const moneyBudget = 85;
@@ -10,7 +10,16 @@ function TodayScreen({ theme, onOpenDetail, onOpenAdd }) {
   const ritualsGoal = 5;
 
   const colorFor = (t) => theme[t];
-  const tintFor = (t) => theme[t + 'Tint'];
+
+  // Day progress — 9:41pm shown in status bar but let's peg it to "evening"
+  const dayProgress = 0.88; // late evening
+
+  // Group entries by time-of-day for the timeline
+  const buckets = [
+    { label: 'Morning', rows: entries.filter(e => parseInt(e.time) < 12) },
+    { label: 'Afternoon', rows: entries.filter(e => parseInt(e.time) >= 12 && parseInt(e.time) < 18) },
+    { label: 'Evening', rows: entries.filter(e => parseInt(e.time) >= 18) },
+  ];
 
   return (
     <div style={{ background: theme.bg, minHeight: '100%', paddingBottom: 110 }}>
@@ -19,138 +28,210 @@ function TodayScreen({ theme, onOpenDetail, onOpenAdd }) {
         leading={<div style={{
           fontFamily: SF, fontSize: 17, color: theme.accent, fontWeight: 400,
         }}>Apr</div>}
-        trailing={<NavIconButton name="magnifyingglass" theme={theme} />}
+        trailing={<div style={{ display: 'flex', gap: 8 }}>
+          <NavIconButton name="bell.fill" theme={theme} onClick={onOpenInbox} />
+          <NavIconButton name="magnifyingglass" theme={theme} />
+        </div>}
       />
 
-      {/* Activity rings hero card */}
-      <div style={{ margin: '8px 16px 20px' }}>
+      {/* Activity rings hero card — denser, prouder, with on-pace line */}
+      <div style={{ margin: '4px 16px 14px' }}>
         <div style={{
-          background: theme.surface, borderRadius: 16, padding: 20,
-          display: 'flex', alignItems: 'center', gap: 20,
+          background: theme.surface, borderRadius: 18, padding: '18px 18px 16px',
         }}>
-          <ActivityRings theme={theme} size={130}
-            values={[moneySpent / moneyBudget, moveMinutes / moveGoal, ritualsDone / ritualsGoal]} />
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <RingStat color={theme.money} label="Spent" value={`$${moneySpent.toFixed(0)}`}
-              goal={`/$${moneyBudget}`} theme={theme} />
-            <RingStat color={theme.move} label="Move" value={`${moveMinutes}`}
-              goal={`/${moveGoal} MIN`} theme={theme} />
-            <RingStat color={theme.rituals} label="Rituals" value={`${ritualsDone}`}
-              goal={`/${ritualsGoal}`} theme={theme} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+            <ActivityRings theme={theme} size={118}
+              values={[moneySpent / moneyBudget, moveMinutes / moveGoal, ritualsDone / ritualsGoal]} />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <RingStat color={theme.money} label="Spent" value={`$${moneySpent.toFixed(0)}`}
+                goal={`/ $${moneyBudget}`} theme={theme} />
+              <RingStat color={theme.move} label="Move" value={`${moveMinutes}`}
+                goal={`/ ${moveGoal} MIN`} theme={theme} />
+              <RingStat color={theme.rituals} label="Rituals" value={`${ritualsDone}`}
+                goal={`/ ${ritualsGoal}`} theme={theme} />
+            </div>
+          </div>
+          {/* Day progress bar */}
+          <div style={{ marginTop: 14, paddingTop: 14, borderTop: `0.5px solid ${theme.hair}` }}>
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+              marginBottom: 6,
+            }}>
+              <span style={{
+                fontFamily: SF, fontSize: 12, color: theme.ink3,
+                fontWeight: 600, letterSpacing: 0.3, textTransform: 'uppercase',
+              }}>Day · 21:30</span>
+              <span style={{
+                fontFamily: SF, fontSize: 12, color: theme.ink2, fontWeight: 500,
+                letterSpacing: -0.08,
+              }}>On pace · 1 ritual to close</span>
+            </div>
+            <div style={{
+              height: 4, borderRadius: 2, background: theme.fill,
+              position: 'relative', overflow: 'hidden',
+            }}>
+              <div style={{
+                position: 'absolute', top: 0, left: 0, bottom: 0,
+                width: `${dayProgress * 100}%`,
+                background: `linear-gradient(90deg, ${theme.money}, ${theme.move}, ${theme.rituals})`,
+                borderRadius: 2,
+              }} />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Summary grid — Apple Health-style tiles */}
-      <div style={{ padding: '0 16px 20px' }}>
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
-          padding: '0 4px 10px',
+      {/* Pal insight hero — primary content, tappable to open streak celebration */}
+      <div style={{ margin: '0 16px 18px' }}>
+        <button onClick={() => onOpenStreak ? onOpenStreak() : onOpenPal && onOpenPal('Tell me more about this pattern')} style={{
+          width: '100%', background: theme.surface, borderRadius: 18,
+          padding: 16, border: 'none', cursor: 'pointer', textAlign: 'left',
+          display: 'block',
         }}>
           <div style={{
-            fontFamily: SF, fontSize: 22, fontWeight: 700, color: theme.ink,
-            letterSpacing: 0.35,
-          }}>Summary</div>
-          <button style={{
-            background: 'transparent', border: 'none', cursor: 'pointer',
-            fontFamily: SF, fontSize: 15, color: theme.accent, letterSpacing: -0.24,
-          }}>Edit</button>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <SummaryTile
-            type="money" theme={theme}
-            icon="dollarsign.circle.fill"
-            label="Spending"
-            big={`$${moneySpent.toFixed(2)}`}
-            sub={`$${(moneyBudget - moneySpent).toFixed(2)} left today`}
-            onClick={() => onOpenDetail('money')}
-          />
-          <SummaryTile
-            type="move" theme={theme}
-            icon="flame.fill"
-            label="Active Energy"
-            big="599"
-            unit="CAL"
-            sub={`${moveMinutes} min · 2 workouts`}
-            onClick={() => onOpenDetail('move')}
-          />
-          <SummaryTile
-            type="rituals" theme={theme}
-            icon="sparkles"
-            label="Routine"
-            big={`${ritualsDone}/${ritualsGoal}`}
-            sub="1 ritual to close the day"
-            onClick={() => onOpenDetail('rituals')}
-          />
-          <SummaryTile
-            type="move" theme={theme}
-            icon="figure.run"
-            label="Steps"
-            big="8,412"
-            sub="of 10,000"
-            onClick={() => onOpenDetail('move')}
-          />
-        </div>
-      </div>
-
-      {/* Recent entries */}
-      <Section theme={theme} header="Recent activity">
-        {entries.slice().reverse().slice(0, 5).map((e, i, arr) => (
-          <ListRow key={e.id}
-            icon={e.sf}
-            iconBg={colorFor(e.type)}
-            title={e.title}
-            subtitle={`${e.time.replace(':', ':')} · ${e.detail}`}
-            value={e.value !== null && e.value !== undefined
-              ? (typeof e.value === 'number'
-                  ? (e.value < 0 ? `−$${Math.abs(e.value).toFixed(2)}` : `$${e.value.toFixed(2)}`)
-                  : e.value)
-              : null}
-            valueColor={e.type === 'money' ? theme.ink : theme.ink3}
-            theme={theme}
-            last={i === arr.length - 1}
-            onClick={() => onOpenDetail(e.type)}
-          />
-        ))}
-      </Section>
-
-      {/* Quick add */}
-      <Section theme={theme} header="Quick add">
-        {[
-          { type: 'money', icon: 'cup.and.saucer.fill', title: 'Log an expense', subtitle: 'Coffee, food, transit…' },
-          { type: 'move', icon: 'figure.run', title: 'Start a workout', subtitle: 'Run, strength, yoga…' },
-          { type: 'rituals', icon: 'sparkles', title: 'Mark a ritual done', subtitle: 'Routines & habits' },
-        ].map((q, i, arr) => (
-          <ListRow key={q.type}
-            icon={q.icon} iconBg={colorFor(q.type)}
-            title={q.title} subtitle={q.subtitle}
-            theme={theme} last={i === arr.length - 1}
-            onClick={onOpenAdd}
-          />
-        ))}
-      </Section>
-
-      {/* Highlight */}
-      <Section theme={theme} header="Highlight">
-        <div style={{ padding: 16 }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6,
+            display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10,
           }}>
-            <Icon name="sparkles" size={15} color={theme.accent} />
+            <div style={{
+              width: 22, height: 22, borderRadius: '50%',
+              background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.rituals} 100%)`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Icon name="sparkles" size={11} color="#fff" />
+            </div>
             <span style={{
-              fontFamily: SF, fontSize: 13, color: theme.accent, fontWeight: 600,
-              letterSpacing: -0.08,
-            }}>Insight</span>
+              fontFamily: SF, fontSize: 12, color: theme.ink3, fontWeight: 700,
+              letterSpacing: 0.3, textTransform: 'uppercase',
+            }}>Pal noticed</span>
+            <span style={{ flex: 1 }} />
+            <Icon name="chevron.right" size={13} color={theme.ink4} />
           </div>
           <div style={{
             fontFamily: SF, fontSize: 17, color: theme.ink, letterSpacing: -0.43,
-            lineHeight: 1.4,
+            lineHeight: 1.38,
           }}>
-            You've moved for <b>11 days in a row</b>. On days you complete morning rituals, you spend <b>32% less on food</b>.
+            You've moved <b>11 days in a row</b>. On days you finish morning rituals, you spend <span style={{ color: theme.money, fontWeight: 600 }}>32% less</span> on food.
+          </div>
+          <div style={{
+            display: 'flex', gap: 6, marginTop: 12, flexWrap: 'wrap',
+          }}>
+            {['Why?', 'Show me the days', 'How to keep it up'].map(q => (
+              <span key={q} onClick={(e) => { e.stopPropagation(); onOpenPal && onOpenPal(q); }} style={{
+                padding: '6px 10px', background: theme.fill, borderRadius: 100,
+                fontFamily: SF, fontSize: 12, color: theme.ink2, fontWeight: 500,
+                letterSpacing: -0.08,
+              }}>{q}</span>
+            ))}
+          </div>
+        </button>
+      </div>
+
+      {/* Timeline — grouped by time-of-day */}
+      <div style={{
+        display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+        padding: '0 20px 8px',
+      }}>
+        <div style={{
+          fontFamily: SF, fontSize: 22, fontWeight: 700, color: theme.ink,
+          letterSpacing: 0.35,
+        }}>Timeline</div>
+        <button style={{
+          background: 'transparent', border: 'none', cursor: 'pointer',
+          fontFamily: SF, fontSize: 15, color: theme.accent, letterSpacing: -0.24,
+        }}>Week</button>
+      </div>
+
+      {buckets.map(b => b.rows.length > 0 && (
+        <div key={b.label} style={{ marginBottom: 14 }}>
+          <div style={{
+            padding: '6px 20px 6px',
+            fontFamily: SF, fontSize: 12, fontWeight: 600, color: theme.ink3,
+            letterSpacing: 0.3, textTransform: 'uppercase',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <span>{b.label}</span>
+            <span style={{ color: theme.ink4, fontWeight: 500 }}>{b.rows.length} {b.rows.length === 1 ? 'entry' : 'entries'}</span>
+          </div>
+          <div style={{
+            margin: '0 16px', background: theme.surface, borderRadius: 14,
+            overflow: 'hidden',
+          }}>
+            {b.rows.map((e, i) => (
+              <div key={e.id} onClick={() => onOpenDetail(e.type)} style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '11px 14px', cursor: 'pointer',
+                borderBottom: i < b.rows.length - 1 ? `0.5px solid ${theme.hair}` : 'none',
+              }}>
+                <div style={{
+                  fontFamily: SF, fontSize: 12, color: theme.ink3,
+                  width: 38, fontVariantNumeric: 'tabular-nums', fontWeight: 500,
+                  letterSpacing: -0.08,
+                }}>{e.time}</div>
+                <div style={{
+                  width: 30, height: 30, borderRadius: 9,
+                  background: colorFor(e.type),
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <Icon name={e.sf} size={15} color="#fff" />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontFamily: SF, fontSize: 15, fontWeight: 500, color: theme.ink,
+                    letterSpacing: -0.24, whiteSpace: 'nowrap',
+                    overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>{e.title}</div>
+                  <div style={{
+                    fontFamily: SF, fontSize: 12, color: theme.ink3,
+                    letterSpacing: -0.08, marginTop: 1,
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>{e.detail}</div>
+                </div>
+                {e.value !== null && e.value !== undefined && (
+                  <div style={{
+                    fontFamily: SF, fontSize: 14, fontWeight: 600,
+                    color: e.type === 'money' ? theme.ink : theme.ink3,
+                    letterSpacing: -0.15, fontVariantNumeric: 'tabular-nums',
+                  }}>
+                    {typeof e.value === 'number'
+                      ? (e.value < 0 ? `−$${Math.abs(e.value).toFixed(2)}` : `$${e.value.toFixed(2)}`)
+                      : e.value}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
-      </Section>
+      ))}
+
+      {/* Close-out prompt */}
+      <div style={{ margin: '6px 16px 0' }}>
+        <button onClick={() => onOpenCloseout ? onOpenCloseout() : onOpenPal && onOpenPal('Help me close out today')} style={{
+          width: '100%', padding: '14px 16px',
+          background: `${theme.rituals}14`,
+          border: `0.5px dashed ${theme.rituals}55`,
+          borderRadius: 14, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left',
+        }}>
+          <div style={{
+            width: 30, height: 30, borderRadius: 9, background: theme.rituals,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <Icon name="sparkles" size={15} color="#fff" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{
+              fontFamily: SF, fontSize: 15, fontWeight: 600, color: theme.ink,
+              letterSpacing: -0.24,
+            }}>Close out your day</div>
+            <div style={{
+              fontFamily: SF, fontSize: 12, color: theme.ink3,
+              letterSpacing: -0.08, marginTop: 1,
+            }}>1 ritual left · 30 min before sleep</div>
+          </div>
+          <Icon name="chevron.right" size={13} color={theme.ink4} />
+        </button>
+      </div>
     </div>
   );
 }

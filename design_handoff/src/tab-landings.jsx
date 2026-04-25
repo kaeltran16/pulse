@@ -1,86 +1,238 @@
 // Move tab landing, Rituals tab landing, Quick action sheet
 // These are the tab-bar destinations; deeper screens push from here.
 
-function MoveTabScreen({ theme, onStart, onHistory, onRoutines, onLibrary, onDetail }) {
-  const sessions = (window.PAST_SESSIONS || []).slice(0, 4);
-  const routines = (window.ROUTINES || []).slice(0, 3);
+function MoveTabScreen({ theme, onStart, onHistory, onRoutines, onLibrary, onDetail, onWeeklyPlan }) {
+  const sessions = (window.PAST_SESSIONS || []).slice(0, 3);
   const allEx = window.EXERCISES || [];
 
-  // this week totals
-  const thisWeek = { workouts: 3, volume: 12400, minutes: 148, cardio: 2 };
+  const thisWeek = { workouts: 3, goal: 4, volume: 12400, minutes: 148 };
+  const weekDays = [
+    { d: 'M', done: true, t: 'Push' },
+    { d: 'T', done: true, t: 'Legs' },
+    { d: 'W', done: false },
+    { d: 'T', done: true, t: 'Cardio' },
+    { d: 'F', done: false, today: true },
+    { d: 'S', done: false },
+    { d: 'S', done: false },
+  ];
+  // balance: weekly muscle group split
+  const balance = [
+    { l: 'Push', p: 38, c: theme.move },
+    { l: 'Pull', p: 12, c: theme.rituals },
+    { l: 'Legs', p: 35, c: theme.money },
+    { l: 'Cardio', p: 15, c: theme.accent },
+  ];
 
   return (
     <div style={{ background: theme.bg, minHeight: '100%', paddingBottom: 110 }}>
-      <NavBar theme={theme} largeTitle="Move" subtitle="Gym, cardio, daily movement"
+      <NavBar theme={theme} title="Move" subtitle="Gym, cardio, daily movement"
         trailing={<NavIconButton name="ellipsis" theme={theme} />} />
 
-      {/* This week hero */}
-      <div style={{ padding: '0 16px 16px' }}>
+      {/* This week hero — richer layout w/ day calendar */}
+      <div style={{ padding: '0 16px 18px' }}>
         <div style={{
-          background: `linear-gradient(135deg, ${theme.move} 0%, ${theme.move}dd 100%)`,
-          borderRadius: 18, padding: 18, color: '#fff',
-          boxShadow: `0 8px 24px ${theme.move}33`,
+          background: `linear-gradient(155deg, ${theme.move} 0%, ${theme.move}ee 60%, ${theme.accent}dd 100%)`,
+          borderRadius: 22, padding: 18, color: '#fff',
+          boxShadow: `0 10px 30px ${theme.move}33`,
+          position: 'relative', overflow: 'hidden',
         }}>
           <div style={{
-            fontFamily: SF, fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
-            textTransform: 'uppercase', opacity: 0.85, marginBottom: 4,
-          }}>This week</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-            <span style={{
-              fontFamily: SFR, fontSize: 42, fontWeight: 700, letterSpacing: -1,
-              fontVariantNumeric: 'tabular-nums', lineHeight: 1,
-            }}>{thisWeek.workouts}</span>
-            <span style={{ fontFamily: SF, fontSize: 15, opacity: 0.9 }}>workouts · {thisWeek.minutes} min</span>
-          </div>
+            position: 'absolute', top: -60, right: -50, width: 180, height: 180,
+            borderRadius: '50%', background: 'rgba(255,255,255,0.08)',
+          }} />
           <div style={{
-            marginTop: 10, display: 'flex', gap: 6,
-          }}>
-            {[1,1,0,1,0,0,0].map((d, i) => (
-              <div key={i} style={{
-                flex: 1, height: 6, borderRadius: 3,
-                background: d ? '#fff' : 'rgba(255,255,255,0.28)',
-              }} />
-            ))}
+            position: 'absolute', inset: 0,
+            background: `repeating-linear-gradient(135deg, transparent 0 22px, rgba(255,255,255,0.04) 22px 23px)`,
+          }} />
+
+          <div style={{ position: 'relative' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{
+                  fontFamily: SF, fontSize: 11, fontWeight: 700, letterSpacing: 1.2,
+                  textTransform: 'uppercase', opacity: 0.82, marginBottom: 6,
+                }}>This week</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                  <span style={{
+                    fontFamily: SFR, fontSize: 48, fontWeight: 700, letterSpacing: -1.2,
+                    fontVariantNumeric: 'tabular-nums', lineHeight: 0.95,
+                  }}>{thisWeek.workouts}</span>
+                  <span style={{ fontFamily: SF, fontSize: 15, opacity: 0.82, letterSpacing: -0.1 }}>
+                    / {thisWeek.goal} workouts
+                  </span>
+                </div>
+              </div>
+              {/* mini ring */}
+              <div style={{ position: 'relative', width: 56, height: 56 }}>
+                <svg width="56" height="56" style={{ transform: 'rotate(-90deg)' }}>
+                  <circle cx="28" cy="28" r="23" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="5" />
+                  <circle cx="28" cy="28" r="23" fill="none" stroke="#fff" strokeWidth="5"
+                    strokeDasharray={`${(thisWeek.workouts / thisWeek.goal) * 144} 144`}
+                    strokeLinecap="round" />
+                </svg>
+                <div style={{
+                  position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: SFR, fontSize: 14, fontWeight: 700,
+                  fontVariantNumeric: 'tabular-nums', letterSpacing: -0.2,
+                }}>{Math.round((thisWeek.workouts / thisWeek.goal) * 100)}%</div>
+              </div>
+            </div>
+
+            {/* Day calendar */}
+            <div style={{ display: 'flex', gap: 4, marginTop: 16 }}>
+              {weekDays.map((d, i) => (
+                <div key={i} style={{
+                  flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+                }}>
+                  <div style={{
+                    width: '100%', paddingBottom: '100%', position: 'relative',
+                    background: d.done ? '#fff' : d.today ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)',
+                    border: d.today && !d.done ? '1.5px dashed rgba(255,255,255,0.7)' : 'none',
+                    borderRadius: 9,
+                  }}>
+                    {d.done && (
+                      <div style={{
+                        position: 'absolute', inset: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <Icon name="checkmark" size={13} color={theme.move} />
+                      </div>
+                    )}
+                  </div>
+                  <div style={{
+                    fontFamily: SF, fontSize: 10, fontWeight: 700, opacity: d.today ? 1 : 0.75, letterSpacing: 0.3,
+                  }}>{d.d}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* stat row */}
+            <div style={{
+              marginTop: 14, paddingTop: 14, borderTop: '0.5px solid rgba(255,255,255,0.2)',
+              display: 'flex', gap: 14,
+            }}>
+              <div>
+                <div style={{ fontFamily: SFR, fontSize: 18, fontWeight: 700,
+                  fontVariantNumeric: 'tabular-nums', letterSpacing: -0.3, lineHeight: 1 }}>
+                  {(thisWeek.volume / 1000).toFixed(1)}t
+                </div>
+                <div style={{ fontFamily: SF, fontSize: 10, opacity: 0.75, letterSpacing: 0.5,
+                  textTransform: 'uppercase', fontWeight: 600, marginTop: 2 }}>Volume</div>
+              </div>
+              <div style={{ width: 1, background: 'rgba(255,255,255,0.2)' }} />
+              <div>
+                <div style={{ fontFamily: SFR, fontSize: 18, fontWeight: 700,
+                  fontVariantNumeric: 'tabular-nums', letterSpacing: -0.3, lineHeight: 1 }}>
+                  {thisWeek.minutes}<span style={{ fontSize: 11, opacity: 0.75, marginLeft: 1 }}>m</span>
+                </div>
+                <div style={{ fontFamily: SF, fontSize: 10, opacity: 0.75, letterSpacing: 0.5,
+                  textTransform: 'uppercase', fontWeight: 600, marginTop: 2 }}>Training</div>
+              </div>
+              <div style={{ width: 1, background: 'rgba(255,255,255,0.2)' }} />
+              <div>
+                <div style={{ fontFamily: SFR, fontSize: 18, fontWeight: 700,
+                  fontVariantNumeric: 'tabular-nums', letterSpacing: -0.3, lineHeight: 1 }}>
+                  2 PR
+                </div>
+                <div style={{ fontFamily: SF, fontSize: 10, opacity: 0.75, letterSpacing: 0.5,
+                  textTransform: 'uppercase', fontWeight: 600, marginTop: 2 }}>Records</div>
+              </div>
+            </div>
           </div>
-          <div style={{
-            marginTop: 8, fontFamily: SF, fontSize: 12, opacity: 0.85,
-            letterSpacing: -0.08,
-          }}>Mon · Tue · <b style={{ opacity: 1 }}>Thu</b> · on track for 4</div>
         </div>
       </div>
 
-      {/* Start workout CTA */}
+      {/* Start workout CTA — more dramatic */}
       <div style={{ padding: '0 16px 18px' }}>
         <button onClick={onStart} style={{
-          width: '100%', padding: '16px 18px',
-          background: theme.surface, border: 'none', borderRadius: 14, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left',
+          width: '100%', padding: 0, background: 'transparent', border: 'none',
+          cursor: 'pointer', textAlign: 'left',
+          borderRadius: 16, overflow: 'hidden',
           boxShadow: `0 0 0 0.5px ${theme.hair}`,
         }}>
           <div style={{
-            width: 44, height: 44, borderRadius: 12,
-            background: theme.move,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: `0 4px 12px ${theme.move}55`,
+            background: theme.surface, padding: '14px 16px',
+            display: 'flex', alignItems: 'center', gap: 14,
           }}>
-            <Icon name="play.fill" size={18} color="#fff" />
-          </div>
-          <div style={{ flex: 1 }}>
             <div style={{
-              fontFamily: SF, fontSize: 16, fontWeight: 600, color: theme.ink,
-              letterSpacing: -0.3,
-            }}>Start workout</div>
+              width: 52, height: 52, borderRadius: '50%',
+              background: `radial-gradient(circle at 30% 30%, ${theme.move} 0%, ${theme.move}cc 80%)`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: `0 4px 14px ${theme.move}55, inset 0 1px 0 rgba(255,255,255,0.3)`,
+              flexShrink: 0,
+            }}>
+              <Icon name="play.fill" size={20} color="#fff" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{
+                fontFamily: SF, fontSize: 10, fontWeight: 700, color: theme.move,
+                letterSpacing: 1, textTransform: 'uppercase',
+              }}>● Pal's pick for today</div>
+              <div style={{
+                fontFamily: SFR, fontSize: 18, fontWeight: 700, color: theme.ink,
+                letterSpacing: -0.3, marginTop: 1,
+              }}>Pull Day A</div>
+              <div style={{
+                fontFamily: SF, fontSize: 12, color: theme.ink3, letterSpacing: -0.08, marginTop: 1,
+              }}>5 exercises · 58 min · last done 5d ago</div>
+            </div>
             <div style={{
-              fontFamily: SF, fontSize: 13, color: theme.ink3, letterSpacing: -0.08,
-              marginTop: 1,
-            }}>Pal suggests Pull Day A · 55 min</div>
+              padding: '10px 14px', background: theme.move, borderRadius: 100,
+              fontFamily: SF, fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: -0.1,
+              flexShrink: 0,
+            }}>Start</div>
           </div>
-          <Icon name="chevron.right" size={14} color={theme.ink4} />
         </button>
+      </div>
+
+      {/* Weekly balance viz */}
+      <div style={{ padding: '0 16px 18px' }}>
+        <div style={{
+          background: theme.surface, borderRadius: 16, padding: 16,
+          boxShadow: `0 0 0 0.5px ${theme.hair}`,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: 12 }}>
+            <div style={{
+              fontFamily: SF, fontSize: 14, fontWeight: 700, color: theme.ink, letterSpacing: -0.2,
+            }}>Weekly balance</div>
+            <div style={{ flex: 1 }} />
+            <div style={{
+              fontFamily: SF, fontSize: 11, fontWeight: 600, color: theme.move, letterSpacing: -0.08,
+              display: 'inline-flex', alignItems: 'center', gap: 3,
+            }}>
+              <Icon name="sparkles" size={10} color={theme.move} />
+              Pal says pull more
+            </div>
+          </div>
+
+          {/* Stacked bar */}
+          <div style={{ display: 'flex', height: 12, borderRadius: 100, overflow: 'hidden', gap: 2, marginBottom: 10 }}>
+            {balance.map(b => (
+              <div key={b.l} style={{
+                width: `${b.p}%`, background: b.c, height: '100%',
+              }} />
+            ))}
+          </div>
+
+          {/* Legend */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+            {balance.map(b => (
+              <div key={b.l} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ width: 8, height: 8, borderRadius: 2, background: b.c }} />
+                <span style={{ fontFamily: SF, fontSize: 12, color: theme.ink2, letterSpacing: -0.08 }}>{b.l}</span>
+                <div style={{ flex: 1 }} />
+                <span style={{ fontFamily: SFR, fontSize: 12, fontWeight: 600, color: theme.ink,
+                  fontVariantNumeric: 'tabular-nums', letterSpacing: -0.08 }}>{b.p}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Quick links */}
       <Section theme={theme}>
+        <ListRow icon="calendar" iconBg={theme.move} title="Weekly plan"
+          value="4 of 5 · Thu" onClick={onWeeklyPlan} theme={theme} />
         <ListRow icon="books.vertical.fill" iconBg={theme.move} title="My routines"
           value={`${(window.ROUTINES || []).length}`} onClick={onRoutines} theme={theme} />
         <ListRow icon="dumbbell.fill" iconBg={theme.accent} title="Exercise library"
@@ -89,40 +241,94 @@ function MoveTabScreen({ theme, onStart, onHistory, onRoutines, onLibrary, onDet
           value="All time" onClick={onHistory} theme={theme} last />
       </Section>
 
-      {/* Recent sessions */}
-      <Section theme={theme} header="Recent sessions">
-        {sessions.map((s, i, arr) => (
-          <div key={i} onClick={onDetail} style={{
-            padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 11,
-            borderBottom: i < arr.length - 1 ? `0.5px solid ${theme.hair}` : 'none',
-            cursor: 'pointer',
-          }}>
-            <div style={{
-              width: 38, height: 38, borderRadius: 10,
-              background: s.type === 'cardio' ? `${theme.accent}22` : `${theme.move}22`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Icon name={s.type === 'cardio' ? 'figure.run' : 'dumbbell.fill'} size={18}
-                color={s.type === 'cardio' ? theme.accent : theme.move} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: SF, fontSize: 15, fontWeight: 500, color: theme.ink, letterSpacing: -0.24 }}>
-                {s.routineName}
+      {/* Recent sessions — rich cards */}
+      <div style={{ padding: '0 16px' }}>
+        <div style={{
+          fontFamily: SF, fontSize: 12, fontWeight: 700, color: theme.ink3,
+          letterSpacing: 0.8, textTransform: 'uppercase', padding: '12px 4px 10px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <span>Recent sessions</span>
+          <span onClick={onHistory} style={{ color: theme.accent, fontWeight: 600, textTransform: 'none',
+            fontSize: 13, letterSpacing: -0.08, cursor: 'pointer' }}>See all</span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {sessions.map((s, i) => {
+            const isCardio = s.type === 'cardio';
+            const c = isCardio ? theme.accent : theme.move;
+            return (
+              <div key={i} onClick={onDetail} style={{
+                background: theme.surface, borderRadius: 14, padding: 0, cursor: 'pointer',
+                boxShadow: `0 0 0 0.5px ${theme.hair}`,
+                display: 'flex', alignItems: 'stretch', overflow: 'hidden',
+              }}>
+                {/* Left accent strip */}
+                <div style={{ width: 4, background: c, flexShrink: 0 }} />
+                <div style={{ flex: 1, padding: '12px 14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <div style={{
+                      width: 32, height: 32, borderRadius: 9,
+                      background: `${c}1a`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Icon name={isCardio ? 'figure.run' : 'dumbbell.fill'} size={16} color={c} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontFamily: SF, fontSize: 15, fontWeight: 600, color: theme.ink, letterSpacing: -0.24 }}>
+                        {s.routineName}
+                      </div>
+                      <div style={{ fontFamily: SF, fontSize: 11, color: theme.ink3, letterSpacing: -0.08, marginTop: 1 }}>
+                        {s.date}
+                      </div>
+                    </div>
+                    {s.prs > 0 && (
+                      <div style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 3,
+                        padding: '3px 8px', background: theme.money, color: '#fff',
+                        borderRadius: 100,
+                        fontFamily: SF, fontSize: 10, fontWeight: 700, letterSpacing: 0.3,
+                      }}>
+                        <Icon name="star.fill" size={8} color="#fff" />
+                        {s.prs} PR
+                      </div>
+                    )}
+                  </div>
+                  {/* stats row */}
+                  <div style={{ display: 'flex', gap: 14, paddingLeft: 42 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
+                      <span style={{ fontFamily: SFR, fontSize: 14, fontWeight: 700, color: theme.ink,
+                        fontVariantNumeric: 'tabular-nums', letterSpacing: -0.2 }}>{s.duration}</span>
+                      <span style={{ fontFamily: SF, fontSize: 10, color: theme.ink3, letterSpacing: -0.08 }}>min</span>
+                    </div>
+                    {s.volume > 0 && (
+                      <>
+                        <div style={{ width: 1, background: theme.hair }} />
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
+                          <span style={{ fontFamily: SFR, fontSize: 14, fontWeight: 700, color: theme.ink,
+                            fontVariantNumeric: 'tabular-nums', letterSpacing: -0.2 }}>
+                            {(s.volume / 1000).toFixed(1)}t
+                          </span>
+                          <span style={{ fontFamily: SF, fontSize: 10, color: theme.ink3, letterSpacing: -0.08 }}>volume</span>
+                        </div>
+                      </>
+                    )}
+                    {/* mini sparkline */}
+                    <div style={{ flex: 1 }} />
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 18 }}>
+                      {[3, 5, 4, 6, 8, 7].map((h, j) => (
+                        <div key={j} style={{
+                          width: 3, height: `${(h / 8) * 100}%`,
+                          background: c, borderRadius: 1, opacity: 0.4 + j * 0.1,
+                        }} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div style={{ fontFamily: SF, fontSize: 12, color: theme.ink3, letterSpacing: -0.08, marginTop: 1 }}>
-                {s.date} · {s.duration} min{s.volume ? ` · ${(s.volume/1000).toFixed(1)}t` : ''}
-              </div>
-            </div>
-            {s.prs > 0 && (
-              <div style={{
-                padding: '2px 7px', background: theme.money, color: '#fff',
-                borderRadius: 6, fontFamily: SF, fontSize: 10, fontWeight: 700, letterSpacing: 0.3,
-              }}>{s.prs} PR</div>
-            )}
-            <Icon name="chevron.right" size={13} color={theme.ink4} />
-          </div>
-        ))}
-      </Section>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -138,7 +344,7 @@ function RitualsTabScreen({ theme, onBuilder }) {
 
   return (
     <div style={{ background: theme.bg, minHeight: '100%', paddingBottom: 110 }}>
-      <NavBar theme={theme} largeTitle="Rituals" subtitle={`${done} of ${rituals.length} done today`}
+      <NavBar theme={theme} title="Rituals" subtitle={`${done} of ${rituals.length} done today`}
         trailing={<NavIconButton name="plus" theme={theme} onClick={onBuilder} />} />
 
       {/* Today progress ring */}
@@ -219,10 +425,10 @@ function RitualsTabScreen({ theme, onBuilder }) {
   );
 }
 
-function YouTabScreen({ theme, onWeek, onMonthly, onStats, onEmailSync }) {
+function YouTabScreen({ theme, onWeek, onMonthly, onStats, onEmailSync, onSubs, onBills, onInbox }) {
   return (
     <div style={{ background: theme.bg, minHeight: '100%', paddingBottom: 110 }}>
-      <NavBar theme={theme} largeTitle="You" subtitle="Reviews, patterns, settings"
+      <NavBar theme={theme} title="You" subtitle="Reviews, patterns, settings"
         trailing={<NavIconButton name="gearshape.fill" theme={theme} />} />
 
       {/* Profile card */}
@@ -250,12 +456,19 @@ function YouTabScreen({ theme, onWeek, onMonthly, onStats, onEmailSync }) {
       </div>
 
       <Section theme={theme} header="Reviews">
-        <ListRow icon="calendar" iconBg={theme.rituals} title="This week"
-          value="Thu Oct 23" onClick={onWeek} theme={theme} />
+        <ListRow icon="calendar" iconBg={theme.rituals} title="Weekly review"
+          value="Apr 17–23" onClick={onWeek} theme={theme} />
         <ListRow icon="chart.bar.fill" iconBg={theme.accent} title="Monthly review"
           value="October" onClick={onMonthly} theme={theme} />
         <ListRow icon="sparkles" iconBg={theme.money} title="Yearly rewind"
           value="Preview" theme={theme} last />
+      </Section>
+
+      <Section theme={theme} header="Money">
+        <ListRow icon="house.fill" iconBg={theme.accent} title="Bills"
+          value="$2,400 · Mon" onClick={onBills} theme={theme} />
+        <ListRow icon="repeat" iconBg={theme.rituals} title="Subscriptions"
+          value="$170/mo" onClick={onSubs} theme={theme} last />
       </Section>
 
       <Section theme={theme} header="Integrations">
@@ -267,7 +480,8 @@ function YouTabScreen({ theme, onWeek, onMonthly, onStats, onEmailSync }) {
         <ListRow icon="chart.bar.fill" iconBg={theme.move} title="All stats"
           onClick={onStats} theme={theme} />
         <ListRow icon="tray.fill" iconBg="#8E8E93" title="Export data" theme={theme} />
-        <ListRow icon="bell.fill" iconBg="#FF9500" title="Notifications" theme={theme} last />
+        <ListRow icon="bell.fill" iconBg="#FF9500" title="Notifications"
+          value="3 new" onClick={onInbox} theme={theme} last />
       </Section>
 
       <Section theme={theme} header="Account">

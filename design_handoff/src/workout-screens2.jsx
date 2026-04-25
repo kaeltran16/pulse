@@ -1,7 +1,7 @@
 // Routine editor + Exercise library + Workout detail (past session)
 
 // ─── Routine editor ──────────────────────────────────────────
-function RoutineEditorScreen({ theme, routineId = 'push-a', onBack }) {
+function RoutineEditorScreen({ theme, routineId = 'push-a', onBack, onGenerate }) {
   const routine = (window.ROUTINES || []).find(r => r.id === routineId) || window.ROUTINES[0];
   const allEx = window.EXERCISES || [];
   const exercises = routine.exercises.map(re => {
@@ -110,8 +110,18 @@ function RoutineEditorScreen({ theme, routineId = 'push-a', onBack }) {
         ))}
       </Section>
 
-      {/* Add exercise */}
-      <div style={{ padding: '0 16px' }}>
+      {/* Add exercise + AI generator */}
+      <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <button onClick={onGenerate} style={{
+          width: '100%', padding: '14px', border: 'none', borderRadius: 12, cursor: 'pointer',
+          background: `linear-gradient(135deg, ${theme.move} 0%, ${theme.accent} 100%)`,
+          fontFamily: SF, fontSize: 15, color: '#fff', fontWeight: 700,
+          letterSpacing: -0.24, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          boxShadow: `0 4px 12px ${theme.move}44`,
+        }}>
+          <Icon name="sparkles" size={13} color="#fff" />
+          Generate routine with AI
+        </button>
         <button style={{
           width: '100%', padding: '14px', background: theme.surface,
           border: `0.5px solid ${theme.hair}`, borderRadius: 12, cursor: 'pointer',
@@ -264,56 +274,103 @@ function WorkoutDetailScreen({ theme, onBack }) {
         trailing={<NavIconButton name="ellipsis" theme={theme} />}
       />
 
-      {/* Summary stats */}
+      {/* Summary stats — 2×2 grid with icons */}
       <div style={{ padding: '0 16px' }}>
         <div style={{
-          display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10,
-          background: theme.surface, borderRadius: 14, padding: '16px 12px',
-          boxShadow: `0 0 0 0.5px ${theme.hair}`,
+          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8,
         }}>
           {[
-            { l: 'Duration', v: `${s.duration}m`, c: theme.move },
-            { l: 'Volume', v: `${(s.volume/1000).toFixed(1)}t`, c: theme.accent },
-            { l: 'Sets', v: '17', c: theme.rituals },
-            { l: 'PRs', v: s.prs, c: theme.money },
+            { l: 'Duration', v: s.duration, u: 'min', c: theme.move, icon: 'clock.fill' },
+            { l: 'Volume', v: (s.volume/1000).toFixed(1), u: 'tonnes', c: theme.accent, icon: 'chart.bar.fill' },
+            { l: 'Sets', v: 17, u: '52 reps', c: theme.rituals, icon: 'list.number' },
+            { l: 'Personal records', v: s.prs, u: 'new best', c: theme.money, icon: 'star.fill' },
           ].map((x, i) => (
-            <div key={i} style={{ textAlign: 'center' }}>
+            <div key={i} style={{
+              background: theme.surface, borderRadius: 14, padding: '13px 14px',
+              boxShadow: `0 0 0 0.5px ${theme.hair}`,
+              position: 'relative', overflow: 'hidden',
+            }}>
               <div style={{
-                fontFamily: SFR, fontSize: 20, fontWeight: 700, color: x.c,
-                fontVariantNumeric: 'tabular-nums', letterSpacing: -0.3,
-              }}>{x.v}</div>
-              <div style={{ fontFamily: SF, fontSize: 11, color: theme.ink3, letterSpacing: -0.08, marginTop: 1 }}>
-                {x.l}
+                position: 'absolute', top: -10, right: -10, width: 50, height: 50,
+                borderRadius: '50%', background: `${x.c}10`,
+              }} />
+              <div style={{ position: 'relative' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
+                  <div style={{
+                    width: 20, height: 20, borderRadius: 6, background: `${x.c}22`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Icon name={x.icon} size={10} color={x.c} />
+                  </div>
+                  <span style={{ fontFamily: SF, fontSize: 10, fontWeight: 700, color: theme.ink3,
+                    letterSpacing: 0.5, textTransform: 'uppercase' }}>{x.l}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                  <div style={{
+                    fontFamily: SFR, fontSize: 26, fontWeight: 700, color: x.c,
+                    fontVariantNumeric: 'tabular-nums', letterSpacing: -0.5, lineHeight: 1,
+                  }}>{x.v}</div>
+                  <div style={{ fontFamily: SF, fontSize: 11, color: theme.ink3, letterSpacing: -0.08 }}>
+                    {x.u}
+                  </div>
+                </div>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Volume chart placeholder */}
+      {/* Volume chart — richer */}
       <Section theme={theme} header="Volume over 8 weeks">
-        <div style={{ padding: '16px 16px 12px' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 80 }}>
-            {[30, 42, 38, 45, 52, 48, 58, 68].map((h, i) => (
-              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                <div style={{
-                  width: '100%', height: `${(h/68)*100}%`,
-                  background: i === 7 ? theme.move : `${theme.move}55`,
-                  borderRadius: '4px 4px 2px 2px',
-                }} />
-                <div style={{
-                  fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace',
-                  fontSize: 9, color: theme.ink3, letterSpacing: 0.3,
-                }}>W{i+1}</div>
-              </div>
-            ))}
-          </div>
+        <div style={{ padding: '16px 16px 14px' }}>
           <div style={{
-            marginTop: 10, fontFamily: SF, fontSize: 12, color: theme.ink3,
-            letterSpacing: -0.08, display: 'flex', justifyContent: 'space-between',
+            display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 14,
           }}>
-            <span>Trend: <span style={{ color: theme.move, fontWeight: 600 }}>↑ 15% over 4 wks</span></span>
-            <span>Total 34.2t</span>
+            <div style={{
+              fontFamily: SFR, fontSize: 26, fontWeight: 700, color: theme.ink,
+              fontVariantNumeric: 'tabular-nums', letterSpacing: -0.5, lineHeight: 1,
+            }}>34.2<span style={{ fontSize: 13, color: theme.ink3, fontWeight: 500, marginLeft: 2 }}>t total</span></div>
+            <div style={{ flex: 1 }} />
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              padding: '3px 9px', background: `${theme.move}1a`,
+              borderRadius: 100,
+              fontFamily: SF, fontSize: 11, fontWeight: 700, color: theme.move, letterSpacing: -0.08,
+            }}>
+              <Icon name="arrow.up.right" size={10} color={theme.move} />
+              +15% in 4 wks
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 100 }}>
+            {[30, 42, 38, 45, 52, 48, 58, 68].map((h, i) => {
+              const isLast = i === 7;
+              return (
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', gap: 5 }}>
+                  {isLast && (
+                    <div style={{
+                      fontFamily: SFR, fontSize: 10, fontWeight: 700, color: theme.move,
+                      fontVariantNumeric: 'tabular-nums', letterSpacing: -0.08,
+                      padding: '1px 4px', background: `${theme.move}1a`, borderRadius: 4,
+                    }}>4.3t</div>
+                  )}
+                  <div style={{
+                    width: '100%', height: `${(h/68)*100}%`,
+                    background: isLast
+                      ? `linear-gradient(180deg, ${theme.move} 0%, ${theme.move}cc 100%)`
+                      : `${theme.move}44`,
+                    borderRadius: '6px 6px 3px 3px',
+                    boxShadow: isLast ? `0 2px 8px ${theme.move}44` : 'none',
+                  }} />
+                  <div style={{
+                    fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace',
+                    fontSize: 9, fontWeight: isLast ? 700 : 500,
+                    color: isLast ? theme.move : theme.ink3, letterSpacing: 0.3,
+                  }}>W{i+1}</div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </Section>

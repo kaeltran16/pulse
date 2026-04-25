@@ -185,11 +185,164 @@ function IOSList({ header, children, dark = false }) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Dynamic Island — TrueDepth notch + Live Activity content
+// Pass `liveActivity` to expand into an ExpensePal Live Activity pill.
+// liveActivity shape: { kind: 'workout' | 'pal' | 'log' | 'streak', title, value, accent }
+// ─────────────────────────────────────────────────────────────
+function IOSDynamicIsland({ liveActivity = null }) {
+  const expanded = !!liveActivity;
+  const w = expanded ? 280 : 126;
+  const h = 37;
+
+  return (
+    <div style={{
+      position: 'absolute', top: 11, left: '50%',
+      transform: 'translateX(-50%)',
+      width: w, height: h, borderRadius: 24,
+      background: '#000', zIndex: 50,
+      boxShadow: 'inset 0 0 0 0.5px rgba(255,255,255,0.04)',
+      display: 'flex', alignItems: 'center',
+      transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+      overflow: 'hidden',
+    }}>
+      {/* sensor dots — sit just inside the pill, always visible */}
+      <div style={{
+        position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
+        width: 8, height: 8, borderRadius: '50%',
+        background: 'radial-gradient(circle at 35% 35%, #1a1a1f 0%, #050507 70%)',
+        boxShadow: 'inset 0 0 0 0.5px rgba(255,255,255,0.05)',
+      }} />
+      <div style={{
+        position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
+        width: 9, height: 9, borderRadius: '50%',
+        background: 'radial-gradient(circle at 35% 35%, #1f1f24 0%, #0a0a0c 55%, #000 100%)',
+        boxShadow: 'inset 0 0 0 0.5px rgba(255,255,255,0.08)',
+      }}>
+        <div style={{
+          position: 'absolute', top: 1.5, left: 1.5,
+          width: 2.5, height: 2.5, borderRadius: '50%',
+          background: 'rgba(80,120,180,0.35)',
+        }} />
+      </div>
+
+      {expanded && <DynamicIslandContent live={liveActivity} />}
+    </div>
+  );
+}
+
+function DynamicIslandContent({ live }) {
+  const accent = live.accent || '#5E5CE6';
+  const iconBg = {
+    workout: '#FF453A', pal: accent, log: '#30D158', streak: '#FF9F0A',
+  }[live.kind] || accent;
+  const Glyph = () => {
+    if (live.kind === 'workout') return (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M20.57 14.86l1.43-1.43-1.43-1.43-1.43 1.43-2.86-2.86 1.43-1.43-1.43-1.43-1.43 1.43-2.14-2.14 1.43-1.43L13.14 3 11.71 4.43 13.14 5.86 11 8l-1.43-1.43L8.14 8l1.43 1.43-2.14 2.14-1.43-1.43L4.57 11.57 6 13l-1.43 1.43L6 15.86l1.43-1.43 2.14 2.14L8.14 18l1.43 1.43L11 18l2.14 2.14-1.43 1.43L13.14 23l1.43-1.43-1.43-1.43 2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43 2.86-2.86 1.43 1.43z"/></svg>
+    );
+    if (live.kind === 'pal') return (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M12 2L9.5 7.5 4 9l4 4.5L7 19l5-2.5L17 19l-1-5.5L20 9l-5.5-1.5L12 2z"/></svg>
+    );
+    if (live.kind === 'log') return (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+    );
+    if (live.kind === 'streak') return (
+      <svg width="13" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M13.5 1S6 7 6 13a6 6 0 0012 0c0-2-1-4-1-4s0 3-2 3c0-3-1.5-7.5-1.5-11z"/></svg>
+    );
+    return null;
+  };
+
+  return (
+    <div style={{
+      position: 'absolute', inset: 0,
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '0 36px',
+      fontFamily: '-apple-system, "SF Pro", system-ui',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{
+          width: 22, height: 22, borderRadius: 6, background: iconBg,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.4)',
+        }}>
+          <Glyph />
+        </div>
+        <div style={{
+          color: '#fff', fontSize: 12.5, fontWeight: 600,
+          letterSpacing: -0.1, lineHeight: 1.1,
+        }}>{live.title}</div>
+      </div>
+      <div style={{
+        color: live.kind === 'workout' ? '#FF6B6B' : '#fff',
+        fontSize: 13, fontWeight: 600,
+        fontVariantNumeric: 'tabular-nums',
+        letterSpacing: -0.2,
+      }}>{live.value}</div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Shortcut chip — Siri Suggestion / Shortcuts.app pill above the home indicator.
+// Pass `shortcut={{ label, hint, kind, accent }}` to IOSDevice.
+// ─────────────────────────────────────────────────────────────
+function IOSShortcutChip({ dark = false, label = 'Log expense', hint = 'Siri Shortcut', kind = 'log', accent = '#5E5CE6' }) {
+  const Glyph = () => {
+    if (kind === 'workout') return (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><path d="M6 6l12 12M4 14l6 6M14 4l6 6M9 11l4 4"/></svg>
+    );
+    if (kind === 'pal') return (
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M12 2L9.5 7.5 4 9l4 4.5L7 19l5-2.5L17 19l-1-5.5L20 9l-5.5-1.5L12 2z"/></svg>
+    );
+    return (
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    );
+  };
+  return (
+    <div style={{
+      position: 'absolute', left: '50%', bottom: 100,
+      transform: 'translateX(-50%)',
+      zIndex: 58, pointerEvents: 'none',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 9,
+        padding: '7px 14px 7px 7px', borderRadius: 9999,
+        background: dark ? 'rgba(28,28,30,0.78)' : 'rgba(255,255,255,0.78)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        boxShadow: dark
+          ? '0 4px 16px rgba(0,0,0,0.45), inset 0 0 0 0.5px rgba(255,255,255,0.12)'
+          : '0 4px 16px rgba(0,0,0,0.10), inset 0 0 0 0.5px rgba(0,0,0,0.06)',
+      }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: '50%',
+          background: `linear-gradient(135deg, ${accent} 0%, ${accent}cc 100%)`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.25)',
+        }}><Glyph /></div>
+        <div style={{ display: 'flex', flexDirection: 'column', paddingRight: 4 }}>
+          <div style={{
+            fontSize: 13, fontWeight: 600,
+            color: dark ? '#fff' : '#1C1C1E',
+            letterSpacing: -0.2, lineHeight: 1.1,
+          }}>{label}</div>
+          <div style={{
+            fontSize: 10, fontWeight: 500,
+            color: dark ? 'rgba(255,255,255,0.5)' : 'rgba(60,60,67,0.6)',
+            letterSpacing: 0.2, marginTop: 1,
+            textTransform: 'uppercase',
+          }}>{hint}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // Device frame
 // ─────────────────────────────────────────────────────────────
 function IOSDevice({
   children, width = 402, height = 874, dark = false,
-  title, keyboard = false,
+  title, keyboard = false, liveActivity = null, shortcut = null,
 }) {
   return (
     <div style={{
@@ -200,10 +353,7 @@ function IOSDevice({
       WebkitFontSmoothing: 'antialiased',
     }}>
       {/* dynamic island */}
-      <div style={{
-        position: 'absolute', top: 11, left: '50%', transform: 'translateX(-50%)',
-        width: 126, height: 37, borderRadius: 24, background: '#000', zIndex: 50,
-      }} />
+      <IOSDynamicIsland liveActivity={liveActivity} />
       {/* status bar (absolute) */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }}>
         <IOSStatusBar dark={dark} />
@@ -214,6 +364,8 @@ function IOSDevice({
         <div style={{ flex: 1, overflow: 'auto' }}>{children}</div>
         {keyboard && <IOSKeyboard dark={dark} />}
       </div>
+      {/* contextual shortcut — Siri-style action chip above home indicator */}
+      {shortcut && <IOSShortcutChip dark={dark} {...shortcut} />}
       {/* home indicator — always on top */}
       <div style={{
         position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 60,
@@ -335,4 +487,5 @@ function IOSKeyboard({ dark = false }) {
 
 Object.assign(window, {
   IOSDevice, IOSStatusBar, IOSNavBar, IOSGlassPill, IOSList, IOSListRow, IOSKeyboard,
+  IOSDynamicIsland, IOSShortcutChip,
 });

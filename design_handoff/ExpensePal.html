@@ -34,16 +34,20 @@
 <script type="text/babel" src="src/today.jsx"></script>
 <script type="text/babel" src="src/screens.jsx"></script>
 <script type="text/babel" src="src/ai-screens.jsx"></script>
+<script type="text/babel" src="src/pal-composer.jsx"></script>
+<script type="text/babel" src="src/new-screens.jsx"></script>
 <script type="text/babel" src="src/workout-data.jsx"></script>
 <script type="text/babel" src="src/workout-screens.jsx"></script>
 <script type="text/babel" src="src/workout-screens2.jsx"></script>
+<script type="text/babel" src="src/routine-generator.jsx"></script>
 <script type="text/babel" src="src/tab-landings.jsx"></script>
 <script type="text/babel" src="src/email-sync.jsx"></script>
+<script type="text/babel" src="src/more-screens.jsx"></script>
 
 <script type="text/babel">
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "themeKey": "light",
-  "showBothDevices": false,
+  "showBothDevices": true,
   "accent": "indigo"
 }/*EDITMODE-END*/;
 
@@ -165,12 +169,18 @@ function App() {
   );
 }
 
-function Device({ theme, themeKey, initialTab = 'today', initialDetail = null, onboardingStep = 0, addOpenInit = false, quickOpenInit = false, label }) {
+function Device({ theme, themeKey, initialTab = 'today', initialDetail = null, onboardingStep = 0, addOpenInit = false, quickOpenInit = false, palSeed = null, label }) {
   const detailValid = typeof initialDetail === 'string' && ['money', 'move', 'rituals'].includes(initialDetail);
   const [tab, setTab] = React.useState(initialTab);
   const [detailType, setDetailType] = React.useState(detailValid ? initialDetail : null);
   const [addOpen, setAddOpen] = React.useState(addOpenInit);
   const [quickOpen, setQuickOpen] = React.useState(quickOpenInit);
+  const [activeSeed, setActiveSeed] = React.useState(palSeed);
+
+  const openPalWith = (seed) => {
+    setActiveSeed(seed || null);
+    setQuickOpen(true);
+  };
 
   const handleTab = (t) => {
     if (t === 'add') { setQuickOpen(true); return; }
@@ -179,20 +189,25 @@ function Device({ theme, themeKey, initialTab = 'today', initialDetail = null, o
 
   // Which tab-bar pill to highlight for each screen
   const tabToActive = {
-    today: 'today', ask: 'today',
+    today: 'today', ask: 'today', closeout: 'today', streak: 'today',
     move: 'move', preworkout: 'move', active: 'move', post: 'move',
     'routine-edit': 'move', 'exercise-lib': 'move', 'workout-detail': 'move',
     rituals: 'rituals', 'rituals-builder': 'rituals',
     profile: 'profile', week: 'profile', monthly: 'profile', stats: 'profile',
+    weekly: 'profile', subs: 'profile',
     'email-empty': 'profile', 'email-connect': 'profile', 'email-synced': 'profile',
-  };
-
-  let screen = null;
+    bills: 'today', 'weekly-plan': 'move', 'pal-inbox': 'profile',
+  };  let screen = null;
   if (detailType) {
     screen = <DetailScreen theme={theme} type={detailType} onBack={() => setDetailType(null)} />;
   } else if (tab === 'today') {
     screen = <TodayScreen theme={theme}
-      onOpenDetail={setDetailType} onOpenAdd={() => setAddOpen(true)} />;
+      onOpenDetail={setDetailType} onOpenAdd={() => setAddOpen(true)}
+      onOpenPal={openPalWith}
+      onOpenStreak={() => setTab('streak')}
+      onOpenCloseout={() => setTab('closeout')}
+      onOpenInbox={() => setTab('pal-inbox')}
+      onOpenBills={() => setTab('bills')} />;
   } else if (tab === 'week') {
     screen = <WeekScreen theme={theme} />;
   } else if (tab === 'stats') {
@@ -203,32 +218,46 @@ function Device({ theme, themeKey, initialTab = 'today', initialDetail = null, o
     screen = <OnboardingScreen theme={theme} step={onboardingStep} />;
   } else if (tab === 'monthly') {
     screen = <MonthlyReviewScreen theme={theme} />;
+  } else if (tab === 'weekly') {
+    screen = <WeeklyReviewScreen theme={theme} onBack={() => setTab('profile')} onOpenPal={openPalWith} />;
+  } else if (tab === 'subs') {
+    screen = <SubscriptionsScreen theme={theme} onBack={() => setTab('profile')} />;
+  } else if (tab === 'streak') {
+    screen = <StreakCelebrationScreen theme={theme} onClose={() => setTab('today')} onShare={() => {}} />;
+  } else if (tab === 'closeout') {
+    screen = <EveningCloseOutScreen theme={theme} onBack={() => setTab('today')} onDone={() => setTab('today')} onOpenPal={openPalWith} />;
   } else if (tab === 'move') {
     screen = <MoveTabScreen theme={theme}
       onStart={() => setTab('preworkout')}
       onHistory={() => setTab('workout-detail')}
       onRoutines={() => setTab('routine-edit')}
       onLibrary={() => setTab('exercise-lib')}
-      onDetail={() => setTab('workout-detail')} />;
+      onDetail={() => setTab('workout-detail')}
+      onWeeklyPlan={() => setTab('weekly-plan')} />;
   } else if (tab === 'rituals') {
     screen = <RitualsTabScreen theme={theme} onBuilder={() => setTab('rituals-builder')} />;
   } else if (tab === 'rituals-builder') {
     screen = <RitualsBuilderScreen theme={theme} onBack={() => setTab('rituals')} />;
   } else if (tab === 'profile') {
     screen = <YouTabScreen theme={theme}
-      onWeek={() => setTab('week')}
+      onWeek={() => setTab('weekly')}
       onMonthly={() => setTab('monthly')}
       onStats={() => setTab('stats')}
-      onEmailSync={() => setTab('email-empty')} />;
+      onSubs={() => setTab('subs')}
+      onEmailSync={() => setTab('email-empty')}
+      onBills={() => setTab('bills')}
+      onInbox={() => setTab('pal-inbox')} />;
   } else if (tab === 'preworkout') {
-    screen = <PreWorkoutScreen theme={theme} onStart={() => setTab('active')} onBack={() => setTab('move')} />;
+    screen = <PreWorkoutScreen theme={theme} onStart={() => setTab('active')} onBack={() => setTab('move')} onGenerate={() => setTab('routine-gen')} />;
   } else if (tab === 'active') {
     screen = <ActiveSessionScreen theme={theme} routineId="push-a"
       onFinish={() => setTab('post')} onBack={() => setTab('preworkout')} />;
   } else if (tab === 'post') {
     screen = <PostWorkoutScreen theme={theme} onDone={() => setTab('move')} />;
   } else if (tab === 'routine-edit') {
-    screen = <RoutineEditorScreen theme={theme} routineId="push-a" onBack={() => setTab('move')} />;
+    screen = <RoutineEditorScreen theme={theme} routineId="push-a" onBack={() => setTab('move')} onGenerate={() => setTab('routine-gen')} />;
+  } else if (tab === 'routine-gen') {
+    screen = <RoutineGeneratorScreen theme={theme} onBack={() => setTab('routine-edit')} onSave={() => setTab('move')} />;
   } else if (tab === 'exercise-lib') {
     screen = <ExerciseLibraryScreen theme={theme} onBack={() => setTab('move')} />;
   } else if (tab === 'email-empty') {
@@ -237,23 +266,44 @@ function Device({ theme, themeKey, initialTab = 'today', initialDetail = null, o
     screen = <EmailSyncConnectScreen theme={theme} onAuthorize={() => setTab('email-synced')} onCancel={() => setTab('email-empty')} />;
   } else if (tab === 'email-synced') {
     screen = <EmailSyncedScreen theme={theme} onBack={() => setTab('profile')} />;
+  } else if (tab === 'bills') {
+    screen = <BillsScreen theme={theme} onBack={() => setTab('today')} />;
+  } else if (tab === 'weekly-plan') {
+    screen = <WeeklyPlanScreen theme={theme} onBack={() => setTab('move')} onStartWorkout={() => setTab('preworkout')} />;
+  } else if (tab === 'pal-inbox') {
+    screen = <PalInboxScreen theme={theme} onBack={() => setTab('today')} onOpenPal={openPalWith} />;
   }
 
   const hideTabBar = tab === 'onboarding' || tab === 'active' || tab === 'post';
 
+  // Contextual Dynamic Island Live Activity per screen
+  let liveActivity = null;
+  if (tab === 'active') liveActivity = { kind: 'workout', title: 'Push A', value: '24:18' };
+  else if (tab === 'post') liveActivity = { kind: 'workout', title: 'Workout', value: 'Saved' };
+  else if (tab === 'streak') liveActivity = { kind: 'streak', title: 'Streak', value: '14 days' };
+  else if (quickOpen) liveActivity = { kind: 'pal', title: 'Pal', value: 'Listening…', accent: theme.accent };
+
+  // Contextual home-screen shortcut chip
+  let shortcut = null;
+  if (tab === 'today' && !addOpen && !quickOpen && !detailType) {
+    shortcut = { label: 'Log expense', hint: 'Siri Shortcut', kind: 'log', accent: theme.accent };
+  } else if (tab === 'move' && !quickOpen) {
+    shortcut = { label: 'Start Push A', hint: 'Quick Action', kind: 'workout', accent: theme.accent };
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
       <div data-screen-label={label} style={{ position: 'relative' }}>
-        <IOSDevice width={390} height={844} dark={themeKey === 'dark'}>
+        <IOSDevice width={390} height={844} dark={themeKey === 'dark'}
+          liveActivity={liveActivity} shortcut={shortcut}>
           <div style={{ height: '100%', overflow: 'auto', background: theme.bg, position: 'relative' }}>
             {screen}
           </div>
           {!hideTabBar && <TabBar active={detailType ? 'today' : (tabToActive[tab] || tab)} onTab={handleTab} theme={theme} />}
-          {quickOpen && <QuickActionSheet theme={theme}
-            onClose={() => setQuickOpen(false)}
-            onLog={() => { setQuickOpen(false); setAddOpen(true); }}
-            onWorkout={() => { setQuickOpen(false); setTab('preworkout'); setDetailType(null); }}
-            onAsk={() => { setQuickOpen(false); setTab('ask'); setDetailType(null); }} />}
+          {quickOpen && <PalComposer theme={theme}
+            onClose={() => { setQuickOpen(false); setActiveSeed(null); }}
+            seed={activeSeed}
+            onStartWorkout={() => { setQuickOpen(false); setActiveSeed(null); setTab('preworkout'); setDetailType(null); }} />}
           {addOpen && <AddSheet theme={theme}
             onClose={() => setAddOpen(false)}
             onSubmit={() => setAddOpen(false)} />}
@@ -279,7 +329,7 @@ function CanvasApp({ theme, themeKey, showBoth }) {
     const update = () => {
       const vw = window.innerWidth, vh = window.innerHeight;
       if (showBoth) {
-        const cols = 6, rows = 3;
+        const cols = 6, rows = 5;
         const neededW = cols * DW + (cols - 1) * GAP;
         const neededH = rows * (DH + 40) + (rows - 1) * GAP;
         const sx = (vw - 80) / neededW;
@@ -314,9 +364,9 @@ function CanvasApp({ theme, themeKey, showBoth }) {
   const screens = [
     { tab: 'onboarding', label: '01 Onboarding', onboardingStep: 1 },
     { tab: 'today',   label: '02 Today' },
-    { tab: 'today',   label: '03 Quick Actions', quickOpenInit: true },
-    { tab: 'today',   label: '04 Log Entry', addOpenInit: true },
-    { tab: 'ask',     label: '05 Ask Pal' },
+    { tab: 'today',   label: '03 Pal · Compact', quickOpenInit: true },
+    { tab: 'today',   label: '04 Pal · Chat', quickOpenInit: true, palSeed: "How's my week so far?" },
+    { tab: 'today',   label: '05 Log Entry', addOpenInit: true },
     { tab: 'today',   label: '06 Spending', initialDetail: 'money' },
     { tab: 'move',    label: '07 Move Tab' },
     { tab: 'preworkout',    label: '08 Start Workout' },
@@ -325,11 +375,18 @@ function CanvasApp({ theme, themeKey, showBoth }) {
     { tab: 'exercise-lib',  label: '11 Exercise Library' },
     { tab: 'workout-detail',label: '12 Workout Detail' },
     { tab: 'rituals', label: '13 Rituals Tab' },
-    { tab: 'monthly', label: '14 Monthly Review' },
-    { tab: 'profile', label: '15 You' },
-    { tab: 'email-empty',   label: '16 Email Sync · Intro' },
-    { tab: 'email-connect', label: '17 Email Sync · Setup' },
-    { tab: 'email-synced',  label: '18 Email Sync · Dashboard' },
+    { tab: 'closeout', label: '14 Evening Close-Out' },
+    { tab: 'streak',   label: '15 Streak Celebration' },
+    { tab: 'monthly', label: '16 Monthly Review' },
+    { tab: 'weekly',  label: '17 Weekly Review' },
+    { tab: 'subs',    label: '18 Subscriptions' },
+    { tab: 'profile', label: '19 You' },
+    { tab: 'email-empty',   label: '20 Email Sync · Intro' },
+    { tab: 'email-connect', label: '21 Email Sync · Setup' },
+    { tab: 'email-synced',  label: '22 Email Sync · Dashboard' },
+    { tab: 'bills',        label: '23 Bills · Rent Due' },
+    { tab: 'weekly-plan',  label: '24 Weekly Plan' },
+    { tab: 'pal-inbox',    label: '25 Pal Inbox' },
   ];
 
   return (
@@ -351,19 +408,19 @@ function CanvasApp({ theme, themeKey, showBoth }) {
         </div>
         <div style={{ fontSize: 11, color: headSub, textAlign: 'right', lineHeight: 1.6 }}>
             {theme.name} · {theme.accent}<br/>
-            18 screens · Money · Gym · Rituals · Email · AI
+            25 screens · Money · Gym · Rituals · Email · AI
           </div>
       </div>
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         <div style={{
           width: (6 * DW + 5 * GAP) * scale,
-          height: (3 * (DH + 40) + 2 * GAP) * scale,
+          height: (5 * (DH + 40) + 4 * GAP) * scale,
           position: 'relative',
         }}>
           <div style={{
             display: 'grid',
             gridTemplateColumns: `repeat(6, ${DW}px)`,
-            gridTemplateRows: `repeat(3, ${DH + 40}px)`,
+            gridTemplateRows: `repeat(5, ${DH + 40}px)`,
             columnGap: GAP, rowGap: GAP,
             transform: `scale(${scale})`, transformOrigin: 'top left',
             position: 'absolute', top: 0, left: 0,
@@ -374,7 +431,8 @@ function CanvasApp({ theme, themeKey, showBoth }) {
                 initialDetail={s.initialDetail}
                 onboardingStep={s.onboardingStep}
                 addOpenInit={s.addOpenInit}
-                quickOpenInit={s.quickOpenInit} />
+                quickOpenInit={s.quickOpenInit}
+                palSeed={s.palSeed} />
             ))}
           </div>
         </div>
