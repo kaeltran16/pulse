@@ -11,7 +11,8 @@
     "lint": "expo lint",
     "test": "jest",
     "db:generate": "drizzle-kit generate",
-    "db:check": "drizzle-kit check"
+    "db:check": "drizzle-kit check",
+    "smoke:sp4a": "tsx scripts/smoke-sp4a.ts"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
