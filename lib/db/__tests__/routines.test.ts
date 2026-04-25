@@ -210,3 +210,124 @@ describe('duplicateRoutine', () => {
     expect(after).toEqual(before);
   });
 });
+
+function draftFromFull(r: NonNullable<Awaited<ReturnType<typeof getRoutineWithSets>>>): DraftInput {
+  return {
+    routineId: r.id,
+    name: r.name,
+    tag: r.tag,
+    color: r.color,
+    position: r.position,
+    restDefaultSeconds: r.restDefaultSeconds,
+    warmupReminder: r.warmupReminder,
+    autoProgress: r.autoProgress,
+    exercises: r.exercises.map((ex) => ({
+      id: ex.id,
+      exerciseId: ex.exercise.id,
+      restSeconds: ex.restSeconds,
+      sets: ex.sets.map((s) => ({
+        id: s.id,
+        targetReps: s.targetReps,
+        targetWeightKg: s.targetWeightKg,
+        targetDurationSeconds: s.targetDurationSeconds,
+        targetDistanceKm: s.targetDistanceKm,
+      })),
+    })),
+  };
+}
+
+describe('updateRoutine', () => {
+  it('updates name + session settings on the routine', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const id = (await listRoutines(db))[0].id;
+    const r = (await getRoutineWithSets(db, id))!;
+    const draft = draftFromFull(r);
+    draft.name = 'Renamed';
+    draft.restDefaultSeconds = 90;
+    draft.warmupReminder = true;
+    draft.autoProgress = true;
+    await updateRoutine(db, draft);
+    const after = (await getRoutineWithSets(db, id))!;
+    expect(after.name).toBe('Renamed');
+    expect(after.restDefaultSeconds).toBe(90);
+    expect(after.warmupReminder).toBe(true);
+    expect(after.autoProgress).toBe(true);
+  });
+
+  it('removes deleted exercises and their sets', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const id = (await listRoutines(db))[0].id;
+    const r = (await getRoutineWithSets(db, id))!;
+    const draft = draftFromFull(r);
+    draft.exercises = draft.exercises.slice(0, 1);
+    await updateRoutine(db, draft);
+    const after = (await getRoutineWithSets(db, id))!;
+    expect(after.exercises).toHaveLength(1);
+  });
+
+  it('inserts a new exercise (id=null) with its sets', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const id = (await listRoutines(db))[0].id;
+    const r = (await getRoutineWithSets(db, id))!;
+    const draft = draftFromFull(r);
+    draft.exercises.push({
+      id: null,
+      exerciseId: 'lateral-raise',
+      restSeconds: null,
+      sets: [
+        { id: null, targetReps: 12, targetWeightKg: 8, targetDurationSeconds: null, targetDistanceKm: null },
+        { id: null, targetReps: 12, targetWeightKg: 8, targetDurationSeconds: null, targetDistanceKm: null },
+      ],
+    });
+    await updateRoutine(db, draft);
+    const after = (await getRoutineWithSets(db, id))!;
+    expect(after.exercises).toHaveLength(r.exercises.length + 1);
+    const last = after.exercises[after.exercises.length - 1];
+    expect(last.exercise.id).toBe('lateral-raise');
+    expect(last.sets).toHaveLength(2);
+    expect(last.sets[0].targetReps).toBe(12);
+  });
+
+  it('updates a mutated set (targetReps, weight)', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const id = (await listRoutines(db))[0].id;
+    const r = (await getRoutineWithSets(db, id))!;
+    const draft = draftFromFull(r);
+    draft.exercises[0].sets[0].targetReps = 999;
+    draft.exercises[0].sets[0].targetWeightKg = 77.5;
+    await updateRoutine(db, draft);
+    const after = (await getRoutineWithSets(db, id))!;
+    expect(after.exercises[0].sets[0].targetReps).toBe(999);
+    expect(after.exercises[0].sets[0].targetWeightKg).toBe(77.5);
+  });
+
+  it('renumbers positions densely after delete', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const id = (await listRoutines(db))[0].id;
+    const r = (await getRoutineWithSets(db, id))!;
+    const draft = draftFromFull(r);
+    draft.exercises = [draft.exercises[0], draft.exercises[2]];
+    await updateRoutine(db, draft);
+    const after = (await getRoutineWithSets(db, id))!;
+    expect(after.exercises.map((e) => e.position)).toEqual([0, 1]);
+  });
+
+  it('updates per-exercise restSeconds (incl. setting to null)', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const id = (await listRoutines(db))[0].id;
+    const r = (await getRoutineWithSets(db, id))!;
+    const draft = draftFromFull(r);
+    draft.exercises[0].restSeconds = 45;
+    draft.exercises[1].restSeconds = null;
+    await updateRoutine(db, draft);
+    const after = (await getRoutineWithSets(db, id))!;
+    expect(after.exercises[0].restSeconds).toBe(45);
+    expect(after.exercises[1].restSeconds).toBeNull();
+  });
+});

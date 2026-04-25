@@ -223,3 +223,119 @@ export async function duplicateRoutine(db: AnyDb, sourceId: number): Promise<num
   }
   return newRoutineId;
 }
+
+export interface DraftSetInput {
+  id: number | null;
+  targetReps: number | null;
+  targetWeightKg: number | null;
+  targetDurationSeconds: number | null;
+  targetDistanceKm: number | null;
+}
+export interface DraftExerciseInput {
+  id: number | null;
+  exerciseId: string;
+  restSeconds: number | null;
+  sets: DraftSetInput[];
+}
+export interface DraftInput {
+  routineId: number;
+  name: string;
+  tag: string;
+  color: string;
+  position: number;
+  restDefaultSeconds: number;
+  warmupReminder: boolean;
+  autoProgress: boolean;
+  exercises: DraftExerciseInput[];
+}
+
+export async function updateRoutine(db: AnyDb, draft: DraftInput): Promise<void> {
+  // better-sqlite3 transactions are synchronous; expo-sqlite drizzle accepts the same.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (db as any).transaction((tx: AnyDb) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (tx as any).update(routines).set({
+      name: draft.name,
+      tag: draft.tag,
+      color: draft.color,
+      position: draft.position,
+      restDefaultSeconds: draft.restDefaultSeconds,
+      warmupReminder: draft.warmupReminder,
+      autoProgress: draft.autoProgress,
+    }).where(eq(routines.id, draft.routineId)).run();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const persistedRe: Array<{ id: number }> = (tx as any)
+      .select({ id: routineExercises.id })
+      .from(routineExercises)
+      .where(eq(routineExercises.routineId, draft.routineId))
+      .all();
+    const draftReIds = new Set(draft.exercises.map((e) => e.id).filter((x): x is number => x !== null));
+    for (const row of persistedRe) {
+      if (!draftReIds.has(row.id)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (tx as any).delete(routineExercises).where(eq(routineExercises.id, row.id)).run();
+      }
+    }
+
+    for (let i = 0; i < draft.exercises.length; i++) {
+      const ex = draft.exercises[i];
+      let reId: number;
+      if (ex.id === null) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const inserted = (tx as any).insert(routineExercises).values({
+          routineId: draft.routineId,
+          exerciseId: ex.exerciseId,
+          position: i,
+          restSeconds: ex.restSeconds,
+        }).returning({ id: routineExercises.id }).get();
+        reId = inserted.id as number;
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (tx as any).update(routineExercises).set({
+          exerciseId: ex.exerciseId,
+          position: i,
+          restSeconds: ex.restSeconds,
+        }).where(eq(routineExercises.id, ex.id)).run();
+        reId = ex.id;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const persistedSets: Array<{ id: number }> = (tx as any)
+        .select({ id: routineSets.id })
+        .from(routineSets)
+        .where(eq(routineSets.routineExerciseId, reId))
+        .all();
+      const draftSetIds = new Set(ex.sets.map((s) => s.id).filter((x): x is number => x !== null));
+      for (const row of persistedSets) {
+        if (!draftSetIds.has(row.id)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (tx as any).delete(routineSets).where(eq(routineSets.id, row.id)).run();
+        }
+      }
+      for (let j = 0; j < ex.sets.length; j++) {
+        const s = ex.sets[j];
+        if (s.id === null) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (tx as any).insert(routineSets).values({
+            routineExerciseId: reId,
+            position: j,
+            targetReps: s.targetReps,
+            targetWeightKg: s.targetWeightKg,
+            targetDurationSeconds: s.targetDurationSeconds,
+            targetDistanceKm: s.targetDistanceKm,
+          }).run();
+        } else {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (tx as any).update(routineSets).set({
+            position: j,
+            targetReps: s.targetReps,
+            targetWeightKg: s.targetWeightKg,
+            targetDurationSeconds: s.targetDurationSeconds,
+            targetDistanceKm: s.targetDistanceKm,
+          }).where(eq(routineSets.id, s.id)).run();
+        }
+      }
+    }
+  });
+}
