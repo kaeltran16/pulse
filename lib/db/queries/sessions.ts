@@ -1,5 +1,7 @@
 import { and, asc, desc, eq } from 'drizzle-orm';
 
+import { activityTypeFor } from '../../health/activity-type';
+import * as healthWorkouts from '../../health/workouts';
 import { computeWeeklyVolumeSeries, type WeeklyVolumeBucket } from '../../workouts/post-session-aggregate';
 import { detectSessionPRs } from '../../workouts/pr-detection';
 import { computeStrengthVolume } from '../../workouts/volume';
@@ -46,6 +48,7 @@ export interface CompletedSessionResult {
   sessionId: number;
   prCount: number;
   totalVolumeKg: number;
+  healthSyncFailed?: boolean;
 }
 
 export interface SessionSummary {
@@ -417,95 +420,119 @@ export async function getWeeklyVolumeSeries(
   return computeWeeklyVolumeSeries(list, weeksBack, now);
 }
 
-export function finalizeSession(
+function finalizeSessionTransactional(
+  db: AnyDb,
+  sessionId: number,
+  finishedAt: number,
+): { sessionId: number; prCount: number; totalVolumeKg: number } {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (db as any).transaction((tx: any) => {
+    const head: { startedAt: number; status: string; routineNameSnapshot: string } | undefined =
+      tx.select({
+        startedAt: sessions.startedAt,
+        status: sessions.status,
+        routineNameSnapshot: sessions.routineNameSnapshot,
+      }).from(sessions).where(eq(sessions.id, sessionId)).all()[0];
+    if (!head) throw new Error(`Session ${sessionId} not found`);
+    if (head.status !== 'draft') throw new Error(`Session ${sessionId} is not a draft`);
+
+    const setsRows: Array<typeof sessionSets.$inferSelect> =
+      tx.select().from(sessionSets).where(eq(sessionSets.sessionId, sessionId))
+        .orderBy(asc(sessionSets.exercisePosition), asc(sessionSets.setPosition)).all();
+
+    const exerciseIds = Array.from(new Set(setsRows.map((s) => s.exerciseId)));
+    const snapshotRows = exerciseIds.length === 0
+      ? []
+      : tx.select({ exerciseId: prs.exerciseId, weightKg: prs.weightKg, reps: prs.reps })
+          .from(prs).all()
+          .filter((r: { exerciseId: string }) => exerciseIds.includes(r.exerciseId));
+    const snapshot = new Map<string, { weightKg: number; reps: number }>();
+    for (const r of snapshotRows as { exerciseId: string; weightKg: number; reps: number }[]) {
+      snapshot.set(r.exerciseId, { weightKg: r.weightKg, reps: r.reps });
+    }
+
+    const detection = detectSessionPRs(
+      snapshot,
+      setsRows.map((s) => ({ exerciseId: s.exerciseId, reps: s.reps, weightKg: s.weightKg })),
+    );
+
+    const totalVolumeKg = computeStrengthVolume(
+      setsRows.map((s) => ({ reps: s.reps, weightKg: s.weightKg })),
+    );
+
+    const durationSeconds = Math.round((finishedAt - head.startedAt) / 1000);
+
+    tx.update(sessions)
+      .set({
+        status: 'completed',
+        finishedAt,
+        durationSeconds,
+        totalVolumeKg,
+        prCount: detection.newPRs.size,
+      })
+      .where(eq(sessions.id, sessionId))
+      .run();
+
+    for (let i = 0; i < setsRows.length; i++) {
+      if (detection.isPrPerSet[i]) {
+        tx.update(sessionSets)
+          .set({ isPr: 1 })
+          .where(eq(sessionSets.id, setsRows[i].id))
+          .run();
+      }
+    }
+
+    for (const [exerciseId, pr] of detection.newPRs) {
+      tx.insert(prs).values({
+        exerciseId,
+        weightKg: pr.weightKg,
+        reps: pr.reps,
+        sessionId,
+        achievedAt: finishedAt,
+      }).onConflictDoUpdate({
+        target: prs.exerciseId,
+        set: { weightKg: pr.weightKg, reps: pr.reps, sessionId, achievedAt: finishedAt },
+      }).run();
+    }
+
+    tx.insert(movementEntries).values({
+      minutes: Math.round(durationSeconds / 60),
+      kind: 'workout',
+      note: head.routineNameSnapshot,
+      occurredAt: finishedAt,
+    }).run();
+
+    return { sessionId, prCount: detection.newPRs.size, totalVolumeKg };
+  });
+}
+
+export async function finalizeSession(
   db: AnyDb,
   sessionId: number,
   finishedAt: number,
 ): Promise<CompletedSessionResult> {
-  return new Promise((resolve, reject) => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = (db as any).transaction((tx: any) => {
-        const head: { startedAt: number; status: string; routineNameSnapshot: string } | undefined =
-          tx.select({
-            startedAt: sessions.startedAt,
-            status: sessions.status,
-            routineNameSnapshot: sessions.routineNameSnapshot,
-          }).from(sessions).where(eq(sessions.id, sessionId)).all()[0];
-        if (!head) throw new Error(`Session ${sessionId} not found`);
-        if (head.status !== 'draft') throw new Error(`Session ${sessionId} is not a draft`);
+  const txResult = finalizeSessionTransactional(db, sessionId, finishedAt);
 
-        const setsRows: Array<typeof sessionSets.$inferSelect> =
-          tx.select().from(sessionSets).where(eq(sessionSets.sessionId, sessionId))
-            .orderBy(asc(sessionSets.exercisePosition), asc(sessionSets.setPosition)).all();
+  let healthSyncFailed: boolean | undefined;
+  try {
+    const session = await getSession(db, sessionId);
+    if (!session) throw new Error('session disappeared after finalize');
+    const distanceKm =
+      session.mode === 'cardio' ? session.sets[0]?.distanceKm ?? undefined : undefined;
+    const exercises = session.sets
+      .map((s) => session.exerciseMetaById[s.exerciseId])
+      .filter((m): m is ExerciseMeta => Boolean(m));
+    await healthWorkouts.writeWorkout({
+      activityType: activityTypeFor(session, exercises),
+      start: new Date(session.startedAt),
+      end: new Date(finishedAt),
+      distanceKm: distanceKm == null ? undefined : distanceKm,
+    });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('[finalizeSession] HealthKit write failed', err);
+    healthSyncFailed = true;
+  }
 
-        const exerciseIds = Array.from(new Set(setsRows.map((s) => s.exerciseId)));
-        const snapshotRows = exerciseIds.length === 0
-          ? []
-          : tx.select({ exerciseId: prs.exerciseId, weightKg: prs.weightKg, reps: prs.reps })
-              .from(prs).all()
-              .filter((r: { exerciseId: string }) => exerciseIds.includes(r.exerciseId));
-        const snapshot = new Map<string, { weightKg: number; reps: number }>();
-        for (const r of snapshotRows as { exerciseId: string; weightKg: number; reps: number }[]) {
-          snapshot.set(r.exerciseId, { weightKg: r.weightKg, reps: r.reps });
-        }
-
-        const detection = detectSessionPRs(
-          snapshot,
-          setsRows.map((s) => ({ exerciseId: s.exerciseId, reps: s.reps, weightKg: s.weightKg })),
-        );
-
-        const totalVolumeKg = computeStrengthVolume(
-          setsRows.map((s) => ({ reps: s.reps, weightKg: s.weightKg })),
-        );
-
-        const durationSeconds = Math.round((finishedAt - head.startedAt) / 1000);
-
-        tx.update(sessions)
-          .set({
-            status: 'completed',
-            finishedAt,
-            durationSeconds,
-            totalVolumeKg,
-            prCount: detection.newPRs.size,
-          })
-          .where(eq(sessions.id, sessionId))
-          .run();
-
-        for (let i = 0; i < setsRows.length; i++) {
-          if (detection.isPrPerSet[i]) {
-            tx.update(sessionSets)
-              .set({ isPr: 1 })
-              .where(eq(sessionSets.id, setsRows[i].id))
-              .run();
-          }
-        }
-
-        for (const [exerciseId, pr] of detection.newPRs) {
-          tx.insert(prs).values({
-            exerciseId,
-            weightKg: pr.weightKg,
-            reps: pr.reps,
-            sessionId,
-            achievedAt: finishedAt,
-          }).onConflictDoUpdate({
-            target: prs.exerciseId,
-            set: { weightKg: pr.weightKg, reps: pr.reps, sessionId, achievedAt: finishedAt },
-          }).run();
-        }
-
-        tx.insert(movementEntries).values({
-          minutes: Math.round(durationSeconds / 60),
-          kind: 'workout',
-          note: head.routineNameSnapshot,
-          occurredAt: finishedAt,
-        }).run();
-
-        return { sessionId, prCount: detection.newPRs.size, totalVolumeKg };
-      });
-      resolve(result);
-    } catch (e) {
-      reject(e);
-    }
-  });
+  return { ...txResult, healthSyncFailed };
 }

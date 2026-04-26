@@ -777,3 +777,79 @@ describe('getWeeklyVolumeSeries', () => {
     expect(out.every((b) => b.tonnageKg === 0)).toBe(true);
   });
 });
+
+import * as healthWorkouts from '@/lib/health/workouts';
+
+describe('finalizeSession HealthKit branch', () => {
+  it('returns healthSyncFailed=undefined when writeWorkout resolves', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const spy = jest
+      .spyOn(healthWorkouts, 'writeWorkout')
+      .mockResolvedValue(undefined);
+    try {
+      const result = await insertCompletedSessionForTests(db, baseDraft());
+      expect(result.healthSyncFailed).toBeUndefined();
+      expect(spy).toHaveBeenCalledTimes(1);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('passes activityType=traditionalStrengthTraining for strength sessions', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const spy = jest.spyOn(healthWorkouts, 'writeWorkout').mockResolvedValue(undefined);
+    try {
+      await insertCompletedSessionForTests(db, baseDraft());
+      expect(spy.mock.calls[0][0]).toMatchObject({ activityType: 'traditionalStrengthTraining' });
+      expect(spy.mock.calls[0][0].distanceKm).toBeUndefined();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('passes activityType=running and distanceKm for treadmill cardio', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const spy = jest.spyOn(healthWorkouts, 'writeWorkout').mockResolvedValue(undefined);
+    try {
+      await insertCompletedSessionForTests(db, {
+        routineId: null,
+        routineNameSnapshot: 'Treadmill Intervals',
+        startedAt: 2_000_000,
+        finishedAt: 2_000_000 + 28 * 60 * 1000,
+        sets: [
+          {
+            exerciseId: 'treadmill',
+            exercisePosition: 0,
+            setPosition: 0,
+            reps: null,
+            weightKg: null,
+            durationSeconds: 28 * 60,
+            distanceKm: 3.5,
+          },
+        ],
+      });
+      expect(spy.mock.calls[0][0]).toMatchObject({ activityType: 'running', distanceKm: 3.5 });
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('returns healthSyncFailed=true when writeWorkout rejects, with DB row still committed', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const spy = jest
+      .spyOn(healthWorkouts, 'writeWorkout')
+      .mockRejectedValue(new Error('not authorized'));
+    try {
+      const result = await insertCompletedSessionForTests(db, baseDraft());
+      expect(result.healthSyncFailed).toBe(true);
+      const full = await getSession(db, result.sessionId);
+      expect(full!.id).toBe(result.sessionId);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});
