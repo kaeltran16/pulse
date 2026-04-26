@@ -206,7 +206,13 @@ export const useActiveSessionStore = create<ActiveSessionState>()((set, get) => 
     try {
       const result = await finalizeSession(db, s.sessionId, Date.now());
       set({ ...ZERO_STATE });
-      router.replace({ pathname: '/(tabs)/move/post', params: { sessionId: String(result.sessionId) } });
+      router.replace({
+        pathname: '/(tabs)/move/post',
+        params: {
+          sessionId: String(result.sessionId),
+          healthSyncFailed: result.healthSyncFailed ? '1' : '0',
+        },
+      });
     } catch (e) {
       set({ phase: 'active' });
       throw e;
