@@ -68,7 +68,7 @@
 - Create: `lib/db/migrations/0003_<generated>.sql` (via drizzle-kit)
 - Create: `lib/db/migrations/meta/0003_snapshot.json` (via drizzle-kit)
 
-- [ ] **Step 1:** Open `lib/db/schema.ts`. Find the `sessions` table at line 127. Replace it entirely with this version:
+- [x] **Step 1:** Open `lib/db/schema.ts`. Find the `sessions` table at line 127. Replace it entirely with this version:
 
 ```ts
 export const sessions = sqliteTable(
@@ -97,13 +97,13 @@ Note three changes from the existing definition:
 - `durationSeconds` now defaults to `0` (was no default; the existing rows always populated it).
 - New partial unique index `oneDraftIdx`.
 
-- [ ] **Step 2:** Add `uniqueIndex` to the `drizzle-orm/sqlite-core` import at the top of the file:
+- [x] **Step 2:** Add `uniqueIndex` to the `drizzle-orm/sqlite-core` import at the top of the file:
 
 ```ts
 import { integer, real, sqliteTable, text, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 ```
 
-- [ ] **Step 3:** Generate the migration.
+- [x] **Step 3:** Generate the migration.
 
 ```bash
 npm run db:generate
@@ -120,7 +120,7 @@ CREATE UNIQUE INDEX `idx_sessions_one_draft` ON `sessions` (`status`) WHERE stat
 
 If drizzle-kit prompts about a destructive change for the `finished_at` relaxation, accept it — there are no draft rows yet, so the rebuild is a no-op for data.
 
-- [ ] **Step 4:** Run the migration test.
+- [x] **Step 4:** Run the migration test.
 
 ```bash
 npm test -- migrations-workouts.test
@@ -128,7 +128,7 @@ npm test -- migrations-workouts.test
 
 Expected: PASS (the existing migration tests verify all migrations apply to a fresh DB without error).
 
-- [ ] **Step 5:** Run the full test suite to confirm nothing else broke from the type change.
+- [x] **Step 5:** Run the full test suite to confirm nothing else broke from the type change.
 
 ```bash
 npm test
@@ -136,7 +136,7 @@ npm test
 
 Expected: most tests still PASS. The `sessions.test.ts` and any code paths consuming `Session.finishedAt` may now have type errors because `finishedAt` is `number | null`. **Do not fix those yet** — they'll be addressed in subsequent tasks. If everything passes, that's also fine; just note any new failures.
 
-- [ ] **Step 6:** Commit.
+- [x] **Step 6:** Commit.
 
 ```bash
 git add lib/db/schema.ts lib/db/migrations/0003_*.sql lib/db/migrations/meta/
@@ -153,7 +153,7 @@ git commit -m "feat(sp4d): sessions.status + nullable finished_at + one-draft in
 
 This task adds the `DraftSession` and `SessionSetDraft` types plus the `getOpenDraft` query. It does **not** yet remove `insertCompletedSession` (Task 7 does that, after the lifecycle pieces exist).
 
-- [ ] **Step 1:** Add two new types at the top of `lib/db/queries/sessions.ts`, just after the existing `CompletedSessionDraftSet` interface:
+- [x] **Step 1:** Add two new types at the top of `lib/db/queries/sessions.ts`, just after the existing `CompletedSessionDraftSet` interface:
 
 ```ts
 export interface SessionSetDraft {
@@ -175,7 +175,7 @@ export interface DraftSession {
 }
 ```
 
-- [ ] **Step 2:** Write the failing tests. Open `lib/db/__tests__/sessions.test.ts` and add a new `describe` block at the bottom (after the existing `listSessions / getSession` describe):
+- [x] **Step 2:** Write the failing tests. Open `lib/db/__tests__/sessions.test.ts` and add a new `describe` block at the bottom (after the existing `listSessions / getSession` describe):
 
 ```ts
 import { getOpenDraft } from '../queries/sessions';
@@ -236,7 +236,7 @@ describe('getOpenDraft', () => {
 });
 ```
 
-- [ ] **Step 3:** Run the new tests to verify they fail.
+- [x] **Step 3:** Run the new tests to verify they fail.
 
 ```bash
 npm test -- sessions.test
@@ -244,7 +244,7 @@ npm test -- sessions.test
 
 Expected: FAIL with "getOpenDraft is not a function" (or similar import error).
 
-- [ ] **Step 4:** Implement `getOpenDraft`. Add at the bottom of `lib/db/queries/sessions.ts`:
+- [x] **Step 4:** Implement `getOpenDraft`. Add at the bottom of `lib/db/queries/sessions.ts`:
 
 ```ts
 export async function getOpenDraft(db: AnyDb): Promise<DraftSession | null> {
@@ -281,7 +281,7 @@ export async function getOpenDraft(db: AnyDb): Promise<DraftSession | null> {
 }
 ```
 
-- [ ] **Step 5:** Run the tests to verify they pass.
+- [x] **Step 5:** Run the tests to verify they pass.
 
 ```bash
 npm test -- sessions.test
@@ -289,7 +289,7 @@ npm test -- sessions.test
 
 Expected: the three new `getOpenDraft` tests PASS. Existing `insertCompletedSession` tests should also still pass (we haven't touched it).
 
-- [ ] **Step 6:** Commit.
+- [x] **Step 6:** Commit.
 
 ```bash
 git add lib/db/queries/sessions.ts lib/db/__tests__/sessions.test.ts
@@ -304,7 +304,7 @@ git commit -m "feat(sp4d): getOpenDraft query + draft types"
 - Modify: `lib/db/queries/sessions.ts`
 - Modify: `lib/db/__tests__/sessions.test.ts`
 
-- [ ] **Step 1:** Write the failing tests. Append to `lib/db/__tests__/sessions.test.ts`:
+- [x] **Step 1:** Write the failing tests. Append to `lib/db/__tests__/sessions.test.ts`:
 
 ```ts
 import { startDraftSession, DraftAlreadyOpenError } from '../queries/sessions';
@@ -364,7 +364,7 @@ describe('startDraftSession', () => {
 });
 ```
 
-- [ ] **Step 2:** Run the tests to verify they fail.
+- [x] **Step 2:** Run the tests to verify they fail.
 
 ```bash
 npm test -- sessions.test -t "startDraftSession"
@@ -372,7 +372,7 @@ npm test -- sessions.test -t "startDraftSession"
 
 Expected: FAIL with import errors.
 
-- [ ] **Step 3:** Implement `startDraftSession`. Append to `lib/db/queries/sessions.ts`:
+- [x] **Step 3:** Implement `startDraftSession`. Append to `lib/db/queries/sessions.ts`:
 
 ```ts
 export class DraftAlreadyOpenError extends Error {
@@ -418,7 +418,7 @@ export async function startDraftSession(
 }
 ```
 
-- [ ] **Step 4:** Run the tests to verify they pass.
+- [x] **Step 4:** Run the tests to verify they pass.
 
 ```bash
 npm test -- sessions.test -t "startDraftSession"
@@ -426,7 +426,7 @@ npm test -- sessions.test -t "startDraftSession"
 
 Expected: all four tests PASS.
 
-- [ ] **Step 5:** Commit.
+- [x] **Step 5:** Commit.
 
 ```bash
 git add lib/db/queries/sessions.ts lib/db/__tests__/sessions.test.ts
@@ -441,7 +441,7 @@ git commit -m "feat(sp4d): startDraftSession + DraftAlreadyOpenError"
 - Modify: `lib/db/queries/sessions.ts`
 - Modify: `lib/db/__tests__/sessions.test.ts`
 
-- [ ] **Step 1:** Write the failing tests. Append to `lib/db/__tests__/sessions.test.ts`:
+- [x] **Step 1:** Write the failing tests. Append to `lib/db/__tests__/sessions.test.ts`:
 
 ```ts
 import { upsertDraftSet } from '../queries/sessions';
@@ -529,7 +529,7 @@ describe('upsertDraftSet', () => {
 });
 ```
 
-- [ ] **Step 2:** Run the tests to verify they fail.
+- [x] **Step 2:** Run the tests to verify they fail.
 
 ```bash
 npm test -- sessions.test -t "upsertDraftSet"
@@ -537,7 +537,7 @@ npm test -- sessions.test -t "upsertDraftSet"
 
 Expected: FAIL with import errors.
 
-- [ ] **Step 3:** Add the implementation to `lib/db/queries/sessions.ts`:
+- [x] **Step 3:** Add the implementation to `lib/db/queries/sessions.ts`:
 
 ```ts
 import { and, eq } from 'drizzle-orm';   // add `and` to the existing import line if not present
@@ -590,7 +590,7 @@ export async function upsertDraftSet(
 }
 ```
 
-- [ ] **Step 4:** Run the tests to verify they pass.
+- [x] **Step 4:** Run the tests to verify they pass.
 
 ```bash
 npm test -- sessions.test -t "upsertDraftSet"
@@ -598,7 +598,7 @@ npm test -- sessions.test -t "upsertDraftSet"
 
 Expected: all five tests PASS.
 
-- [ ] **Step 5:** Commit.
+- [x] **Step 5:** Commit.
 
 ```bash
 git add lib/db/queries/sessions.ts lib/db/__tests__/sessions.test.ts
@@ -615,7 +615,7 @@ We need both: `discardDraftSession` for the back-button discard, and `deleteDraf
 - Modify: `lib/db/queries/sessions.ts`
 - Modify: `lib/db/__tests__/sessions.test.ts`
 
-- [ ] **Step 1:** Write the failing tests. Append to `lib/db/__tests__/sessions.test.ts`:
+- [x] **Step 1:** Write the failing tests. Append to `lib/db/__tests__/sessions.test.ts`:
 
 ```ts
 import { discardDraftSession, deleteDraftSet } from '../queries/sessions';
@@ -688,7 +688,7 @@ describe('deleteDraftSet', () => {
 });
 ```
 
-- [ ] **Step 2:** Run the tests to verify they fail.
+- [x] **Step 2:** Run the tests to verify they fail.
 
 ```bash
 npm test -- sessions.test -t "discardDraftSession"
@@ -696,7 +696,7 @@ npm test -- sessions.test -t "discardDraftSession"
 
 Expected: FAIL with import errors.
 
-- [ ] **Step 3:** Add the implementations. Append to `lib/db/queries/sessions.ts`:
+- [x] **Step 3:** Add the implementations. Append to `lib/db/queries/sessions.ts`:
 
 ```ts
 export async function discardDraftSession(db: AnyDb, sessionId: number): Promise<void> {
@@ -724,7 +724,7 @@ export async function deleteDraftSet(
 }
 ```
 
-- [ ] **Step 4:** Run the tests.
+- [x] **Step 4:** Run the tests.
 
 ```bash
 npm test -- sessions.test -t "discardDraftSession"
@@ -733,7 +733,7 @@ npm test -- sessions.test -t "deleteDraftSet"
 
 Expected: all PASS.
 
-- [ ] **Step 5:** Commit.
+- [x] **Step 5:** Commit.
 
 ```bash
 git add lib/db/queries/sessions.ts lib/db/__tests__/sessions.test.ts
@@ -750,7 +750,7 @@ This is the largest query task. `finalizeSession` is the atomic transaction that
 - Modify: `lib/db/queries/sessions.ts`
 - Modify: `lib/db/__tests__/sessions.test.ts`
 
-- [ ] **Step 1:** Write the failing tests. Append to `lib/db/__tests__/sessions.test.ts`:
+- [x] **Step 1:** Write the failing tests. Append to `lib/db/__tests__/sessions.test.ts`:
 
 ```ts
 import { finalizeSession, type CompletedSessionResult } from '../queries/sessions';
@@ -922,7 +922,7 @@ describe('finalizeSession', () => {
 });
 ```
 
-- [ ] **Step 2:** Run the tests to verify they fail.
+- [x] **Step 2:** Run the tests to verify they fail.
 
 ```bash
 npm test -- sessions.test -t "finalizeSession"
@@ -930,7 +930,7 @@ npm test -- sessions.test -t "finalizeSession"
 
 Expected: FAIL with import errors.
 
-- [ ] **Step 3:** Implement `finalizeSession`. Append to `lib/db/queries/sessions.ts`:
+- [x] **Step 3:** Implement `finalizeSession`. Append to `lib/db/queries/sessions.ts`:
 
 ```ts
 export function finalizeSession(
@@ -1031,7 +1031,7 @@ export function finalizeSession(
 }
 ```
 
-- [ ] **Step 4:** Run the tests.
+- [x] **Step 4:** Run the tests.
 
 ```bash
 npm test -- sessions.test -t "finalizeSession"
@@ -1039,7 +1039,7 @@ npm test -- sessions.test -t "finalizeSession"
 
 Expected: all tests PASS.
 
-- [ ] **Step 5:** Commit.
+- [x] **Step 5:** Commit.
 
 ```bash
 git add lib/db/queries/sessions.ts lib/db/__tests__/sessions.test.ts
@@ -1055,7 +1055,7 @@ git commit -m "feat(sp4d): finalizeSession atomic transaction"
 - Modify: `lib/db/__tests__/sessions.test.ts`
 - Modify: `lib/db/__tests__/test-helpers.ts`
 
-- [ ] **Step 1:** Add a test helper. Append to `lib/db/__tests__/test-helpers.ts`:
+- [x] **Step 1:** Add a test helper. Append to `lib/db/__tests__/test-helpers.ts`:
 
 ```ts
 import { startDraftSession, upsertDraftSet, finalizeSession, type CompletedSessionDraft } from '../queries/sessions';
@@ -1088,9 +1088,9 @@ export async function insertCompletedSessionForTests(
 }
 ```
 
-- [ ] **Step 2:** Open `lib/db/queries/sessions.ts`. Delete the entire `insertCompletedSession` function (the `export function insertCompletedSession(...) { ... }` block). Keep all the types it referenced — they're still exported for the test helper and for SP4e/4f.
+- [x] **Step 2:** Open `lib/db/queries/sessions.ts`. Delete the entire `insertCompletedSession` function (the `export function insertCompletedSession(...) { ... }` block). Keep all the types it referenced — they're still exported for the test helper and for SP4e/4f.
 
-- [ ] **Step 3:** Rewrite the `describe('insertCompletedSession', ...)` block in `lib/db/__tests__/sessions.test.ts` to use the helper. Find the block (lines 28–131 originally) and replace it with:
+- [x] **Step 3:** Rewrite the `describe('insertCompletedSession', ...)` block in `lib/db/__tests__/sessions.test.ts` to use the helper. Find the block (lines 28–131 originally) and replace it with:
 
 ```ts
 describe('completed-session lifecycle (start → upsert → finalize)', () => {
@@ -1174,9 +1174,9 @@ describe('completed-session lifecycle (start → upsert → finalize)', () => {
 
 Update the `listSessions / getSession` describe similarly — replace `insertCompletedSession` calls with `insertCompletedSessionForTests`. (Same arguments; the helper's signature matches the original.)
 
-- [ ] **Step 4:** Update the import in `sessions.test.ts`: remove `insertCompletedSession` from the imports, and add `insertCompletedSessionForTests` to the imports from `./test-helpers`. The original `CompletedSessionDraft` import from `../queries/sessions` stays.
+- [x] **Step 4:** Update the import in `sessions.test.ts`: remove `insertCompletedSession` from the imports, and add `insertCompletedSessionForTests` to the imports from `./test-helpers`. The original `CompletedSessionDraft` import from `../queries/sessions` stays.
 
-- [ ] **Step 5:** Run the full test file.
+- [x] **Step 5:** Run the full test file.
 
 ```bash
 npm test -- sessions.test
@@ -1184,7 +1184,7 @@ npm test -- sessions.test
 
 Expected: all tests PASS.
 
-- [ ] **Step 6:** Commit.
+- [x] **Step 6:** Commit.
 
 ```bash
 git add lib/db/queries/sessions.ts lib/db/__tests__/sessions.test.ts lib/db/__tests__/test-helpers.ts
@@ -1201,7 +1201,7 @@ git commit -m "refactor(sp4d): drop insertCompletedSession; tests use lifecycle 
 - Modify: `lib/db/queries/sessions.ts`
 - Modify: `lib/db/__tests__/sessions.test.ts`
 
-- [ ] **Step 1:** Write the failing test. Append to the `listSessions / getSession` describe block in `sessions.test.ts`:
+- [x] **Step 1:** Write the failing test. Append to the `listSessions / getSession` describe block in `sessions.test.ts`:
 
 ```ts
   it('listSessions excludes draft sessions', async () => {
@@ -1217,7 +1217,7 @@ git commit -m "refactor(sp4d): drop insertCompletedSession; tests use lifecycle 
   });
 ```
 
-- [ ] **Step 2:** Run to verify it fails.
+- [x] **Step 2:** Run to verify it fails.
 
 ```bash
 npm test -- sessions.test -t "excludes draft"
@@ -1225,7 +1225,7 @@ npm test -- sessions.test -t "excludes draft"
 
 Expected: FAIL — `list.length` is 2.
 
-- [ ] **Step 3:** Update `listSessions` in `lib/db/queries/sessions.ts`. Find the function (was at line 137) and add a `where` clause:
+- [x] **Step 3:** Update `listSessions` in `lib/db/queries/sessions.ts`. Find the function (was at line 137) and add a `where` clause:
 
 ```ts
 export async function listSessions(
@@ -1271,7 +1271,7 @@ export interface SessionSummary {
 
 (Leave `finishedAt: number` here — `listSessions` filters to completed, so it's correct. `SessionFull` may need `finishedAt: number | null` if `getSession` is allowed to return drafts; check at the top of the file. If `SessionFull extends SessionSummary`, change the base or shadow the field. Simplest: leave both as `number` and document that `getSession` for a draft is not a supported use.)
 
-- [ ] **Step 4:** Run the test.
+- [x] **Step 4:** Run the test.
 
 ```bash
 npm test -- sessions.test
@@ -1279,7 +1279,7 @@ npm test -- sessions.test
 
 Expected: PASS.
 
-- [ ] **Step 5:** Commit.
+- [x] **Step 5:** Commit.
 
 ```bash
 git add lib/db/queries/sessions.ts lib/db/__tests__/sessions.test.ts
@@ -1296,7 +1296,7 @@ The PreWorkout RoutineCard's "last done" stamp should ignore in-progress drafts.
 - Modify: `lib/db/queries/routines.ts`
 - Modify: `lib/db/__tests__/routines.test.ts`
 
-- [ ] **Step 1:** Write the failing test. Open `lib/db/__tests__/routines.test.ts` and add:
+- [x] **Step 1:** Write the failing test. Open `lib/db/__tests__/routines.test.ts` and add:
 
 ```ts
 import { startDraftSession } from '../queries/sessions';
@@ -1324,7 +1324,7 @@ describe('listRoutines.lastDoneAt', () => {
 
 (Make sure the existing `routines.test.ts` already imports `listRoutines` and `seedWorkouts` and `makeTestDb` from the right places — check the top of the file before adding.)
 
-- [ ] **Step 2:** Run to verify it fails.
+- [x] **Step 2:** Run to verify it fails.
 
 ```bash
 npm test -- routines.test -t "lastDoneAt"
@@ -1356,7 +1356,7 @@ Replace the test body with:
   });
 ```
 
-- [ ] **Step 3:** Run again to verify the corrupted-draft test fails.
+- [x] **Step 3:** Run again to verify the corrupted-draft test fails.
 
 ```bash
 npm test -- routines.test -t "lastDoneAt"
@@ -1364,7 +1364,7 @@ npm test -- routines.test -t "lastDoneAt"
 
 Expected: FAIL — `lastDoneAt` is `9_100_000`.
 
-- [ ] **Step 4:** Update the subquery in `lib/db/queries/routines.ts`. Find the `lastDoneAt` line (line 58–60):
+- [x] **Step 4:** Update the subquery in `lib/db/queries/routines.ts`. Find the `lastDoneAt` line (line 58–60):
 
 ```ts
       lastDoneAt: sql<number | null>`(
@@ -1381,7 +1381,7 @@ Change to:
       )`,
 ```
 
-- [ ] **Step 5:** Run the test.
+- [x] **Step 5:** Run the test.
 
 ```bash
 npm test -- routines.test
@@ -1389,7 +1389,7 @@ npm test -- routines.test
 
 Expected: PASS.
 
-- [ ] **Step 6:** Commit.
+- [x] **Step 6:** Commit.
 
 ```bash
 git add lib/db/queries/routines.ts lib/db/__tests__/routines.test.ts
@@ -1403,7 +1403,7 @@ git commit -m "fix(sp4d): listRoutines.lastDoneAt ignores draft sessions"
 **Files:**
 - Modify: `scripts/smoke-sp4a.ts`
 
-- [ ] **Step 1:** Open `scripts/smoke-sp4a.ts`. The current script imports `insertCompletedSession`. Replace its contents (specifically the import and the `result = await insertCompletedSession(...)` block).
+- [x] **Step 1:** Open `scripts/smoke-sp4a.ts`. The current script imports `insertCompletedSession`. Replace its contents (specifically the import and the `result = await insertCompletedSession(...)` block).
 
 Find the line:
 
@@ -1417,7 +1417,7 @@ Replace with:
 import { startDraftSession, upsertDraftSet, finalizeSession, listSessions } from '../lib/db/queries/sessions';
 ```
 
-- [ ] **Step 2:** Find the block that calls `insertCompletedSession` (line 24-33). Replace it with the equivalent lifecycle. The current script has the call inlined with `1_000_000` literals and 2 sets. Replace lines 23-33 with:
+- [x] **Step 2:** Find the block that calls `insertCompletedSession` (line 24-33). Replace it with the equivalent lifecycle. The current script has the call inlined with `1_000_000` literals and 2 sets. Replace lines 23-33 with:
 
 ```ts
 const sets = [
@@ -1438,7 +1438,7 @@ const result = await finalizeSession(db as any, sessionId, 1_000_000 + 60 * 52 *
 
 The existing volume assertion (`5 * 80 + 5 * 90 = 850`) on line 39 still holds because the same two sets are logged.
 
-- [ ] **Step 3:** Run the smoke script.
+- [x] **Step 3:** Run the smoke script.
 
 ```bash
 npm run smoke:sp4a
@@ -1446,7 +1446,7 @@ npm run smoke:sp4a
 
 Expected: prints the same output as before — a session ID, totals, and the listed session row.
 
-- [ ] **Step 4:** Commit.
+- [x] **Step 4:** Commit.
 
 ```bash
 git add scripts/smoke-sp4a.ts
@@ -1461,7 +1461,7 @@ git commit -m "chore(sp4d): migrate smoke-sp4a to new session lifecycle"
 - Create: `lib/workouts/rest-timer.ts`
 - Create: `lib/workouts/__tests__/rest-timer.test.ts`
 
-- [ ] **Step 1:** Write the failing tests. Create `lib/workouts/__tests__/rest-timer.test.ts`:
+- [x] **Step 1:** Write the failing tests. Create `lib/workouts/__tests__/rest-timer.test.ts`:
 
 ```ts
 /** @jest-environment node */
@@ -1532,7 +1532,7 @@ describe('rest timer reducer', () => {
 });
 ```
 
-- [ ] **Step 2:** Run to verify failure.
+- [x] **Step 2:** Run to verify failure.
 
 ```bash
 npm test -- rest-timer
@@ -1540,7 +1540,7 @@ npm test -- rest-timer
 
 Expected: FAIL with module-not-found.
 
-- [ ] **Step 3:** Implement the reducer. Create `lib/workouts/rest-timer.ts`:
+- [x] **Step 3:** Implement the reducer. Create `lib/workouts/rest-timer.ts`:
 
 ```ts
 export type RestTimerState =
@@ -1580,7 +1580,7 @@ export function isOvertime(state: RestTimerState, now: number): boolean {
 }
 ```
 
-- [ ] **Step 4:** Run the tests.
+- [x] **Step 4:** Run the tests.
 
 ```bash
 npm test -- rest-timer
@@ -1588,7 +1588,7 @@ npm test -- rest-timer
 
 Expected: all PASS.
 
-- [ ] **Step 5:** Commit.
+- [x] **Step 5:** Commit.
 
 ```bash
 git add lib/workouts/rest-timer.ts lib/workouts/__tests__/rest-timer.test.ts
@@ -1603,7 +1603,7 @@ git commit -m "feat(sp4d): rest timer reducer + helpers"
 - Create: `lib/workouts/in-flight-pr.ts`
 - Create: `lib/workouts/__tests__/in-flight-pr.test.ts`
 
-- [ ] **Step 1:** Write the failing tests. Create `lib/workouts/__tests__/in-flight-pr.test.ts`:
+- [x] **Step 1:** Write the failing tests. Create `lib/workouts/__tests__/in-flight-pr.test.ts`:
 
 ```ts
 /** @jest-environment node */
@@ -1663,7 +1663,7 @@ describe('wouldThisSetBeAPR', () => {
 });
 ```
 
-- [ ] **Step 2:** Run to verify failure.
+- [x] **Step 2:** Run to verify failure.
 
 ```bash
 npm test -- in-flight-pr
@@ -1671,7 +1671,7 @@ npm test -- in-flight-pr
 
 Expected: FAIL with module-not-found.
 
-- [ ] **Step 3:** Implement. Create `lib/workouts/in-flight-pr.ts`:
+- [x] **Step 3:** Implement. Create `lib/workouts/in-flight-pr.ts`:
 
 ```ts
 import { detectSessionPRs, type PRSnapshot } from './pr-detection';
@@ -1699,7 +1699,7 @@ export function wouldThisSetBeAPR(
 }
 ```
 
-- [ ] **Step 4:** Run.
+- [x] **Step 4:** Run.
 
 ```bash
 npm test -- in-flight-pr
@@ -1707,7 +1707,7 @@ npm test -- in-flight-pr
 
 Expected: all PASS.
 
-- [ ] **Step 5:** Commit.
+- [x] **Step 5:** Commit.
 
 ```bash
 git add lib/workouts/in-flight-pr.ts lib/workouts/__tests__/in-flight-pr.test.ts
@@ -1722,7 +1722,7 @@ git commit -m "feat(sp4d): in-flight PR detection wrapper"
 - Create: `lib/workouts/cardio-aggregate.ts`
 - Create: `lib/workouts/__tests__/cardio-aggregate.test.ts`
 
-- [ ] **Step 1:** Write the failing tests. Create `lib/workouts/__tests__/cardio-aggregate.test.ts`:
+- [x] **Step 1:** Write the failing tests. Create `lib/workouts/__tests__/cardio-aggregate.test.ts`:
 
 ```ts
 /** @jest-environment node */
@@ -1783,7 +1783,7 @@ describe('formatDuration', () => {
 });
 ```
 
-- [ ] **Step 2:** Run to verify failure.
+- [x] **Step 2:** Run to verify failure.
 
 ```bash
 npm test -- cardio-aggregate
@@ -1791,7 +1791,7 @@ npm test -- cardio-aggregate
 
 Expected: FAIL with module-not-found.
 
-- [ ] **Step 3:** Implement. Create `lib/workouts/cardio-aggregate.ts`:
+- [x] **Step 3:** Implement. Create `lib/workouts/cardio-aggregate.ts`:
 
 ```ts
 export function paceMinPerKm(durationSeconds: number, distanceKm: number): number | null {
@@ -1820,7 +1820,7 @@ export function formatDuration(seconds: number): string {
 }
 ```
 
-- [ ] **Step 4:** Run.
+- [x] **Step 4:** Run.
 
 ```bash
 npm test -- cardio-aggregate
@@ -1828,7 +1828,7 @@ npm test -- cardio-aggregate
 
 Expected: all PASS.
 
-- [ ] **Step 5:** Commit.
+- [x] **Step 5:** Commit.
 
 ```bash
 git add lib/workouts/cardio-aggregate.ts lib/workouts/__tests__/cardio-aggregate.test.ts
@@ -1844,7 +1844,7 @@ This is the largest non-test file. Split into three tasks (14, 15, 16) for revie
 **Files:**
 - Create: `lib/state/activeSessionStore.ts`
 
-- [ ] **Step 1:** Create `lib/state/activeSessionStore.ts` with the types and lifecycle:
+- [x] **Step 1:** Create `lib/state/activeSessionStore.ts` with the types and lifecycle:
 
 ```ts
 import { create } from 'zustand';
@@ -2089,7 +2089,7 @@ export const useActiveSessionStore = create<ActiveSessionState>()((set, get) => 
 }));
 ```
 
-- [ ] **Step 2:** Type-check the file.
+- [x] **Step 2:** Type-check the file.
 
 ```bash
 npx tsc --noEmit
@@ -2097,7 +2097,7 @@ npx tsc --noEmit
 
 Expected: clean exit. If you get errors about `getPRsForExercises` returning a `Map<string, ...>` shape mismatch, double-check it returns `PRSnapshot` (i.e. `Map<string, { weightKg: number; reps: number }>`) — it should.
 
-- [ ] **Step 3:** Run the test suite — there are no tests for the store yet, but make sure nothing else broke.
+- [x] **Step 3:** Run the test suite — there are no tests for the store yet, but make sure nothing else broke.
 
 ```bash
 npm test
@@ -2105,7 +2105,7 @@ npm test
 
 Expected: all existing tests still pass.
 
-- [ ] **Step 4:** Commit.
+- [x] **Step 4:** Commit.
 
 ```bash
 git add lib/state/activeSessionStore.ts
@@ -2119,7 +2119,7 @@ git commit -m "feat(sp4d): active session store — types + lifecycle"
 **Files:**
 - Modify: `lib/state/activeSessionStore.ts`
 
-- [ ] **Step 1:** Replace the `completeSet`, `editSet`, `removeSet`, `addSetToCurrent`, `skipExercise`, and `goToNextExercise` stubs in `lib/state/activeSessionStore.ts` with these implementations. Find each stub and replace it with the corresponding block:
+- [x] **Step 1:** Replace the `completeSet`, `editSet`, `removeSet`, `addSetToCurrent`, `skipExercise`, and `goToNextExercise` stubs in `lib/state/activeSessionStore.ts` with these implementations. Find each stub and replace it with the corresponding block:
 
 ```ts
   completeSet: async (exPos, setPos, payload) => {
@@ -2221,7 +2221,7 @@ git commit -m "feat(sp4d): active session store — types + lifecycle"
   },
 ```
 
-- [ ] **Step 2:** Type-check.
+- [x] **Step 2:** Type-check.
 
 ```bash
 npx tsc --noEmit
@@ -2229,7 +2229,7 @@ npx tsc --noEmit
 
 Expected: clean.
 
-- [ ] **Step 3:** Run the suite.
+- [x] **Step 3:** Run the suite.
 
 ```bash
 npm test
@@ -2237,7 +2237,7 @@ npm test
 
 Expected: all PASS (no new tests; verifying nothing broke).
 
-- [ ] **Step 4:** Commit.
+- [x] **Step 4:** Commit.
 
 ```bash
 git add lib/state/activeSessionStore.ts
@@ -2251,7 +2251,7 @@ git commit -m "feat(sp4d): active session store — set operations"
 **Files:**
 - Modify: `lib/state/activeSessionStore.ts`
 
-- [ ] **Step 1:** Replace the four rest-timer stubs at the bottom of the store. Find each stub (`startRestTimer`, `addRestTime`, `skipRest`, `tickRest`) and replace with:
+- [x] **Step 1:** Replace the four rest-timer stubs at the bottom of the store. Find each stub (`startRestTimer`, `addRestTime`, `skipRest`, `tickRest`) and replace with:
 
 ```ts
   startRestTimer: (durationMs: number) => {
@@ -2287,7 +2287,7 @@ git commit -m "feat(sp4d): active session store — set operations"
   },
 ```
 
-- [ ] **Step 2:** Type-check + test.
+- [x] **Step 2:** Type-check + test.
 
 ```bash
 npx tsc --noEmit && npm test
@@ -2295,7 +2295,7 @@ npx tsc --noEmit && npm test
 
 Expected: all PASS.
 
-- [ ] **Step 3:** Commit.
+- [x] **Step 3:** Commit.
 
 ```bash
 git add lib/state/activeSessionStore.ts
@@ -2311,7 +2311,7 @@ Tiny consumer of 4b's `useLiveHeartRate`. No tests (spec §11).
 **Files:**
 - Create: `components/active-session/LiveHRChip.tsx`
 
-- [ ] **Step 1:** Create the file:
+- [x] **Step 1:** Create the file:
 
 ```tsx
 import { useEffect } from 'react';
@@ -2353,7 +2353,7 @@ export function LiveHRChip() {
 }
 ```
 
-- [ ] **Step 2:** Type-check.
+- [x] **Step 2:** Type-check.
 
 ```bash
 npx tsc --noEmit
@@ -2361,7 +2361,7 @@ npx tsc --noEmit
 
 Expected: clean. If `useLiveHeartRate`'s `current.sampledAt` type is unclear, peek at `lib/health/heart-rate.ts` and `lib/health/types.ts` and adjust the conversion accordingly.
 
-- [ ] **Step 3:** Commit.
+- [x] **Step 3:** Commit.
 
 ```bash
 git add components/active-session/LiveHRChip.tsx
@@ -2375,7 +2375,7 @@ git commit -m "feat(sp4d): LiveHRChip component"
 **Files:**
 - Create: `components/active-session/SetCard.tsx`
 
-- [ ] **Step 1:** Create the file:
+- [x] **Step 1:** Create the file:
 
 ```tsx
 import { Pressable, Text, TextInput, View } from 'react-native';
@@ -2517,7 +2517,7 @@ export function SetCard({
 }
 ```
 
-- [ ] **Step 2:** Type-check.
+- [x] **Step 2:** Type-check.
 
 ```bash
 npx tsc --noEmit
@@ -2525,7 +2525,7 @@ npx tsc --noEmit
 
 Expected: clean.
 
-- [ ] **Step 3:** Commit.
+- [x] **Step 3:** Commit.
 
 ```bash
 git add components/active-session/SetCard.tsx
@@ -2541,7 +2541,7 @@ A modal sheet for editing a previously-completed set's reps/weight, with a "Remo
 **Files:**
 - Create: `components/active-session/SetEditSheet.tsx`
 
-- [ ] **Step 1:** Create the file:
+- [x] **Step 1:** Create the file:
 
 ```tsx
 import { useEffect, useState } from 'react';
@@ -2638,7 +2638,7 @@ export function SetEditSheet({
 }
 ```
 
-- [ ] **Step 2:** Type-check.
+- [x] **Step 2:** Type-check.
 
 ```bash
 npx tsc --noEmit
@@ -2646,7 +2646,7 @@ npx tsc --noEmit
 
 Expected: clean.
 
-- [ ] **Step 3:** Commit.
+- [x] **Step 3:** Commit.
 
 ```bash
 git add components/active-session/SetEditSheet.tsx
@@ -2660,7 +2660,7 @@ git commit -m "feat(sp4d): SetEditSheet with remove action"
 **Files:**
 - Create: `components/active-session/ExerciseCard.tsx`
 
-- [ ] **Step 1:** Create the file:
+- [x] **Step 1:** Create the file:
 
 ```tsx
 import { useState } from 'react';
@@ -2846,7 +2846,7 @@ export function ExerciseCard({
 }
 ```
 
-- [ ] **Step 2:** Type-check.
+- [x] **Step 2:** Type-check.
 
 ```bash
 npx tsc --noEmit
@@ -2854,7 +2854,7 @@ npx tsc --noEmit
 
 Expected: clean.
 
-- [ ] **Step 3:** Commit.
+- [x] **Step 3:** Commit.
 
 ```bash
 git add components/active-session/ExerciseCard.tsx
@@ -2868,7 +2868,7 @@ git commit -m "feat(sp4d): ExerciseCard composes SetCard + edit sheet"
 **Files:**
 - Create: `components/active-session/UpNextRow.tsx`
 
-- [ ] **Step 1:** Create the file:
+- [x] **Step 1:** Create the file:
 
 ```tsx
 import { Text, View } from 'react-native';
@@ -2906,7 +2906,7 @@ export function UpNextRow({ exercise }: { exercise: ExerciseInSession }) {
 }
 ```
 
-- [ ] **Step 2:** Type-check + commit.
+- [x] **Step 2:** Type-check + commit.
 
 ```bash
 npx tsc --noEmit
@@ -2921,7 +2921,7 @@ git commit -m "feat(sp4d): UpNextRow component"
 **Files:**
 - Create: `components/active-session/RestBanner.tsx`
 
-- [ ] **Step 1:** Create the file:
+- [x] **Step 1:** Create the file:
 
 ```tsx
 import { useEffect, useState } from 'react';
@@ -2986,7 +2986,7 @@ export function RestBanner() {
 }
 ```
 
-- [ ] **Step 2:** Type-check + commit.
+- [x] **Step 2:** Type-check + commit.
 
 ```bash
 npx tsc --noEmit
@@ -3001,7 +3001,7 @@ git commit -m "feat(sp4d): RestBanner with ticker"
 **Files:**
 - Create: `components/active-session/SessionHeader.tsx`
 
-- [ ] **Step 1:** Create the file:
+- [x] **Step 1:** Create the file:
 
 ```tsx
 import { useEffect, useState } from 'react';
@@ -3121,7 +3121,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 ```
 
-- [ ] **Step 2:** Type-check + commit.
+- [x] **Step 2:** Type-check + commit.
 
 ```bash
 npx tsc --noEmit
@@ -3136,7 +3136,7 @@ git commit -m "feat(sp4d): SessionHeader with strength/cardio chips"
 **Files:**
 - Create: `components/active-session/CardioBody.tsx`
 
-- [ ] **Step 1:** Create the file:
+- [x] **Step 1:** Create the file:
 
 ```tsx
 import { useEffect, useState } from 'react';
@@ -3236,7 +3236,7 @@ export function CardioBody() {
 }
 ```
 
-- [ ] **Step 2:** Type-check + commit.
+- [x] **Step 2:** Type-check + commit.
 
 ```bash
 npx tsc --noEmit
@@ -3251,7 +3251,7 @@ git commit -m "feat(sp4d): CardioBody with live elapsed + distance input"
 **Files:**
 - Create: `components/active-session/DiscardConfirmModal.tsx`
 
-- [ ] **Step 1:** Create the file:
+- [x] **Step 1:** Create the file:
 
 ```tsx
 import { Modal, Pressable, Text, View } from 'react-native';
@@ -3312,7 +3312,7 @@ export function DiscardConfirmModal({
 }
 ```
 
-- [ ] **Step 2:** Type-check + commit.
+- [x] **Step 2:** Type-check + commit.
 
 ```bash
 npx tsc --noEmit
@@ -3327,7 +3327,7 @@ git commit -m "feat(sp4d): DiscardConfirmModal"
 **Files:**
 - Create: `app/(tabs)/move/active.tsx`
 
-- [ ] **Step 1:** Create the route:
+- [x] **Step 1:** Create the route:
 
 ```tsx
 import { useState } from 'react';
@@ -3391,7 +3391,7 @@ export default function ActiveSession() {
 }
 ```
 
-- [ ] **Step 2:** Type-check.
+- [x] **Step 2:** Type-check.
 
 ```bash
 npx tsc --noEmit
@@ -3399,7 +3399,7 @@ npx tsc --noEmit
 
 Expected: clean.
 
-- [ ] **Step 3:** Commit.
+- [x] **Step 3:** Commit.
 
 ```bash
 git add app/(tabs)/move/active.tsx
@@ -3413,7 +3413,7 @@ git commit -m "feat(sp4d): ActiveSession route with strength + cardio branches"
 **Files:**
 - Create: `app/(tabs)/move/post.tsx`
 
-- [ ] **Step 1:** Create the route:
+- [x] **Step 1:** Create the route:
 
 ```tsx
 import { useEffect, useState } from 'react';
@@ -3484,7 +3484,7 @@ function Row({ label, value, palette }: { label: string; value: string; palette:
 }
 ```
 
-- [ ] **Step 2:** Type-check.
+- [x] **Step 2:** Type-check.
 
 ```bash
 npx tsc --noEmit
@@ -3492,7 +3492,7 @@ npx tsc --noEmit
 
 Expected: clean. If `colors.light` isn't a valid type reference, replace `palette: typeof colors.light` with `palette: ReturnType<typeof useTheme>['palette']` or simply pass the relevant fields explicitly.
 
-- [ ] **Step 3:** Commit.
+- [x] **Step 3:** Commit.
 
 ```bash
 git add app/(tabs)/move/post.tsx
@@ -3506,7 +3506,7 @@ git commit -m "feat(sp4d): PostWorkout stub route"
 **Files:**
 - Modify: `app/_layout.tsx`
 
-- [ ] **Step 1:** Open `app/_layout.tsx`. Update the `Boot` component to add a one-shot resume check after the onboarding redirect logic. The full `Boot` becomes:
+- [x] **Step 1:** Open `app/_layout.tsx`. Update the `Boot` component to add a one-shot resume check after the onboarding redirect logic. The full `Boot` becomes:
 
 ```tsx
 function Boot({ children }: { children: React.ReactNode }) {
@@ -3566,7 +3566,7 @@ function Boot({ children }: { children: React.ReactNode }) {
 }
 ```
 
-- [ ] **Step 2:** Add the new imports at the top of the file (alongside the existing imports):
+- [x] **Step 2:** Add the new imports at the top of the file (alongside the existing imports):
 
 ```tsx
 import React, { useEffect } from 'react';   // add React if not already there for useRef
@@ -3574,7 +3574,7 @@ import { getOpenDraft } from '@/lib/db/queries/sessions';
 import { useActiveSessionStore } from '@/lib/state/activeSessionStore';
 ```
 
-- [ ] **Step 3:** Type-check.
+- [x] **Step 3:** Type-check.
 
 ```bash
 npx tsc --noEmit
@@ -3582,7 +3582,7 @@ npx tsc --noEmit
 
 Expected: clean.
 
-- [ ] **Step 4:** Run all tests.
+- [x] **Step 4:** Run all tests.
 
 ```bash
 npm test
@@ -3590,7 +3590,7 @@ npm test
 
 Expected: all PASS.
 
-- [ ] **Step 5:** Commit.
+- [x] **Step 5:** Commit.
 
 ```bash
 git add app/_layout.tsx
@@ -3607,7 +3607,7 @@ Move the routine card tap from "edit" to "start session", and add an "Edit" entr
 - Modify: `components/workouts/RoutineActionSheet.tsx`
 - Modify: `app/(tabs)/move/index.tsx`
 
-- [ ] **Step 1:** Update `components/workouts/RoutineActionSheet.tsx` to add an `onEdit` prop and Row:
+- [x] **Step 1:** Update `components/workouts/RoutineActionSheet.tsx` to add an `onEdit` prop and Row:
 
 ```tsx
 import { Modal, Pressable, Text, View } from 'react-native';
@@ -3654,7 +3654,7 @@ export function RoutineActionSheet({
 }
 ```
 
-- [ ] **Step 2:** Update `app/(tabs)/move/index.tsx`. Add a `startActive` helper that calls the store and navigates, and rewire the tap handlers. Find the `RoutineCard` JSX (around line 56) and the `CardioRow` JSX (around line 70). Update the `RoutineActionSheet` JSX to wire `onEdit`. The relevant changes:
+- [x] **Step 2:** Update `app/(tabs)/move/index.tsx`. Add a `startActive` helper that calls the store and navigates, and rewire the tap handlers. Find the `RoutineCard` JSX (around line 56) and the `CardioRow` JSX (around line 70). Update the `RoutineActionSheet` JSX to wire `onEdit`. The relevant changes:
 
 Add at the top, with the existing imports:
 
@@ -3731,7 +3731,7 @@ Wire the `onEdit` row in the action sheet. Update the `<RoutineActionSheet ...>`
 />
 ```
 
-- [ ] **Step 3:** Type-check.
+- [x] **Step 3:** Type-check.
 
 ```bash
 npx tsc --noEmit
@@ -3739,7 +3739,7 @@ npx tsc --noEmit
 
 Expected: clean.
 
-- [ ] **Step 4:** Commit.
+- [x] **Step 4:** Commit.
 
 ```bash
 git add components/workouts/RoutineActionSheet.tsx app/(tabs)/move/index.tsx
@@ -3754,7 +3754,7 @@ This task has no code; it's the verification gate that closes 4d.
 
 **Verification surface:** iPhone via the EAS dev client built in 4b. Web target is acceptable for steps 1–6 (the data + state-machine smoke); HR + draft-resume-across-app-kill require the device. If iPhone dev-client install is still pending, document that here and treat 4d as "code complete; iPhone verification carried."
 
-- [ ] **Step 1:** Run the full test suite.
+- [x] **Step 1:** Run the full test suite.
 
 ```bash
 npm test
@@ -3762,7 +3762,7 @@ npm test
 
 Expected: all PASS. Note the test count for the commit message.
 
-- [ ] **Step 2:** Run typecheck.
+- [x] **Step 2:** Run typecheck.
 
 ```bash
 npx tsc --noEmit
@@ -3770,7 +3770,7 @@ npx tsc --noEmit
 
 Expected: clean.
 
-- [ ] **Step 3:** Start the app on web (Windows-friendly path).
+- [x] **Step 3:** Start the app on web (Windows-friendly path).
 
 ```bash
 npm run web
@@ -3786,24 +3786,24 @@ Walk through the **strength smoke** (spec §1):
 7. Tap "..." on the active exercise → Skip → next exercise becomes active.
 8. Tap Finish → spinner → PostWorkout stub renders with totals → tap Done → returns to PreWorkout.
 
-- [ ] **Step 4:** Walk through the **cardio smoke** (web is fine):
+- [x] **Step 4:** Walk through the **cardio smoke** (web is fine):
 1. From PreWorkout, tap a Cardio row.
 2. Active Session opens with `<CardioBody />`; live elapsed clock ticks up.
 3. Type a distance value (e.g. 3.5) → blur → distance is persisted to the draft.
 4. Tap Finish → PostWorkout stub shows the cardio session.
 
-- [ ] **Step 5:** Walk through the **discard smoke** (web is fine):
+- [x] **Step 5:** Walk through the **discard smoke** (web is fine):
 1. Start a session, log 2 sets.
 2. Tap the back arrow on the header → DiscardConfirmModal appears with "You'll lose 2 logged sets."
 3. Tap Discard → returns to PreWorkout; the routine card's last-done is unchanged.
 4. Verify in DB (e.g. `tsx scripts/smoke-sp4a.ts` printout, or open the SQLite file) that no draft sessions remain.
 
-- [ ] **Step 6:** Walk through the **resume smoke** (web is OK; iPhone preferred):
+- [x] **Step 6:** Walk through the **resume smoke** (web is OK; iPhone preferred):
 1. Start a session, log 2 sets.
 2. Reload the web page (or kill the iOS app from the app switcher).
 3. App boots → resume hook runs → lands directly on Active Session with both sets present and the elapsed timer continuing from `startedAt`.
 
-- [ ] **Step 7:** **iPhone-only:** verify the **HR chip**.
+- [x] **Step 7:** **iPhone-only:** verify the **HR chip**.
 1. Wear the Apple Watch.
 2. Start a strength session on the iPhone via the dev client.
 3. HR chip appears in the active exercise card with current bpm.
@@ -3811,16 +3811,16 @@ Walk through the **strength smoke** (spec §1):
 
 If iPhone is not available right now, skip step 7 and document it as "iPhone HR verification deferred until 4b dev-client install is exercised."
 
-- [ ] **Step 8:** Update the meta-spec status. Open `docs/superpowers/specs/meta/2026-04-25-ios-v2-workouts-design.md`. Find §3 row 4d and §3 sub-slice status section. Mark 4d complete (check ✅) with the test count, the iPhone-verification deferral note (if applicable), and the date 2026-04-25. Mirror the format used for 4a/4b/4c.
+- [x] **Step 8:** Update the meta-spec status. Open `docs/superpowers/specs/meta/2026-04-25-ios-v2-workouts-design.md`. Find §3 row 4d and §3 sub-slice status section. Mark 4d complete (check ✅) with the test count, the iPhone-verification deferral note (if applicable), and the date 2026-04-25. Mirror the format used for 4a/4b/4c.
 
-- [ ] **Step 9:** Commit the meta-spec update.
+- [x] **Step 9:** Commit the meta-spec update.
 
 ```bash
 git add docs/superpowers/specs/meta/2026-04-25-ios-v2-workouts-design.md
 git commit -m "docs(sp4d): mark slice 4d complete in meta spec"
 ```
 
-- [ ] **Step 10:** Optional but recommended: run `superpowers:requesting-code-review` against the SP4d diff (every commit since the spec) and address any blocking findings.
+- [x] **Step 10:** Optional but recommended: run `superpowers:requesting-code-review` against the SP4d diff (every commit since the spec) and address any blocking findings.
 
 ---
 
