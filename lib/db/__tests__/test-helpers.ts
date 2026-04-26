@@ -31,6 +31,7 @@ import {
   upsertDraftSet,
   finalizeSession,
   type CompletedSessionDraft,
+  type CompletedSessionResult,
 } from '../queries/sessions';
 
 /**
@@ -40,7 +41,7 @@ import {
 export async function insertCompletedSessionForTests(
   db: TestDb,
   draft: CompletedSessionDraft,
-): Promise<{ sessionId: number; prCount: number; totalVolumeKg: number }> {
+): Promise<CompletedSessionResult> {
   const { sessionId } = await startDraftSession(db, {
     routineId: draft.routineId,
     routineNameSnapshot: draft.routineNameSnapshot,
