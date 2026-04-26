@@ -6,6 +6,7 @@ import {
   getSession,
   getRecentSessions,
   listAllSessions,
+  getWeeklyVolumeSeries,
   type CompletedSessionDraft,
 } from '../queries/sessions';
 import { movementEntries, prs, sessions, sessionSets } from '../schema';
@@ -745,5 +746,34 @@ describe('listAllSessions', () => {
     await startDraftSession(db, { routineId: 1, routineNameSnapshot: 'Pull Day A', startedAt: 9_000_000 });
     const out = await listAllSessions(db);
     expect(out).toHaveLength(1);
+  });
+});
+
+describe('getWeeklyVolumeSeries', () => {
+  const NOW = new Date(2026, 3, 22, 14, 0, 0).getTime(); // Wed Apr 22 2026
+
+  it('returns weeksBack zeros when no sessions', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const out = await getWeeklyVolumeSeries(db, 8, NOW);
+    expect(out).toHaveLength(8);
+    expect(out.every((b) => b.tonnageKg === 0)).toBe(true);
+  });
+
+  it('places this-week session in the last bucket', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const today = new Date(2026, 3, 22, 12, 0, 0).getTime();
+    await insertCompletedSessionForTests(db, { ...baseDraft(), startedAt: today - 1000, finishedAt: today });
+    const out = await getWeeklyVolumeSeries(db, 8, NOW);
+    expect(out[7].tonnageKg).toBeGreaterThan(0);
+  });
+
+  it('excludes drafts from the series', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    await startDraftSession(db, { routineId: 1, routineNameSnapshot: 'Push Day A', startedAt: NOW - 1000 });
+    const out = await getWeeklyVolumeSeries(db, 8, NOW);
+    expect(out.every((b) => b.tonnageKg === 0)).toBe(true);
   });
 });

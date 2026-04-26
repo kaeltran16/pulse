@@ -1,5 +1,6 @@
 import { and, asc, desc, eq } from 'drizzle-orm';
 
+import { computeWeeklyVolumeSeries, type WeeklyVolumeBucket } from '../../workouts/post-session-aggregate';
 import { detectSessionPRs } from '../../workouts/pr-detection';
 import { computeStrengthVolume } from '../../workouts/volume';
 import { exercises as exercisesTable, movementEntries, prs, sessions, sessionSets } from '../schema';
@@ -395,6 +396,25 @@ export async function listAllSessions(
   const hydrated = await hydrateRows(db, rows as Array<typeof sessions.$inferSelect>);
   if (!modeFilter) return hydrated;
   return hydrated.filter((r) => r.mode === modeFilter);
+}
+
+export async function getWeeklyVolumeSeries(
+  db: AnyDb,
+  weeksBack: number,
+  now: number,
+): Promise<WeeklyVolumeBucket[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rows = await (db as any)
+    .select({
+      finishedAt: sessions.finishedAt,
+      totalVolumeKg: sessions.totalVolumeKg,
+    })
+    .from(sessions)
+    .where(eq(sessions.status, 'completed'));
+  const list = (rows as Array<{ finishedAt: number | null; totalVolumeKg: number }>)
+    .filter((r) => r.finishedAt !== null)
+    .map((r) => ({ finishedAt: r.finishedAt as number, totalVolumeKg: r.totalVolumeKg }));
+  return computeWeeklyVolumeSeries(list, weeksBack, now);
 }
 
 export function finalizeSession(
