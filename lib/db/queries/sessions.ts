@@ -382,6 +382,21 @@ export async function getRecentSessions(db: AnyDb, limit: number): Promise<Sessi
   return hydrateRows(db, rows as Array<typeof sessions.$inferSelect>);
 }
 
+export async function listAllSessions(
+  db: AnyDb,
+  modeFilter?: 'strength' | 'cardio',
+): Promise<SessionRowData[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rows = await (db as any)
+    .select()
+    .from(sessions)
+    .where(eq(sessions.status, 'completed'))
+    .orderBy(desc(sessions.finishedAt));
+  const hydrated = await hydrateRows(db, rows as Array<typeof sessions.$inferSelect>);
+  if (!modeFilter) return hydrated;
+  return hydrated.filter((r) => r.mode === modeFilter);
+}
+
 export function finalizeSession(
   db: AnyDb,
   sessionId: number,

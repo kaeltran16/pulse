@@ -5,6 +5,7 @@ import {
   listSessions,
   getSession,
   getRecentSessions,
+  listAllSessions,
   type CompletedSessionDraft,
 } from '../queries/sessions';
 import { movementEntries, prs, sessions, sessionSets } from '../schema';
@@ -671,5 +672,78 @@ describe('getRecentSessions', () => {
     expect(cardio).toBeDefined();
     expect(cardio!.distanceKm).toBe(3.5);
     expect(cardio!.paceSecondsPerKm).toBeCloseTo((28 * 60) / 3.5);
+  });
+});
+
+describe('listAllSessions', () => {
+  it('returns all completed sessions newest first when no filter', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    await insertCompletedSessionForTests(db, { ...baseDraft(), startedAt: 1_000_000, finishedAt: 1_500_000 });
+    await insertCompletedSessionForTests(db, { ...baseDraft(), startedAt: 2_000_000, finishedAt: 2_500_000 });
+    const out = await listAllSessions(db);
+    expect(out).toHaveLength(2);
+    expect(out[0].finishedAt).toBeGreaterThan(out[1].finishedAt);
+  });
+
+  it('filters to strength when mode=strength', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    await insertCompletedSessionForTests(db, baseDraft());
+    await insertCompletedSessionForTests(db, {
+      routineId: null,
+      routineNameSnapshot: 'Treadmill Intervals',
+      startedAt: 5_000_000,
+      finishedAt: 5_000_000 + 28 * 60 * 1000,
+      sets: [
+        {
+          exerciseId: 'treadmill',
+          exercisePosition: 0,
+          setPosition: 0,
+          reps: null,
+          weightKg: null,
+          durationSeconds: 28 * 60,
+          distanceKm: 3.5,
+        },
+      ],
+    });
+    const out = await listAllSessions(db, 'strength');
+    expect(out).toHaveLength(1);
+    expect(out[0].mode).toBe('strength');
+  });
+
+  it('filters to cardio when mode=cardio', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    await insertCompletedSessionForTests(db, baseDraft());
+    await insertCompletedSessionForTests(db, {
+      routineId: null,
+      routineNameSnapshot: 'Treadmill Intervals',
+      startedAt: 5_000_000,
+      finishedAt: 5_000_000 + 28 * 60 * 1000,
+      sets: [
+        {
+          exerciseId: 'treadmill',
+          exercisePosition: 0,
+          setPosition: 0,
+          reps: null,
+          weightKg: null,
+          durationSeconds: 28 * 60,
+          distanceKm: 3.5,
+        },
+      ],
+    });
+    const out = await listAllSessions(db, 'cardio');
+    expect(out).toHaveLength(1);
+    expect(out[0].mode).toBe('cardio');
+  });
+
+  it('excludes drafts', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    await insertCompletedSessionForTests(db, baseDraft());
+    await startDraftSession(db, { routineId: 1, routineNameSnapshot: 'Pull Day A', startedAt: 9_000_000 });
+    const out = await listAllSessions(db);
+    expect(out).toHaveLength(1);
   });
 });
