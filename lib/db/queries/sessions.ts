@@ -67,7 +67,11 @@ export async function listSessions(
   args: { limit?: number; offset?: number } = {},
 ): Promise<SessionSummary[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let q = (db as any).select().from(sessions).orderBy(desc(sessions.startedAt));
+  let q = (db as any)
+    .select()
+    .from(sessions)
+    .where(eq(sessions.status, 'completed'))
+    .orderBy(desc(sessions.startedAt));
   if (args.limit !== undefined)  q = q.limit(args.limit);
   if (args.offset !== undefined) q = q.offset(args.offset);
   const rows = await q;

@@ -114,6 +114,17 @@ describe('listSessions / getSession', () => {
     expect(list[1].startedAt).toBe(1_000_000);
   });
 
+  it('listSessions excludes draft sessions', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    await insertCompletedSessionForTests(db, baseDraft({ startedAt: 1_000_000, finishedAt: 1_500_000 }));
+    await startDraftSession(db, { routineId: 1, routineNameSnapshot: 'Push Day A', startedAt: 2_000_000 });
+
+    const list = await listSessions(db);
+    expect(list).toHaveLength(1);
+    expect(list[0].startedAt).toBe(1_000_000);
+  });
+
   it('listSessions honors limit', async () => {
     const { db } = makeTestDb();
     seedWorkouts(db);
