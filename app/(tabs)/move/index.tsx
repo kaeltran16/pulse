@@ -11,6 +11,7 @@ import { RoutineActionSheet } from '@/components/workouts/RoutineActionSheet';
 import { RenameRoutineSheet } from '@/components/workouts/RenameRoutineSheet';
 import { useRoutineActions } from '@/lib/hooks/useRoutineActions';
 import { useActiveSessionStore } from '@/lib/state/activeSessionStore';
+import { RecentSection } from '@/components/history/RecentSection';
 
 export default function PreWorkout() {
   const router = useRouter();
@@ -65,6 +66,8 @@ export default function PreWorkout() {
           <Text style={{ fontSize: 17, color: palette.accent, fontWeight: '600' }}>+ New</Text>
         </Pressable>
       </View>
+
+      <RecentSection />
 
       <Text style={{ fontSize: 12, fontWeight: '700', color: palette.ink3, textTransform: 'uppercase', marginBottom: 8 }}>
         Strength
