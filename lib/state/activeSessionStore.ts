@@ -14,6 +14,23 @@ import {
 import { getRoutineWithSets, type RoutineFull } from '@/lib/db/queries/routines';
 import { getPRsForExercises, type PRSnapshot } from '@/lib/db/queries/prs';
 import { type RestTimerState, reduce as reduceRest } from '@/lib/workouts/rest-timer';
+import {
+  startRestActivity,
+  updateRestActivity,
+  stopRestActivity,
+} from '@/lib/live-activity';
+import { projectRestActivity } from '@/lib/live-activity/projection';
+import type { LiveActivityState } from 'expo-live-activity';
+
+function buildFinalRestState(): LiveActivityState {
+  return {
+    title: 'Rest done',
+    subtitle: '',
+    progressBar: { date: Date.now() },
+    imageName: 'rest_timer',
+    dynamicIslandImageName: 'rest_timer',
+  };
+}
 
 export type SessionPhase = 'idle' | 'hydrating' | 'active' | 'finalizing';
 export type SessionMode = 'strength' | 'cardio';
@@ -202,6 +219,7 @@ export const useActiveSessionStore = create<ActiveSessionState>()((set, get) => 
   finishSession: async () => {
     const s = get();
     if (s.phase !== 'active' || s.sessionId === null) return;
+    stopRestActivity(buildFinalRestState());
     set({ phase: 'finalizing' });
     try {
       const result = await finalizeSession(db, s.sessionId, Date.now());
@@ -222,6 +240,7 @@ export const useActiveSessionStore = create<ActiveSessionState>()((set, get) => 
   discardSession: async () => {
     const s = get();
     if (s.sessionId === null) return;
+    stopRestActivity(buildFinalRestState());
     await discardDraftSession(db, s.sessionId);
     set({ ...ZERO_STATE });
     router.replace('/(tabs)/move');
@@ -262,6 +281,8 @@ export const useActiveSessionStore = create<ActiveSessionState>()((set, get) => 
 
     if (s.mode === 'strength') {
       get().startRestTimer(s.restDefaultSeconds * 1000);
+      const projected = projectRestActivity(get());
+      if (projected !== null) startRestActivity(projected);
     }
   },
 
@@ -325,18 +346,21 @@ export const useActiveSessionStore = create<ActiveSessionState>()((set, get) => 
     if (secs === 30) {
       const next = reduceRest(get().rest, { type: 'ADD_30S' });
       set({ rest: next });
-      return;
+    } else {
+      let next = get().rest;
+      let remaining = secs;
+      while (remaining >= 30) {
+        next = reduceRest(next, { type: 'ADD_30S' });
+        remaining -= 30;
+      }
+      set({ rest: next });
     }
-    let next = get().rest;
-    let remaining = secs;
-    while (remaining >= 30) {
-      next = reduceRest(next, { type: 'ADD_30S' });
-      remaining -= 30;
-    }
-    set({ rest: next });
+    const projected = projectRestActivity(get());
+    if (projected !== null) updateRestActivity(projected);
   },
 
   skipRest: () => {
+    stopRestActivity(buildFinalRestState());
     const next = reduceRest(get().rest, { type: 'SKIP' });
     set({ rest: next });
   },
