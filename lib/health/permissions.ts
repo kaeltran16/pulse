@@ -5,7 +5,10 @@ export async function requestPermissions(): Promise<{ granted: boolean }> {
   // as granted=true. Real failures surface as thrown errors at write/read time.
   try {
     const ok = await requestAuthorization({
-      toShare: ['HKWorkoutTypeIdentifier'],
+      toShare: [
+        'HKWorkoutTypeIdentifier',
+        'HKQuantityTypeIdentifierDistanceWalkingRunning',
+      ],
       toRead: ['HKQuantityTypeIdentifierHeartRate'],
     });
     return { granted: ok };
