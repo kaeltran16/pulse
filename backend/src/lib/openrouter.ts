@@ -8,7 +8,7 @@ export type Usage = { inputTokens: number; outputTokens: number };
 
 export interface LlmClient {
   chatStream(args: { messages: Msg[]; model: string; signal?: AbortSignal }): AsyncIterable<{ delta: string } | { done: Usage }>;
-  chatJson(args: { messages: Msg[]; model: string }): Promise<{ text: string; usage: Usage }>;
+  chatJson(args: { messages: Msg[]; model: string; signal?: AbortSignal }): Promise<{ text: string; usage: Usage }>;
 }
 
 export function createOpenRouterClient(apiKey: string): LlmClient {
@@ -46,13 +46,16 @@ export function createOpenRouterClient(apiKey: string): LlmClient {
       yield { done: { inputTokens, outputTokens } };
     },
 
-    async chatJson({ messages, model }) {
+    async chatJson({ messages, model, signal }) {
       try {
-        const resp = await client.chat.completions.create({
-          model,
-          messages,
-          response_format: { type: "json_object" },
-        });
+        const resp = await client.chat.completions.create(
+          {
+            model,
+            messages,
+            response_format: { type: "json_object" },
+          },
+          signal ? { signal } : undefined,
+        );
         const text = resp.choices?.[0]?.message?.content ?? "";
         const usage = {
           inputTokens: resp.usage?.prompt_tokens ?? 0,

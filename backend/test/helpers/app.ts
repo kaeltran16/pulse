@@ -1,6 +1,6 @@
 import { createApp, type AppDeps } from "../../src/index.js";
 import { createLogger } from "../../src/lib/logger.js";
-import type { LlmClient } from "../../src/lib/openrouter.js";
+import type { LlmClient, Msg } from "../../src/lib/openrouter.js";
 import { TEST_SECRET } from "./jwt.js";
 import type { Config } from "../../src/config.js";
 
@@ -20,7 +20,7 @@ export function buildTestApp(overrides: { llm?: Partial<LlmClient>; config?: Par
       yield { delta: "ok" };
       yield { done: { inputTokens: 1, outputTokens: 1 } };
     },
-    async chatJson() {
+    async chatJson(_args: { messages: Msg[]; model: string; signal?: AbortSignal }) {
       return { text: "{}", usage: { inputTokens: 1, outputTokens: 1 } };
     },
     ...overrides.llm,
