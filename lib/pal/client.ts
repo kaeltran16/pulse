@@ -1,7 +1,8 @@
 import type { ParseResponse, ParseHint } from '../api-types';
 import { PAL_BASE_URL, PAL_TOKEN } from './config';
-import { AuthError, NetworkError, RateLimitError, UpstreamError, ValidationError } from './errors';
+import { AuthError, GenerationFailedError, NetworkError, RateLimitError, UpstreamError, ValidationError } from './errors';
 import { realSSE, type SSEFactory } from './sse';
+import type { GeneratedRoutine } from './types';
 
 type ErrorEnvelope = { error: { code: string; message: string }; requestId?: string };
 
@@ -35,6 +36,35 @@ export async function parse(text: string, hint?: ParseHint): Promise<ParseRespon
   if (res.status === 401) throw new AuthError(msg, rid);
   if (res.status === 429) throw new RateLimitError(msg, rid);
   if (res.status === 400) throw new ValidationError(msg, rid);
+  throw new UpstreamError(msg, rid);
+}
+
+export async function generateRoutine(goal: string): Promise<GeneratedRoutine> {
+  let res: Response;
+  try {
+    res = await fetch(`${PAL_BASE_URL}/generate-routine`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${PAL_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ goal }),
+    });
+  } catch {
+    throw new NetworkError();
+  }
+
+  if (res.ok) return (await res.json()) as GeneratedRoutine;
+
+  const env = await readError(res);
+  const rid = env?.requestId;
+  const code = env?.error.code ?? '';
+  const msg = env?.error.message ?? '';
+
+  if (res.status === 400) throw new ValidationError(msg, rid);
+  if (res.status === 401 || res.status === 403) throw new AuthError(msg, rid);
+  if (res.status === 429) throw new RateLimitError(msg, rid);
+  if (res.status === 502 && code === 'generation_failed') throw new GenerationFailedError(msg, rid);
   throw new UpstreamError(msg, rid);
 }
 
