@@ -8,6 +8,7 @@ const Schema = z.object({
   RATE_LIMIT_PER_MIN: z.coerce.number().int().positive().default(60),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
   NODE_ENV: z.string().default("development"),
+  PROMPT_TIMEOUT_MS: z.coerce.number().int().positive().default(20_000),
 });
 
 export type Config = {
@@ -18,6 +19,7 @@ export type Config = {
   rateLimitPerMin: number;
   logLevel: "fatal" | "error" | "warn" | "info" | "debug" | "trace";
   nodeEnv: string;
+  promptTimeoutMs: number;
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -35,5 +37,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     rateLimitPerMin: e.RATE_LIMIT_PER_MIN,
     logLevel: e.LOG_LEVEL,
     nodeEnv: e.NODE_ENV,
+    promptTimeoutMs: e.PROMPT_TIMEOUT_MS,
   };
 }

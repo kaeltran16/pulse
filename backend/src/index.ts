@@ -9,6 +9,7 @@ import { healthRouter } from "./routes/health.js";
 import { parseRouter } from "./routes/parse.js";
 import { chatRouter } from "./routes/chat.js";
 import { reviewRouter } from "./routes/review.js";
+import { generateRoutineRouter } from "./routes/generate-routine.js";
 import type { LlmClient } from "./lib/openrouter.js";
 import { createOpenRouterClient } from "./lib/openrouter.js";
 
@@ -45,6 +46,12 @@ export function createApp(deps: AppDeps): Express {
     rateLimitMw,
     authMiddleware(config.jwtSecret, "review"),
     reviewRouter({ llm: deps.llm, modelId: config.modelId })
+  );
+  app.use(
+    "/generate-routine",
+    rateLimitMw,
+    authMiddleware(config.jwtSecret, "generate-routine"),
+    generateRoutineRouter({ llm: deps.llm, modelId: config.modelId, logger, promptTimeoutMs: config.promptTimeoutMs })
   );
 
   app.use(errorHandler(logger));

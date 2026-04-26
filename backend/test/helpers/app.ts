@@ -13,6 +13,7 @@ export function buildTestApp(overrides: { llm?: Partial<LlmClient>; config?: Par
     rateLimitPerMin: 60,
     logLevel: "fatal",
     nodeEnv: "test",
+    promptTimeoutMs: 20_000,
     ...overrides.config,
   };
   const llm: LlmClient = {
