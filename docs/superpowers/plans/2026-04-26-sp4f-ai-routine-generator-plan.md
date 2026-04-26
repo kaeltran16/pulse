@@ -33,11 +33,11 @@
 
 **Context:** The shared `ErrorCode` union is consumed by both the backend (`errorHandler.ts`, `auth.ts`) and the iOS client (envelope parsing). Adding the new code here first means the rest of the plan can reference it without TypeScript complaints. No tests — this is a one-liner type change; downstream tests cover the behavior.
 
-- [ ] **Step 1: Read the current file**
+- [x] **Step 1: Read the current file**
 
 Read `lib/api-types.ts` lines 1-16 to see the existing union.
 
-- [ ] **Step 2: Add `"generation_failed"` to the union**
+- [x] **Step 2: Add `"generation_failed"` to the union**
 
 Edit `lib/api-types.ts` lines 5-11:
 
@@ -52,7 +52,7 @@ export type ErrorCode =
   | "internal";
 ```
 
-- [ ] **Step 3: Typecheck both packages**
+- [x] **Step 3: Typecheck both packages**
 
 ```bash
 npx tsc --noEmit
@@ -61,7 +61,7 @@ cd backend && npx tsc -p tsconfig.json --noEmit && cd ..
 
 Expected: PASS for both. (Adding a member to a union is purely additive.)
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lib/api-types.ts
@@ -80,7 +80,7 @@ git commit -m "feat(sp4f): add generation_failed to shared ErrorCode union"
 
 **Context:** The `Scope` type drives both `authMiddleware` and the test JWT signer. Adding the scope and the new error class together keeps the cross-cutting changes in one commit. The error class maps to 502 `generation_failed` in the envelope.
 
-- [ ] **Step 1: Add the new scope to `Scope`**
+- [x] **Step 1: Add the new scope to `Scope`**
 
 Edit `backend/src/middleware/auth.ts` line 5:
 
@@ -88,7 +88,7 @@ Edit `backend/src/middleware/auth.ts` line 5:
 export type Scope = "chat" | "parse" | "review" | "generate-routine";
 ```
 
-- [ ] **Step 2: Add `GenerationFailedError` and its mapping**
+- [x] **Step 2: Add `GenerationFailedError` and its mapping**
 
 Edit `backend/src/middleware/errorHandler.ts`. Add after the existing `UpstreamError` class (around line 12):
 
@@ -109,7 +109,7 @@ Then add to the `map(err)` function (insert before the `UpstreamError` branch, a
   }
 ```
 
-- [ ] **Step 3: Update the test JWT signer's default scopes**
+- [x] **Step 3: Update the test JWT signer's default scopes**
 
 Edit `backend/test/helpers/jwt.ts` line 8 to include the new scope by default so existing route tests aren't affected:
 
@@ -117,7 +117,7 @@ Edit `backend/test/helpers/jwt.ts` line 8 to include the new scope by default so
 const scope: Scope[] = opts.scope ?? ["chat", "parse", "review", "generate-routine"];
 ```
 
-- [ ] **Step 4: Add a failing test for the new error mapping**
+- [x] **Step 4: Add a failing test for the new error mapping**
 
 Edit `backend/test/unit/errorHandler.test.ts`. Add after the existing tests:
 
@@ -140,7 +140,7 @@ describe("GenerationFailedError mapping", () => {
 
 (If the existing file doesn't yet import `request` / `buildTestApp`, add the imports at the top: `import request from "supertest"; import { buildTestApp } from "../helpers/app.js";`. Read the file first to know what's already imported.)
 
-- [ ] **Step 5: Run the new test (expect FAIL until handler is reachable, but the mapping itself is in step 2)**
+- [x] **Step 5: Run the new test (expect FAIL until handler is reachable, but the mapping itself is in step 2)**
 
 ```bash
 cd backend && npm test -- errorHandler && cd ..
@@ -148,7 +148,7 @@ cd backend && npm test -- errorHandler && cd ..
 
 Expected: PASS. The mapping is wired in step 2; this test confirms it.
 
-- [ ] **Step 6: Run the full backend suite to confirm nothing else regressed**
+- [x] **Step 6: Run the full backend suite to confirm nothing else regressed**
 
 ```bash
 cd backend && npm test && cd ..
@@ -156,13 +156,13 @@ cd backend && npm test && cd ..
 
 Expected: all existing tests still PASS.
 
-- [ ] **Step 7: Typecheck**
+- [x] **Step 7: Typecheck**
 
 ```bash
 cd backend && npx tsc -p tsconfig.json --noEmit && cd ..
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add backend/src/middleware/auth.ts backend/src/middleware/errorHandler.ts backend/test/helpers/jwt.ts backend/test/unit/errorHandler.test.ts
@@ -180,7 +180,7 @@ git commit -m "feat(sp4f): add generate-routine scope and GenerationFailedError"
 
 **Context:** The current `chatJson` accepts no `signal`. Per spec §4.4, the `/generate-routine` route enforces a `PROMPT_TIMEOUT_MS` cap; the cleanest way is to pass an `AbortSignal` to `chatJson` and rely on the OpenAI SDK's existing signal support (the same mechanism `chatStream` already uses). This task only widens the signature; the route in Task 7 supplies the AbortController.
 
-- [ ] **Step 1: Widen the `chatJson` signature in the interface**
+- [x] **Step 1: Widen the `chatJson` signature in the interface**
 
 Edit `backend/src/lib/openrouter.ts`. Update the `LlmClient` interface (around line 11):
 
@@ -191,7 +191,7 @@ export interface LlmClient {
 }
 ```
 
-- [ ] **Step 2: Pass the signal through in `createOpenRouterClient.chatJson`**
+- [x] **Step 2: Pass the signal through in `createOpenRouterClient.chatJson`**
 
 In the same file, update the `chatJson` body (around lines 53-71):
 
@@ -218,7 +218,7 @@ In the same file, update the `chatJson` body (around lines 53-71):
     },
 ```
 
-- [ ] **Step 3: Update the test app's mock `chatJson` to accept (and ignore) the signal**
+- [x] **Step 3: Update the test app's mock `chatJson` to accept (and ignore) the signal**
 
 Edit `backend/test/helpers/app.ts`. The current mock `async chatJson()` ignores its argument; widen its type-friendly signature so consumers can pass `signal`:
 
@@ -230,7 +230,7 @@ Edit `backend/test/helpers/app.ts`. The current mock `async chatJson()` ignores 
 
 (Add the `Msg` import at the top of the file: `import type { LlmClient, Msg } from "../../src/lib/openrouter.js";` — the `LlmClient` import already exists; only `Msg` is new.)
 
-- [ ] **Step 4: Write a failing test that the signal is propagated**
+- [x] **Step 4: Write a failing test that the signal is propagated**
 
 Create `backend/test/unit/openrouter.test.ts`:
 
@@ -279,7 +279,7 @@ describe("createOpenRouterClient.chatJson", () => {
 });
 ```
 
-- [ ] **Step 5: Run the test**
+- [x] **Step 5: Run the test**
 
 ```bash
 cd backend && npm test -- openrouter && cd ..
@@ -287,13 +287,13 @@ cd backend && npm test -- openrouter && cd ..
 
 Expected: PASS.
 
-- [ ] **Step 6: Typecheck**
+- [x] **Step 6: Typecheck**
 
 ```bash
 cd backend && npx tsc -p tsconfig.json --noEmit && cd ..
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/src/lib/openrouter.ts backend/test/helpers/app.ts backend/test/unit/openrouter.test.ts
@@ -310,7 +310,7 @@ git commit -m "feat(sp4f): plumb AbortSignal through LlmClient.chatJson"
 
 **Context:** The backend needs its own copy of the seeded exercise catalog so the prompt builder can enumerate ids and the validator can verify ids returned by the LLM. The iOS-side parity test in Task 10 will guard against drift between this file and `lib/db/seed-workouts.ts`. The catalog only needs `id`, `name`, `group`, `muscle` — equipment / kind / SF symbol are iOS-only display concerns.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `backend/test/unit/exercise-catalog.test.ts`:
 
@@ -354,7 +354,7 @@ describe("EXERCISE_CATALOG", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify FAIL**
+- [x] **Step 2: Run the test to verify FAIL**
 
 ```bash
 cd backend && npm test -- exercise-catalog && cd ..
@@ -362,7 +362,7 @@ cd backend && npm test -- exercise-catalog && cd ..
 
 Expected: FAIL with "Cannot find module".
 
-- [ ] **Step 3: Implement the catalog**
+- [x] **Step 3: Implement the catalog**
 
 Create `backend/src/lib/exercise-catalog.ts`:
 
@@ -412,7 +412,7 @@ export const EXERCISE_CATALOG: readonly CatalogExercise[] = [
 export const EXERCISE_ID_SET: ReadonlySet<string> = new Set(EXERCISE_CATALOG.map((e) => e.id));
 ```
 
-- [ ] **Step 4: Run the test to verify PASS**
+- [x] **Step 4: Run the test to verify PASS**
 
 ```bash
 cd backend && npm test -- exercise-catalog && cd ..
@@ -420,13 +420,13 @@ cd backend && npm test -- exercise-catalog && cd ..
 
 Expected: PASS.
 
-- [ ] **Step 5: Typecheck**
+- [x] **Step 5: Typecheck**
 
 ```bash
 cd backend && npx tsc -p tsconfig.json --noEmit && cd ..
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/src/lib/exercise-catalog.ts backend/test/unit/exercise-catalog.test.ts
@@ -443,7 +443,7 @@ git commit -m "feat(sp4f): add backend exercise catalog with id-set helper"
 
 **Context:** Strict discriminated union on `tag === "Cardio"`. Strength arm: 3–6 exercises × 3–4 sets per exercise, `weight ≥ 0`, `reps ≥ 1`. Cardio arm: exactly 1 exercise × 1+ sets, each set has `duration` (positive minutes) **or** `distance` (positive km); `pace` optional. Catalog-id check is NOT in the schema — it's a separate handler step in Task 7 so the `error.message` can name the offending id.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `backend/test/unit/generate-routine.schema.test.ts`:
 
@@ -566,7 +566,7 @@ describe("GenerateRoutineResponseSchema", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify FAIL**
+- [x] **Step 2: Run the test to verify FAIL**
 
 ```bash
 cd backend && npm test -- generate-routine.schema && cd ..
@@ -574,7 +574,7 @@ cd backend && npm test -- generate-routine.schema && cd ..
 
 Expected: FAIL with "Cannot find module".
 
-- [ ] **Step 3: Implement the schemas**
+- [x] **Step 3: Implement the schemas**
 
 Create `backend/src/schemas/generate-routine.ts`:
 
@@ -634,7 +634,7 @@ export const GenerateRoutineResponseSchema = z.discriminatedUnion("tag", [
 export type GenerateRoutineResponse = z.infer<typeof GenerateRoutineResponseSchema>;
 ```
 
-- [ ] **Step 4: Run the test to verify PASS**
+- [x] **Step 4: Run the test to verify PASS**
 
 ```bash
 cd backend && npm test -- generate-routine.schema && cd ..
@@ -642,13 +642,13 @@ cd backend && npm test -- generate-routine.schema && cd ..
 
 Expected: all assertions PASS.
 
-- [ ] **Step 5: Typecheck**
+- [x] **Step 5: Typecheck**
 
 ```bash
 cd backend && npx tsc -p tsconfig.json --noEmit && cd ..
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/src/schemas/generate-routine.ts backend/test/unit/generate-routine.schema.test.ts
@@ -665,7 +665,7 @@ git commit -m "feat(sp4f): Zod schemas for /generate-routine request and respons
 
 **Context:** Builds the `Msg[]` for `chatJson`. System message states the role and output rules. User message embeds the goal and the catalog inline so the LLM can only pick valid ids. Catalog enumeration order is the order in `EXERCISE_CATALOG` (already grouped by category for legibility) — the test pins this so accidental reshuffles don't change prompt behavior silently.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `backend/test/unit/generate-routine.prompt.test.ts`:
 
@@ -726,7 +726,7 @@ describe("buildGenerateRoutineMessages", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify FAIL**
+- [x] **Step 2: Run the test to verify FAIL**
 
 ```bash
 cd backend && npm test -- generate-routine.prompt && cd ..
@@ -734,7 +734,7 @@ cd backend && npm test -- generate-routine.prompt && cd ..
 
 Expected: FAIL with "Cannot find module".
 
-- [ ] **Step 3: Implement the prompt builder**
+- [x] **Step 3: Implement the prompt builder**
 
 Create `backend/src/lib/prompts/generate-routine.ts`:
 
@@ -776,7 +776,7 @@ Return JSON matching the schema described above.`;
 }
 ```
 
-- [ ] **Step 4: Run the test to verify PASS**
+- [x] **Step 4: Run the test to verify PASS**
 
 ```bash
 cd backend && npm test -- generate-routine.prompt && cd ..
@@ -784,13 +784,13 @@ cd backend && npm test -- generate-routine.prompt && cd ..
 
 Expected: PASS.
 
-- [ ] **Step 5: Typecheck**
+- [x] **Step 5: Typecheck**
 
 ```bash
 cd backend && npx tsc -p tsconfig.json --noEmit && cd ..
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/src/lib/prompts/generate-routine.ts backend/test/unit/generate-routine.prompt.test.ts
@@ -807,7 +807,7 @@ git commit -m "feat(sp4f): prompt builder for /generate-routine"
 
 **Context:** Mirrors `parseRouter`'s factory shape: `generateRoutineRouter(deps)` returns an Express `Router`. The handler runs the validation order from spec §4.7. Timeout enforced via `AbortController` (Task 3 added the `signal` plumbing). Mounting in `index.ts` is Task 8.
 
-- [ ] **Step 1: Write the failing integration test**
+- [x] **Step 1: Write the failing integration test**
 
 Create `backend/test/integration/generate-routine.test.ts`:
 
@@ -1006,7 +1006,7 @@ describe("POST /generate-routine", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify FAIL**
+- [x] **Step 2: Run the test to verify FAIL**
 
 ```bash
 cd backend && npm test -- generate-routine && cd ..
@@ -1014,7 +1014,7 @@ cd backend && npm test -- generate-routine && cd ..
 
 Expected: FAIL — route doesn't exist or isn't mounted yet.
 
-- [ ] **Step 3: Add `promptTimeoutMs` to `Config` (and load from env)**
+- [x] **Step 3: Add `promptTimeoutMs` to `Config` (and load from env)**
 
 Edit `backend/src/config.ts`:
 
@@ -1042,7 +1042,7 @@ Then update `backend/test/helpers/app.ts` so the test config defaults to a sane 
   };
 ```
 
-- [ ] **Step 4: Implement the route**
+- [x] **Step 4: Implement the route**
 
 Create `backend/src/routes/generate-routine.ts`:
 
@@ -1126,7 +1126,7 @@ export function generateRoutineRouter(deps: {
 }
 ```
 
-- [ ] **Step 5: Wire the route in `backend/src/index.ts`**
+- [x] **Step 5: Wire the route in `backend/src/index.ts`**
 
 Edit `backend/src/index.ts`. Add an import near the other route imports:
 
@@ -1147,7 +1147,7 @@ Then mount it before `errorHandler`:
 
 (Keep existing routes unchanged.)
 
-- [ ] **Step 6: Run the integration test to verify PASS**
+- [x] **Step 6: Run the integration test to verify PASS**
 
 ```bash
 cd backend && npm test -- generate-routine && cd ..
@@ -1155,7 +1155,7 @@ cd backend && npm test -- generate-routine && cd ..
 
 Expected: every `POST /generate-routine` test PASS. The timeout test runs ~50 ms then resolves to a 502.
 
-- [ ] **Step 7: Run the full backend suite to confirm no regressions**
+- [x] **Step 7: Run the full backend suite to confirm no regressions**
 
 ```bash
 cd backend && npm test && cd ..
@@ -1163,13 +1163,13 @@ cd backend && npm test && cd ..
 
 Expected: all PASS.
 
-- [ ] **Step 8: Typecheck**
+- [x] **Step 8: Typecheck**
 
 ```bash
 cd backend && npx tsc -p tsconfig.json --noEmit && cd ..
 ```
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add backend/src/routes/generate-routine.ts backend/src/config.ts backend/src/index.ts backend/test/helpers/app.ts backend/test/integration/generate-routine.test.ts
@@ -1185,7 +1185,7 @@ git commit -m "feat(sp4f): POST /generate-routine route with strict-fail validat
 
 **Context:** Mirrors the existing typed-error pattern. No `messageFor` change — the route in Task 15 maps screen-specific copy via `instanceof` against the spec §5.4 table; the shared helper stays untouched.
 
-- [ ] **Step 1: Add the class**
+- [x] **Step 1: Add the class**
 
 Edit `lib/pal/errors.ts`. Add after the existing `ValidationError` line (line 11):
 
@@ -1193,7 +1193,7 @@ Edit `lib/pal/errors.ts`. Add after the existing `ValidationError` line (line 11
 export class GenerationFailedError extends PalError { constructor(m = 'Could not generate', rid?: string) { super('generation_failed', m, rid); } }
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 ```bash
 npx tsc --noEmit
@@ -1201,7 +1201,7 @@ npx tsc --noEmit
 
 Expected: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/pal/errors.ts
@@ -1217,7 +1217,7 @@ git commit -m "feat(sp4f): add GenerationFailedError to lib/pal/errors"
 
 **Context:** Drift defense per spec §4.6. Imports the backend catalog via relative path (allowed because both packages share a tsconfig path-resolution at the root, and Jest with `jest-expo` follows relative imports without extra config). Asserts the seed and the backend catalog list the same ids with the same name/group/muscle.
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 Create `lib/db/__tests__/exercise-catalog-parity.test.ts`:
 
@@ -1252,7 +1252,7 @@ describe('iOS seed ↔ backend catalog parity', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify PASS**
+- [x] **Step 2: Run the test to verify PASS**
 
 ```bash
 npm test -- exercise-catalog-parity
@@ -1260,13 +1260,13 @@ npm test -- exercise-catalog-parity
 
 Expected: PASS. (Both files were authored to match.)
 
-- [ ] **Step 3: If the test fails because Jest can't resolve `../../../backend/src/lib/exercise-catalog`**
+- [x] **Step 3: If the test fails because Jest can't resolve `../../../backend/src/lib/exercise-catalog`**
 
 Read `jest.config.js` (or `jest.config.ts`, or the `"jest"` block in `package.json`) to see the `roots` / `testPathIgnorePatterns` / `modulePaths` configuration. Add the backend directory to the resolver if needed. Most likely no change is required — relative imports work out of the box in Jest's default resolver.
 
 If the import fails *only* for typecheck (`npx tsc --noEmit`) but not Jest, add `backend/src/**/*.ts` to the `include` array in the root `tsconfig.json` (read it first to know the current shape). Keep `noEmit` semantics — we are not building the backend through the iOS tsconfig.
 
-- [ ] **Step 4: Typecheck**
+- [x] **Step 4: Typecheck**
 
 ```bash
 npx tsc --noEmit
@@ -1274,7 +1274,7 @@ npx tsc --noEmit
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/__tests__/exercise-catalog-parity.test.ts
@@ -1293,7 +1293,7 @@ git commit -m "test(sp4f): catalog parity between iOS seed and backend"
 
 **Context:** The iOS app needs the same response type the backend emits. Rather than depending on the backend's Zod schema directly (which would force the iOS bundle to import Zod at runtime in `lib/pal/`), declare a TypeScript-only mirror in `lib/pal/types.ts` that matches the backend's discriminated union exactly. The catalog parity test already prevents id drift; a runtime check in this client (just `typeof` on top-level fields, not a deep schema) is enough — backend already validated.
 
-- [ ] **Step 1: Create the shared response type**
+- [x] **Step 1: Create the shared response type**
 
 Create `lib/pal/types.ts`:
 
@@ -1313,7 +1313,7 @@ export type GeneratedRoutine =
   | { tag: 'Cardio';                                name: string; estMin: number; rationale: string; exercises: [CardioExercise] };
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 Create `lib/pal/__tests__/generateRoutine.test.ts`:
 
@@ -1397,7 +1397,7 @@ describe('generateRoutine', () => {
 });
 ```
 
-- [ ] **Step 3: Run the test to verify FAIL**
+- [x] **Step 3: Run the test to verify FAIL**
 
 ```bash
 npm test -- generateRoutine
@@ -1405,7 +1405,7 @@ npm test -- generateRoutine
 
 Expected: FAIL — function doesn't exist.
 
-- [ ] **Step 4: Implement the function**
+- [x] **Step 4: Implement the function**
 
 Edit `lib/pal/client.ts`. Add the imports (the existing import block already has `AuthError, NetworkError, RateLimitError, UpstreamError, ValidationError` — extend it):
 
@@ -1447,7 +1447,7 @@ export async function generateRoutine(goal: string): Promise<GeneratedRoutine> {
 }
 ```
 
-- [ ] **Step 5: Run the test to verify PASS**
+- [x] **Step 5: Run the test to verify PASS**
 
 ```bash
 npm test -- generateRoutine
@@ -1455,13 +1455,13 @@ npm test -- generateRoutine
 
 Expected: all PASS.
 
-- [ ] **Step 6: Typecheck**
+- [x] **Step 6: Typecheck**
 
 ```bash
 npx tsc --noEmit
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add lib/pal/types.ts lib/pal/client.ts lib/pal/__tests__/generateRoutine.test.ts
@@ -1478,11 +1478,11 @@ git commit -m "feat(sp4f): generateRoutine client + GeneratedRoutine type"
 
 **Context:** Wraps `createEmptyRoutine` + `updateRoutine` inside `db.transaction(...)`. better-sqlite3's drizzle adapter offers a synchronous `transaction((tx) => { ... })`; both helpers tolerate either the top-level `db` or a `tx` handle (they cast to `any` already, per the existing 4c code). The plan also injects a mid-transaction failure to confirm rollback.
 
-- [ ] **Step 1: Confirm `db.transaction` shape on better-sqlite3**
+- [x] **Step 1: Confirm `db.transaction` shape on better-sqlite3**
 
 Read `lib/db/queries/routines.ts` once more if needed (especially `updateRoutine` around line 253) to confirm it uses `(db as any)` casts everywhere — it does — meaning any handle that has `.insert/.delete/.select/.update` will work, including a tx handle from `db.transaction(...)`. No source change required to those helpers; the wrapping happens in the new file.
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 Create `lib/db/__tests__/saveGeneratedRoutine.test.ts`:
 
@@ -1579,7 +1579,7 @@ describe('saveGeneratedRoutine', () => {
 });
 ```
 
-- [ ] **Step 3: Run the test to verify FAIL**
+- [x] **Step 3: Run the test to verify FAIL**
 
 ```bash
 npm test -- saveGeneratedRoutine
@@ -1587,7 +1587,7 @@ npm test -- saveGeneratedRoutine
 
 Expected: FAIL with "Cannot find module".
 
-- [ ] **Step 4: Implement the query**
+- [x] **Step 4: Implement the query**
 
 `createEmptyRoutine` and `updateRoutine` from 4c are typed as `async` but their bodies are fully synchronous over better-sqlite3 (they use `(db as any).insert(...).run()`). Rather than awkwardly chain them (which would mix sync transaction semantics with `Promise` ergonomics), inline the inserts directly using the same `(tx as any).insert(...).values(...)` pattern. This keeps the whole save in one synchronous transaction so rollback is trivially correct.
 
@@ -1682,7 +1682,7 @@ export async function saveGeneratedRoutine(db: AnyDb, generated: GeneratedRoutin
 
 > **Note on column names:** the snippet above uses `routineSets.reps`, `routineSets.weightKg`, `routineSets.durationSeconds`, `routineSets.distanceKm`, `routineSets.pace` — read `lib/db/schema.ts` (around the `routineSets` declaration) to confirm these are the exact column names. If any differ (e.g., `weightKg` vs `weight_kg`), align the code to the actual TS field names. The schema was authored in 4a/4c so changes are unlikely.
 
-- [ ] **Step 5: Run the test to verify PASS**
+- [x] **Step 5: Run the test to verify PASS**
 
 ```bash
 npm test -- saveGeneratedRoutine
@@ -1690,13 +1690,13 @@ npm test -- saveGeneratedRoutine
 
 Expected: all 5 tests PASS, including the rollback test.
 
-- [ ] **Step 6: Typecheck**
+- [x] **Step 6: Typecheck**
 
 ```bash
 npx tsc --noEmit
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add lib/db/queries/saveGeneratedRoutine.ts lib/db/__tests__/saveGeneratedRoutine.test.ts
@@ -1713,7 +1713,7 @@ git commit -m "feat(sp4f): saveGeneratedRoutine transactional helper with rollba
 
 **Context:** Per spec §5.2. Pure function so we can unit-test every transition without rendering React. Lives next to its consumer (the route component in Task 14) but in its own file because the route component has side-effecty stuff (router, db, fetch) the reducer doesn't.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `app/(tabs)/move/__tests__/generate.reducer.test.ts`:
 
@@ -1799,7 +1799,7 @@ describe('generate reducer', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify FAIL**
+- [x] **Step 2: Run the test to verify FAIL**
 
 ```bash
 npm test -- generate.reducer
@@ -1807,7 +1807,7 @@ npm test -- generate.reducer
 
 Expected: FAIL with "Cannot find module".
 
-- [ ] **Step 3: Implement the reducer**
+- [x] **Step 3: Implement the reducer**
 
 Create `app/(tabs)/move/generate.reducer.ts`:
 
@@ -1858,7 +1858,7 @@ export function reducer(state: State, action: Action): State {
 }
 ```
 
-- [ ] **Step 4: Run the test to verify PASS**
+- [x] **Step 4: Run the test to verify PASS**
 
 ```bash
 npm test -- generate.reducer
@@ -1866,13 +1866,13 @@ npm test -- generate.reducer
 
 Expected: all 13 tests PASS.
 
-- [ ] **Step 5: Typecheck**
+- [x] **Step 5: Typecheck**
 
 ```bash
 npx tsc --noEmit
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/\(tabs\)/move/generate.reducer.ts app/\(tabs\)/move/__tests__/generate.reducer.test.ts
@@ -1897,7 +1897,7 @@ git commit -m "feat(sp4f): pure reducer for /move/generate state machine"
 
 > **Reading order before implementing:** read `design_handoff/src/routine-generator.jsx` once end-to-end (it's 363 lines). Then read one existing 4e component (`components/move/post/CompleteHero.tsx` is a good template — it has the same gradient hero pattern with theme tokens). Match conventions (theme palette destructuring, inline styles, `react-native-svg` for gradients, `expo-symbols` for icons via the existing `Icon` wrapper).
 
-- [ ] **Step 1: Read the design handoff once**
+- [x] **Step 1: Read the design handoff once**
 
 Read `design_handoff/src/routine-generator.jsx` end-to-end. Identify which lines belong to which component:
 - Lines 97-134 → `GenerateHero` (idle hero card)
@@ -1911,13 +1911,13 @@ Read `design_handoff/src/routine-generator.jsx` end-to-end. Identify which lines
 
 Note: replace the screen copy "Pal uses your exercise library & recent sessions" (handoff line 160) with **"Pal picks from your exercise library"** per the spec's screen-copy fix in §2 question 2's resolution.
 
-- [ ] **Step 2: Implement `GenerateHero.tsx`**
+- [x] **Step 2: Implement `GenerateHero.tsx`**
 
 Create `components/move/generate/GenerateHero.tsx`. Use the gradient-and-radial pattern from the handoff lines 99-131. Match the theme via `useTheme()` from `lib/theme/provider` (the existing 4e components import it the same way). Props: none (stateless presentation). Render the dark-ink card with the SPARKLES badge ("Pal builds your routine"), the headline ("Describe what you want. Pal picks the exercises."), and the muted subtitle ('"A 30-min pull day I can do at the gym" or "legs at home with dumbbells."').
 
 Specific note: the handoff uses CSS radial-gradients on `<div>`s. In RN, use `<View style={{ position: 'absolute', borderRadius: 9999, ... }}>` with translucent solid colors as a pragmatic substitute (Reanimated/Skia gradients are an option but YAGNI here — the visual already lands).
 
-- [ ] **Step 3: Implement `PromptCard.tsx`**
+- [x] **Step 3: Implement `PromptCard.tsx`**
 
 Create `components/move/generate/PromptCard.tsx`. Props:
 
@@ -1932,7 +1932,7 @@ type Props = {
 
 Render a `TextInput` (multiline, `placeholder="What kind of workout do you want? Goal, duration, equipment…"`, ~76 px min height, no border, on a card surface) and a `Pressable` "Generate" button. Disable the button when `value.trim().length === 0` or `loading`. Footer hint text: **"Pal picks from your exercise library"** (note: do NOT use the handoff's "& recent sessions" — see Step 1).
 
-- [ ] **Step 4: Implement `QuickPickGrid.tsx`**
+- [x] **Step 4: Implement `QuickPickGrid.tsx`**
 
 Create `components/move/generate/QuickPickGrid.tsx`. Props:
 
@@ -1962,15 +1962,15 @@ Each chip is a `Pressable` that fires `onPick(label)`. Wrap in a `disabled={load
 
 Below the grid, add a small uppercase label ("Or try one of these"). Match the handoff's spacing.
 
-- [ ] **Step 5: Implement `LoadingPill.tsx`**
+- [x] **Step 5: Implement `LoadingPill.tsx`**
 
 Create `components/move/generate/LoadingPill.tsx`. No props. Render a centered pill with a small spinner (`<ActivityIndicator size="small" color={palette.move} />`) and the text "Pal is building your routine…". Keep it simple — the handoff's CSS spinner becomes RN's built-in `ActivityIndicator`.
 
-- [ ] **Step 6: Implement `ErrorBanner.tsx`**
+- [x] **Step 6: Implement `ErrorBanner.tsx`**
 
 Create `components/move/generate/ErrorBanner.tsx`. Props: `{ message: string }`. Render a red-tinted card with the message text. Match handoff lines 238-246 (low-saturation red background, subtle border).
 
-- [ ] **Step 7: Implement `ResultHero.tsx`**
+- [x] **Step 7: Implement `ResultHero.tsx`**
 
 Create `components/move/generate/ResultHero.tsx`. Props:
 
@@ -1984,7 +1984,7 @@ Render the "Generated" gradient hero (lines 250-293): a "GENERATED" badge with s
 
 Use a flat `backgroundColor: palette.move` (or a two-color stack of two `<View>`s with different colors and reduced opacity for a faux-gradient) — Skia/SVG gradient is YAGNI for a personal-use app's nice-to-have flourish. Match the radius (20) and padding (18) from the handoff.
 
-- [ ] **Step 8: Implement `ResultExerciseList.tsx`**
+- [x] **Step 8: Implement `ResultExerciseList.tsx`**
 
 Create `components/move/generate/ResultExerciseList.tsx`. Props:
 
@@ -2010,7 +2010,7 @@ The route component (Task 14) hydrates raw `GeneratedRoutine.exercises` (which o
 
 Wrap rows in a `Section` styling (use the same wrapper 4c/4e use — read one to see the pattern; e.g., `components/move/post/ExerciseRecapCard.tsx`).
 
-- [ ] **Step 9: Implement `ResultActions.tsx`**
+- [x] **Step 9: Implement `ResultActions.tsx`**
 
 Create `components/move/generate/ResultActions.tsx`. Props:
 
@@ -2024,7 +2024,7 @@ type Props = {
 
 Render a horizontal pair: a 1/3-width "Try again" pressable (surface-on-surface neutral), a 2/3-width "Save routine" pressable (filled `palette.move`, white text, big shadow). Disable Save when `saving === true`.
 
-- [ ] **Step 10: Typecheck**
+- [x] **Step 10: Typecheck**
 
 ```bash
 npx tsc --noEmit
@@ -2032,7 +2032,7 @@ npx tsc --noEmit
 
 Expected: PASS.
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add components/move/generate/
@@ -2048,7 +2048,7 @@ git commit -m "feat(sp4f): presentational components for the generate route"
 
 **Context:** The orchestrator. Wires the reducer + components + client + save query + navigation. Per spec §5.6, post-Save uses `router.replace` so back-button from the editor returns to PreWorkout. Per spec §5.4, error mapping is `instanceof`-based.
 
-- [ ] **Step 1: Replace the stub**
+- [x] **Step 1: Replace the stub**
 
 Overwrite `app/(tabs)/move/generate.tsx` entirely:
 
@@ -2230,7 +2230,7 @@ export default function GenerateRoutineScreen() {
 
 > **Imports to verify:** `useDb` from `@/lib/db/provider` — confirm the path by reading one existing route that touches the DB (e.g., `app/(tabs)/move/index.tsx` or `app/(tabs)/move/[routineId]/edit.tsx`). If the existing pattern is different (e.g., a hook called `useDatabase`, or pulling from a context), match what's already used. The same applies to `@/lib/theme/provider` — read `app/(tabs)/move/index.tsx` for the existing import.
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 ```bash
 npx tsc --noEmit
@@ -2238,7 +2238,7 @@ npx tsc --noEmit
 
 If anything fails (e.g., import path mismatch, prop-shape mismatch with one of the components), fix in this file or in the relevant component file. Do NOT alter the reducer or the client to paper over a mistake.
 
-- [ ] **Step 3: Run the full iOS test suite to confirm nothing regressed**
+- [x] **Step 3: Run the full iOS test suite to confirm nothing regressed**
 
 ```bash
 npm test
@@ -2246,7 +2246,7 @@ npm test
 
 Expected: previously-green suites stay green; the new suites from Tasks 9, 10, 11, 12 are green; total count > previous baseline.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/\(tabs\)/move/generate.tsx
@@ -2262,7 +2262,7 @@ git commit -m "feat(sp4f): generate route — wires reducer, client, save, compo
 
 **Context:** Per spec §6. Backend deploy is gated on the user setting `OPENROUTER_API_KEY` on the droplet (parent meta-spec §8a row 2 / spec §8 item 1). The web smoke (steps 6.2 and 6.4) requires a running deployed backend. If the user hasn't yet set the key, mark the smoke tests as deferred and stop short of the meta-spec update — same posture 4d / 4e took for iPhone verification.
 
-- [ ] **Step 1: Run all tests one more time**
+- [x] **Step 1: Run all tests one more time**
 
 ```bash
 npm test
@@ -2271,7 +2271,7 @@ cd backend && npm test && cd ..
 
 Both must be green.
 
-- [ ] **Step 2: Run typechecks**
+- [x] **Step 2: Run typechecks**
 
 ```bash
 npx tsc --noEmit
@@ -2280,7 +2280,7 @@ cd backend && npx tsc -p tsconfig.json --noEmit && cd ..
 
 Both must be clean.
 
-- [ ] **Step 3: Backend smoke (only if `OPENROUTER_API_KEY` is set on the droplet)**
+- [x] **Step 3: Backend smoke (only if `OPENROUTER_API_KEY` is set on the droplet)**
 
 If the key is set:
 
@@ -2296,7 +2296,7 @@ Expect: 200 with a strength-arm payload. Repeat with `'{"goal":"20 min easy run"
 
 If the key is NOT yet set, ask the user before proceeding. Note the deferral in the meta-spec update (Step 5 below).
 
-- [ ] **Step 4: iOS web smoke (Windows)**
+- [x] **Step 4: iOS web smoke (Windows)**
 
 Start the dev server: `npm start` (or `npm run web` if a web entry is configured). Open the app in a browser and walk through spec §6.2:
 
@@ -2315,7 +2315,7 @@ Then spec §6.4 cardio variant:
 
 - Type "Short 20-minute run" → result shows 1 cardio exercise with a duration set chip → Save → routine appears in PreWorkout list with "Cardio" tag → opens in editor as a cardio routine.
 
-- [ ] **Step 5: Update the parent meta-spec status row for SP4f**
+- [x] **Step 5: Update the parent meta-spec status row for SP4f**
 
 Edit `docs/superpowers/specs/meta/2026-04-25-ios-v2-workouts-design.md`. In §3 the "Sub-slice status" block, after the line ending with "270 tests passing (54 new). Manual web smoke + iPhone HealthKit verification deferred to user — typecheck clean on sp4e files, full unit suite green.", append a `4f` line:
 
@@ -2327,14 +2327,14 @@ Replace `<N>+` with the actual passing count from Step 1.
 
 In the `§8a` table row for sub-project 4 (the long line at the bottom of that table), append a sentence after the existing 4e summary: ` 4f ✅ code complete 2026-04-26 — POST /generate-routine route + iOS generate screen, transactional save, no schema delta. Backend live deploy + web smoke deferred to user.`. Update `4f–4g pending` → `4g pending`.
 
-- [ ] **Step 6: Commit the meta-spec update**
+- [x] **Step 6: Commit the meta-spec update**
 
 ```bash
 git add docs/superpowers/specs/meta/2026-04-25-ios-v2-workouts-design.md
 git commit -m "docs(sp4f): mark slice 4f code-complete in meta specs"
 ```
 
-- [ ] **Step 7: Final summary**
+- [x] **Step 7: Final summary**
 
 Report back to the user:
 - Total backend tests passing (number).
