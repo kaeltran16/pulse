@@ -199,6 +199,54 @@ export async function getSession(db: AnyDb, sessionId: number): Promise<SessionF
   };
 }
 
+export class DraftAlreadyOpenError extends Error {
+  constructor() {
+    super('A draft session is already open. Resume or discard it before starting a new one.');
+    this.name = 'DraftAlreadyOpenError';
+  }
+}
+
+export interface StartDraftSessionArgs {
+  routineId: number | null;
+  routineNameSnapshot: string;
+  startedAt: number;
+}
+
+export async function startDraftSession(
+  db: AnyDb,
+  args: StartDraftSessionArgs,
+): Promise<{ sessionId: number }> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const inserted = await (db as any)
+      .insert(sessions)
+      .values({
+        routineId: args.routineId,
+        routineNameSnapshot: args.routineNameSnapshot,
+        status: 'draft',
+        startedAt: args.startedAt,
+        finishedAt: null,
+        durationSeconds: 0,
+        totalVolumeKg: 0,
+        prCount: 0,
+      })
+      .returning({ id: sessions.id });
+    return { sessionId: inserted[0].id };
+  } catch (e) {
+    const msg = String(e);
+    // The only UNIQUE constraint involving sessions.status is the partial index
+    // idx_sessions_one_draft (one draft at a time). better-sqlite3 surfaces the
+    // violation as "UNIQUE constraint failed: sessions.status".
+    if (
+      msg.includes('UNIQUE') &&
+      (msg.includes('idx_sessions_one_draft') || msg.includes('sessions.status'))
+    ) {
+      throw new DraftAlreadyOpenError();
+    }
+    throw e;
+  }
+}
+
 export async function getOpenDraft(db: AnyDb): Promise<DraftSession | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const heads = await (db as any)

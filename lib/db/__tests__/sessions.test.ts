@@ -224,3 +224,58 @@ describe('getOpenDraft', () => {
     expect(draft!.sets.map((s) => `${s.exercisePosition}:${s.setPosition}`)).toEqual(['0:0', '0:1', '1:0']);
   });
 });
+
+import { startDraftSession, DraftAlreadyOpenError } from '../queries/sessions';
+
+describe('startDraftSession', () => {
+  it('inserts a draft row with finishedAt=null and returns sessionId', async () => {
+    const { db, raw } = makeTestDb();
+    seedWorkouts(db);
+    const { sessionId } = await startDraftSession(db, {
+      routineId: 1,
+      routineNameSnapshot: 'Push Day A',
+      startedAt: 1_500_000,
+    });
+    expect(sessionId).toBeGreaterThan(0);
+    const row = raw.prepare(`SELECT * FROM sessions WHERE id = ?`).get(sessionId) as {
+      status: string; routine_id: number; routine_name_snapshot: string;
+      started_at: number; finished_at: number | null; duration_seconds: number;
+    };
+    expect(row.status).toBe('draft');
+    expect(row.routine_id).toBe(1);
+    expect(row.routine_name_snapshot).toBe('Push Day A');
+    expect(row.started_at).toBe(1_500_000);
+    expect(row.finished_at).toBeNull();
+    expect(row.duration_seconds).toBe(0);
+  });
+
+  it('throws DraftAlreadyOpenError when a draft already exists', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    await startDraftSession(db, { routineId: 1, routineNameSnapshot: 'Push Day A', startedAt: 1_500_000 });
+    await expect(
+      startDraftSession(db, { routineId: 2, routineNameSnapshot: 'Pull Day A', startedAt: 1_600_000 })
+    ).rejects.toThrow(DraftAlreadyOpenError);
+  });
+
+  it('allows starting a new draft after the previous one is finalized or discarded', async () => {
+    const { db, raw } = makeTestDb();
+    seedWorkouts(db);
+    const first = await startDraftSession(db, { routineId: 1, routineNameSnapshot: 'Push Day A', startedAt: 1_500_000 });
+    raw.prepare(`UPDATE sessions SET status='completed', finished_at = ? WHERE id = ?`).run(1_600_000, first.sessionId);
+    const second = await startDraftSession(db, { routineId: 2, routineNameSnapshot: 'Pull Day A', startedAt: 1_700_000 });
+    expect(second.sessionId).not.toBe(first.sessionId);
+  });
+
+  it('accepts a null routineId for ad-hoc / freestyle sessions', async () => {
+    const { db, raw } = makeTestDb();
+    seedWorkouts(db);
+    const { sessionId } = await startDraftSession(db, {
+      routineId: null,
+      routineNameSnapshot: 'Freestyle',
+      startedAt: 1_500_000,
+    });
+    const row = raw.prepare(`SELECT routine_id FROM sessions WHERE id = ?`).get(sessionId) as { routine_id: number | null };
+    expect(row.routine_id).toBeNull();
+  });
+});
