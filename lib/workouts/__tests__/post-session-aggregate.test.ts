@@ -1,0 +1,78 @@
+/** @jest-environment node */
+import { computeMuscleDistribution } from '../post-session-aggregate';
+
+const meta = {
+  bench:    { name: 'Bench Press',    muscle: 'Chest',     group: 'Push' },
+  ohp:      { name: 'Overhead Press', muscle: 'Shoulders', group: 'Push' },
+  triceps:  { name: 'Tricep Pushdown',muscle: 'Triceps',   group: 'Push' },
+  treadmil: { name: 'Treadmill',      muscle: '',          group: 'Cardio' },
+};
+
+const set = (
+  exerciseId: string,
+  weightKg: number | null,
+  reps: number | null,
+) => ({
+  id: 0,
+  sessionId: 0,
+  exerciseId,
+  exercisePosition: 0,
+  setPosition: 0,
+  reps,
+  weightKg,
+  durationSeconds: null,
+  distanceKm: null,
+  isPr: 0,
+});
+
+describe('computeMuscleDistribution', () => {
+  it('returns empty array when no sets', () => {
+    expect(computeMuscleDistribution([], meta)).toEqual([]);
+  });
+
+  it('sums volume per muscle and sorts desc by tonnage', () => {
+    const sets = [
+      set('bench',   80, 5),  // 400 chest
+      set('bench',   85, 5),  // 425 chest -> total 825
+      set('ohp',     50, 6),  // 300 shoulders
+      set('triceps', 30, 10), // 300 triceps
+    ];
+    const out = computeMuscleDistribution(sets, meta);
+    expect(out.map((m) => m.muscle)).toEqual(['Chest', 'Shoulders', 'Triceps']);
+    expect(out[0].tonnageKg).toBe(825);
+    expect(out[1].tonnageKg).toBe(300);
+    expect(out[2].tonnageKg).toBe(300);
+  });
+
+  it('percentages are integers and sum to 99 or 100', () => {
+    const sets = [
+      set('bench',   80, 5),  // 400
+      set('ohp',     50, 6),  // 300
+      set('triceps', 30, 10), // 300
+    ];
+    const out = computeMuscleDistribution(sets, meta);
+    const sum = out.reduce((s, m) => s + m.percentage, 0);
+    expect(out.every((m) => Number.isInteger(m.percentage))).toBe(true);
+    expect(sum === 99 || sum === 100).toBe(true);
+  });
+
+  it('excludes cardio sets (null weight or reps)', () => {
+    const sets = [
+      set('bench', 80, 5),
+      { ...set('treadmil', null, null), durationSeconds: 1800, distanceKm: 5 },
+    ];
+    const out = computeMuscleDistribution(sets, meta);
+    expect(out).toHaveLength(1);
+    expect(out[0].muscle).toBe('Chest');
+  });
+
+  it('skips contributions for unknown exercise ids without crashing', () => {
+    const sets = [
+      set('bench', 80, 5),
+      set('ghost', 50, 5),
+    ];
+    const out = computeMuscleDistribution(sets, meta);
+    expect(out).toHaveLength(1);
+    expect(out[0].muscle).toBe('Chest');
+  });
+});
