@@ -326,3 +326,27 @@ export async function upsertDraftSet(
       isPr: 0,
     });
 }
+
+export async function discardDraftSession(db: AnyDb, sessionId: number): Promise<void> {
+  // session_sets has ON DELETE CASCADE on sessions.id; deleting the session row removes both.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (db as any).delete(sessions).where(eq(sessions.id, sessionId));
+}
+
+export async function deleteDraftSet(
+  db: AnyDb,
+  sessionId: number,
+  exercisePosition: number,
+  setPosition: number,
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (db as any)
+    .delete(sessionSets)
+    .where(
+      and(
+        eq(sessionSets.sessionId, sessionId),
+        eq(sessionSets.exercisePosition, exercisePosition),
+        eq(sessionSets.setPosition, setPosition),
+      ),
+    );
+}

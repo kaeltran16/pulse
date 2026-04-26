@@ -363,3 +363,72 @@ describe('upsertDraftSet', () => {
     expect(count.c).toBe(3);
   });
 });
+
+import { discardDraftSession, deleteDraftSet } from '../queries/sessions';
+
+describe('discardDraftSession', () => {
+  it('deletes the draft session row', async () => {
+    const { db, raw } = makeTestDb();
+    seedWorkouts(db);
+    const { sessionId } = await startDraftSession(db, {
+      routineId: 1, routineNameSnapshot: 'Push Day A', startedAt: 1_500_000,
+    });
+    await discardDraftSession(db, sessionId);
+    const count = raw.prepare(`SELECT COUNT(*) AS c FROM sessions WHERE id = ?`).get(sessionId) as { c: number };
+    expect(count.c).toBe(0);
+  });
+
+  it('cascades to delete session_sets', async () => {
+    const { db, raw } = makeTestDb();
+    seedWorkouts(db);
+    const { sessionId } = await startDraftSession(db, {
+      routineId: 1, routineNameSnapshot: 'Push Day A', startedAt: 1_500_000,
+    });
+    await upsertDraftSet(db, sessionId, {
+      exerciseId: 'bench', exercisePosition: 0, setPosition: 0,
+      reps: 5, weightKg: 80, durationSeconds: null, distanceKm: null,
+    });
+    await upsertDraftSet(db, sessionId, {
+      exerciseId: 'bench', exercisePosition: 0, setPosition: 1,
+      reps: 5, weightKg: 85, durationSeconds: null, distanceKm: null,
+    });
+    await discardDraftSession(db, sessionId);
+    const count = raw.prepare(`SELECT COUNT(*) AS c FROM session_sets WHERE session_id = ?`).get(sessionId) as { c: number };
+    expect(count.c).toBe(0);
+  });
+
+  it('is a no-op when the session does not exist', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    await expect(discardDraftSession(db, 99999)).resolves.toBeUndefined();
+  });
+});
+
+describe('deleteDraftSet', () => {
+  it('deletes a single set by (sessionId, exercisePosition, setPosition) without touching others', async () => {
+    const { db, raw } = makeTestDb();
+    seedWorkouts(db);
+    const { sessionId } = await startDraftSession(db, {
+      routineId: 1, routineNameSnapshot: 'Push Day A', startedAt: 1_500_000,
+    });
+    await upsertDraftSet(db, sessionId, {
+      exerciseId: 'bench', exercisePosition: 0, setPosition: 0, reps: 5, weightKg: 80, durationSeconds: null, distanceKm: null,
+    });
+    await upsertDraftSet(db, sessionId, {
+      exerciseId: 'bench', exercisePosition: 0, setPosition: 1, reps: 5, weightKg: 85, durationSeconds: null, distanceKm: null,
+    });
+    await deleteDraftSet(db, sessionId, 0, 0);
+    const remaining = raw.prepare(`SELECT set_position FROM session_sets WHERE session_id = ?`).all(sessionId) as Array<{ set_position: number }>;
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0].set_position).toBe(1);
+  });
+
+  it('is a no-op when the row does not exist', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const { sessionId } = await startDraftSession(db, {
+      routineId: 1, routineNameSnapshot: 'Push Day A', startedAt: 1_500_000,
+    });
+    await expect(deleteDraftSet(db, sessionId, 9, 9)).resolves.toBeUndefined();
+  });
+});
