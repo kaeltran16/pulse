@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import type { Request, Response, NextFunction } from "express";
 import { ZodError, z } from "zod";
-import { errorHandler, UpstreamError } from "../../src/middleware/errorHandler.js";
+import { errorHandler, UpstreamError, GenerationFailedError } from "../../src/middleware/errorHandler.js";
 import { AuthError } from "../../src/middleware/auth.js";
 import { createLogger } from "../../src/lib/logger.js";
 
@@ -61,6 +61,15 @@ describe("errorHandler", () => {
     handle(new UpstreamError("openrouter 503"), req, res, next);
     expect(res.statusCode).toBe(502);
     expect(res.body.error.code).toBe("upstream_error");
+  });
+
+  it("maps GenerationFailedError to 502 generation_failed with the original message", () => {
+    const res = fakeRes();
+    handle(new GenerationFailedError("model returned junk"), req, res, next);
+    expect(res.statusCode).toBe(502);
+    expect(res.body.error.code).toBe("generation_failed");
+    expect(res.body.error.message).toBe("model returned junk");
+    expect(res.body.requestId).toBe("req-1");
   });
 
   it("maps unknown errors to 500 internal with generic message", () => {

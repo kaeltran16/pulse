@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import type { Request, Response, NextFunction } from "express";
 import type { ErrorCode } from "@api-types";
 
-export type Scope = "chat" | "parse" | "review";
+export type Scope = "chat" | "parse" | "review" | "generate-routine";
 
 export type AuthClaims = {
   sub: string;

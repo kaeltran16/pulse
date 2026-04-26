@@ -11,6 +11,13 @@ export class UpstreamError extends Error {
   }
 }
 
+export class GenerationFailedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "GenerationFailedError";
+  }
+}
+
 type Mapped = { status: number; code: ErrorCode; message: string };
 
 function map(err: unknown): Mapped {
@@ -21,6 +28,9 @@ function map(err: unknown): Mapped {
   if (err instanceof ZodError) {
     const message = err.issues.map((i) => `${i.path.join(".") || "<root>"}: ${i.message}`).join("; ");
     return { status: 400, code: "validation_failed", message };
+  }
+  if (err instanceof GenerationFailedError) {
+    return { status: 502, code: "generation_failed", message: err.message };
   }
   if (err instanceof UpstreamError) {
     return { status: 502, code: "upstream_error", message: "upstream provider error" };
