@@ -2,7 +2,7 @@ import { and, asc, desc, eq } from 'drizzle-orm';
 
 import { detectSessionPRs } from '../../workouts/pr-detection';
 import { computeStrengthVolume } from '../../workouts/volume';
-import { movementEntries, prs, sessions, sessionSets } from '../schema';
+import { exercises as exercisesTable, movementEntries, prs, sessions, sessionSets } from '../schema';
 import { type AnyDb } from './onboarding';
 
 export interface CompletedSessionDraftSet {
@@ -58,8 +58,19 @@ export interface SessionSummary {
   prCount: number;
 }
 
+export interface ExerciseMeta {
+  name: string;
+  muscle: string;
+  group: string;
+  equipment: string;
+  kind: 'strength' | 'cardio';
+  sfSymbol: string;
+}
+
 export interface SessionFull extends SessionSummary {
   sets: (typeof sessionSets.$inferSelect)[];
+  mode: 'strength' | 'cardio';
+  exerciseMetaById: Record<string, ExerciseMeta>;
 }
 
 export async function listSessions(
@@ -100,6 +111,29 @@ export async function getSession(db: AnyDb, sessionId: number): Promise<SessionF
     .where(eq(sessionSets.sessionId, sessionId))
     .orderBy(asc(sessionSets.exercisePosition), asc(sessionSets.setPosition));
 
+  const exerciseIds = Array.from(new Set(sets.map((s: { exerciseId: string }) => s.exerciseId)));
+  const exerciseMetaById: Record<string, ExerciseMeta> = {};
+  if (exerciseIds.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const metaRows = await (db as any).select().from(exercisesTable);
+    for (const row of metaRows as Array<typeof exercisesTable.$inferSelect>) {
+      if (exerciseIds.includes(row.id)) {
+        exerciseMetaById[row.id] = {
+          name: row.name,
+          muscle: row.muscle,
+          group: row.group,
+          equipment: row.equipment,
+          kind: row.kind as 'strength' | 'cardio',
+          sfSymbol: row.sfSymbol,
+        };
+      }
+    }
+  }
+
+  const firstSet = sets[0] as typeof sessionSets.$inferSelect | undefined;
+  const firstMeta = firstSet ? exerciseMetaById[firstSet.exerciseId] : undefined;
+  const mode: 'strength' | 'cardio' = firstMeta?.kind === 'cardio' ? 'cardio' : 'strength';
+
   return {
     id: h.id,
     routineId: h.routineId,
@@ -110,6 +144,8 @@ export async function getSession(db: AnyDb, sessionId: number): Promise<SessionF
     totalVolumeKg: h.totalVolumeKg,
     prCount: h.prCount,
     sets,
+    mode,
+    exerciseMetaById,
   };
 }
 

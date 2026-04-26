@@ -566,3 +566,41 @@ describe('finalizeSession', () => {
     await expect(finalizeSession(db, sessionId, 2_000_000)).rejects.toThrow(/not a draft/i);
   });
 });
+
+describe('getSession with mode + exerciseMetaById extension', () => {
+  it('returns mode="strength" and hydrates exerciseMetaById from exercises table', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const { sessionId } = await insertCompletedSessionForTests(db, baseDraft());
+    const full = await getSession(db, sessionId);
+    expect(full).not.toBeNull();
+    expect(full!.mode).toBe('strength');
+    expect(full!.exerciseMetaById['bench']).toBeDefined();
+    expect(full!.exerciseMetaById['bench'].name).toBeTruthy();
+    expect(full!.exerciseMetaById['ohp']).toBeDefined();
+  });
+
+  it('returns mode="cardio" when first exercise has kind=cardio', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const cardio = await insertCompletedSessionForTests(db, {
+      routineId: null,
+      routineNameSnapshot: 'Treadmill Intervals',
+      startedAt: 2_000_000,
+      finishedAt: 2_000_000 + 28 * 60 * 1000,
+      sets: [
+        {
+          exerciseId: 'treadmill',
+          exercisePosition: 0,
+          setPosition: 0,
+          reps: null,
+          weightKg: null,
+          durationSeconds: 28 * 60,
+          distanceKm: 3.5,
+        },
+      ],
+    });
+    const full = await getSession(db, cardio.sessionId);
+    expect(full!.mode).toBe('cardio');
+  });
+});
