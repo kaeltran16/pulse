@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import {
   listSessions,
   getSession,
+  getRecentSessions,
   type CompletedSessionDraft,
 } from '../queries/sessions';
 import { movementEntries, prs, sessions, sessionSets } from '../schema';
@@ -602,5 +603,73 @@ describe('getSession with mode + exerciseMetaById extension', () => {
     });
     const full = await getSession(db, cardio.sessionId);
     expect(full!.mode).toBe('cardio');
+  });
+});
+
+describe('getRecentSessions', () => {
+  it('returns empty list when no completed sessions', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const out = await getRecentSessions(db, 5);
+    expect(out).toEqual([]);
+  });
+
+  it('orders by finishedAt desc and respects limit', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    await insertCompletedSessionForTests(db, { ...baseDraft(), startedAt: 1_000_000, finishedAt: 1_500_000 });
+    await insertCompletedSessionForTests(db, { ...baseDraft(), startedAt: 2_000_000, finishedAt: 2_500_000 });
+    await insertCompletedSessionForTests(db, { ...baseDraft(), startedAt: 3_000_000, finishedAt: 3_500_000 });
+    const out = await getRecentSessions(db, 2);
+    expect(out).toHaveLength(2);
+    expect(out[0].finishedAt).toBe(3_500_000);
+    expect(out[1].finishedAt).toBe(2_500_000);
+  });
+
+  it('excludes draft sessions', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    await insertCompletedSessionForTests(db, baseDraft());
+    await startDraftSession(db, { routineId: 1, routineNameSnapshot: 'Pull Day A', startedAt: 9_000_000 });
+    const out = await getRecentSessions(db, 5);
+    expect(out).toHaveLength(1);
+  });
+
+  it('hydrates strength rows with mode + totalVolumeKg', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    await insertCompletedSessionForTests(db, baseDraft());
+    const out = await getRecentSessions(db, 5);
+    expect(out[0].mode).toBe('strength');
+    expect(out[0].totalVolumeKg).toBeGreaterThan(0);
+    expect(out[0].distanceKm).toBeNull();
+    expect(out[0].paceSecondsPerKm).toBeNull();
+  });
+
+  it('hydrates cardio rows with distance + pace and totalVolumeKg=0', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    await insertCompletedSessionForTests(db, {
+      routineId: null,
+      routineNameSnapshot: 'Treadmill Intervals',
+      startedAt: 2_000_000,
+      finishedAt: 2_000_000 + 28 * 60 * 1000,
+      sets: [
+        {
+          exerciseId: 'treadmill',
+          exercisePosition: 0,
+          setPosition: 0,
+          reps: null,
+          weightKg: null,
+          durationSeconds: 28 * 60,
+          distanceKm: 3.5,
+        },
+      ],
+    });
+    const out = await getRecentSessions(db, 5);
+    const cardio = out.find((r) => r.mode === 'cardio');
+    expect(cardio).toBeDefined();
+    expect(cardio!.distanceKm).toBe(3.5);
+    expect(cardio!.paceSecondsPerKm).toBeCloseTo((28 * 60) / 3.5);
   });
 });

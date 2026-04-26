@@ -301,6 +301,87 @@ export async function deleteDraftSet(
     );
 }
 
+export interface SessionRowData {
+  id: number;
+  routineNameSnapshot: string;
+  finishedAt: number;
+  durationSeconds: number;
+  mode: 'strength' | 'cardio';
+  totalVolumeKg: number;
+  prCount: number;
+  setCount: number;
+  distanceKm: number | null;
+  paceSecondsPerKm: number | null;
+}
+
+async function hydrateRows(
+  db: AnyDb,
+  rows: Array<typeof sessions.$inferSelect>,
+): Promise<SessionRowData[]> {
+  if (rows.length === 0) return [];
+  const sessionIds = rows.map((r) => r.id);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const allSets = await (db as any)
+    .select()
+    .from(sessionSets)
+    .orderBy(asc(sessionSets.sessionId), asc(sessionSets.exercisePosition), asc(sessionSets.setPosition));
+  const setsBySession = new Map<number, Array<typeof sessionSets.$inferSelect>>();
+  for (const s of allSets as Array<typeof sessionSets.$inferSelect>) {
+    if (!sessionIds.includes(s.sessionId)) continue;
+    const list = setsBySession.get(s.sessionId) ?? [];
+    list.push(s);
+    setsBySession.set(s.sessionId, list);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const exMetaRows = await (db as any).select().from(exercisesTable);
+  const exKindById = new Map<string, 'strength' | 'cardio'>();
+  for (const row of exMetaRows as Array<typeof exercisesTable.$inferSelect>) {
+    exKindById.set(row.id, row.kind as 'strength' | 'cardio');
+  }
+
+  return rows.map((r) => {
+    const sets = setsBySession.get(r.id) ?? [];
+    const firstKind = sets[0] ? exKindById.get(sets[0].exerciseId) : undefined;
+    const mode: 'strength' | 'cardio' = firstKind === 'cardio' ? 'cardio' : 'strength';
+
+    let distanceKm: number | null = null;
+    let paceSecondsPerKm: number | null = null;
+    if (mode === 'cardio' && sets[0]) {
+      distanceKm = sets[0].distanceKm;
+      const dur = sets[0].durationSeconds;
+      paceSecondsPerKm =
+        distanceKm != null && distanceKm > 0 && dur != null && dur > 0
+          ? dur / distanceKm
+          : null;
+    }
+
+    return {
+      id: r.id,
+      routineNameSnapshot: r.routineNameSnapshot,
+      finishedAt: r.finishedAt ?? 0,
+      durationSeconds: r.durationSeconds,
+      mode,
+      totalVolumeKg: r.totalVolumeKg,
+      prCount: r.prCount,
+      setCount: sets.length,
+      distanceKm,
+      paceSecondsPerKm,
+    };
+  });
+}
+
+export async function getRecentSessions(db: AnyDb, limit: number): Promise<SessionRowData[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rows = await (db as any)
+    .select()
+    .from(sessions)
+    .where(eq(sessions.status, 'completed'))
+    .orderBy(desc(sessions.finishedAt))
+    .limit(limit);
+  return hydrateRows(db, rows as Array<typeof sessions.$inferSelect>);
+}
+
 export function finalizeSession(
   db: AnyDb,
   sessionId: number,
