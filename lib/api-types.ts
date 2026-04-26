@@ -7,6 +7,7 @@ export type ErrorCode =
   | "forbidden"
   | "rate_limited"
   | "validation_failed"
+  | "generation_failed"
   | "upstream_error"
   | "internal";
 
