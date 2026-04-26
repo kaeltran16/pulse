@@ -279,3 +279,87 @@ describe('startDraftSession', () => {
     expect(row.routine_id).toBeNull();
   });
 });
+
+import { upsertDraftSet } from '../queries/sessions';
+
+describe('upsertDraftSet', () => {
+  async function freshDraft() {
+    const { db, raw } = makeTestDb();
+    seedWorkouts(db);
+    const { sessionId } = await startDraftSession(db, {
+      routineId: 1, routineNameSnapshot: 'Push Day A', startedAt: 1_500_000,
+    });
+    return { db, raw, sessionId };
+  }
+
+  it('inserts a new row when no row at (sessionId, exercisePosition, setPosition) exists', async () => {
+    const { db, raw, sessionId } = await freshDraft();
+    await upsertDraftSet(db, sessionId, {
+      exerciseId: 'bench', exercisePosition: 0, setPosition: 0,
+      reps: 5, weightKg: 80, durationSeconds: null, distanceKm: null,
+    });
+    const rows = raw.prepare(`SELECT * FROM session_sets WHERE session_id = ?`).all(sessionId) as Array<{
+      exercise_id: string; exercise_position: number; set_position: number;
+      reps: number; weight_kg: number; is_pr: number;
+    }>;
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ exercise_id: 'bench', exercise_position: 0, set_position: 0, reps: 5, weight_kg: 80, is_pr: 0 });
+  });
+
+  it('replaces an existing row at the same (sessionId, exercisePosition, setPosition)', async () => {
+    const { db, raw, sessionId } = await freshDraft();
+    await upsertDraftSet(db, sessionId, {
+      exerciseId: 'bench', exercisePosition: 0, setPosition: 0,
+      reps: 5, weightKg: 80, durationSeconds: null, distanceKm: null,
+    });
+    await upsertDraftSet(db, sessionId, {
+      exerciseId: 'bench', exercisePosition: 0, setPosition: 0,
+      reps: 6, weightKg: 82.5, durationSeconds: null, distanceKm: null,
+    });
+    const rows = raw.prepare(`SELECT * FROM session_sets WHERE session_id = ?`).all(sessionId) as Array<{
+      reps: number; weight_kg: number;
+    }>;
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ reps: 6, weight_kg: 82.5 });
+  });
+
+  it('keeps isPr=0 even if the caller provides truthy data — finalize sets the flag', async () => {
+    const { db, raw, sessionId } = await freshDraft();
+    await upsertDraftSet(db, sessionId, {
+      exerciseId: 'bench', exercisePosition: 0, setPosition: 0,
+      reps: 100, weightKg: 999, durationSeconds: null, distanceKm: null,
+    });
+    const row = raw.prepare(`SELECT is_pr FROM session_sets WHERE session_id = ?`).get(sessionId) as { is_pr: number };
+    expect(row.is_pr).toBe(0);
+  });
+
+  it('supports cardio sets (durationSeconds + distanceKm, reps/weightKg null)', async () => {
+    const { db, raw, sessionId } = await freshDraft();
+    await upsertDraftSet(db, sessionId, {
+      exerciseId: 'treadmill', exercisePosition: 0, setPosition: 0,
+      reps: null, weightKg: null, durationSeconds: 1800, distanceKm: 5.0,
+    });
+    const row = raw.prepare(`SELECT * FROM session_sets WHERE session_id = ?`).get(sessionId) as {
+      reps: number | null; weight_kg: number | null; duration_seconds: number; distance_km: number;
+    };
+    expect(row.reps).toBeNull();
+    expect(row.weight_kg).toBeNull();
+    expect(row.duration_seconds).toBe(1800);
+    expect(row.distance_km).toBe(5.0);
+  });
+
+  it('allows multiple sets at different (exercisePosition, setPosition) keys', async () => {
+    const { db, raw, sessionId } = await freshDraft();
+    await upsertDraftSet(db, sessionId, {
+      exerciseId: 'bench', exercisePosition: 0, setPosition: 0, reps: 5, weightKg: 80, durationSeconds: null, distanceKm: null,
+    });
+    await upsertDraftSet(db, sessionId, {
+      exerciseId: 'bench', exercisePosition: 0, setPosition: 1, reps: 5, weightKg: 85, durationSeconds: null, distanceKm: null,
+    });
+    await upsertDraftSet(db, sessionId, {
+      exerciseId: 'ohp',   exercisePosition: 1, setPosition: 0, reps: 6, weightKg: 50, durationSeconds: null, distanceKm: null,
+    });
+    const count = raw.prepare(`SELECT COUNT(*) AS c FROM session_sets WHERE session_id = ?`).get(sessionId) as { c: number };
+    expect(count.c).toBe(3);
+  });
+});

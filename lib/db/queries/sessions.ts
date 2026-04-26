@@ -1,4 +1,4 @@
-import { asc, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq } from 'drizzle-orm';
 
 import { detectSessionPRs } from '../../workouts/pr-detection';
 import { computeStrengthVolume } from '../../workouts/volume';
@@ -278,4 +278,51 @@ export async function getOpenDraft(db: AnyDb): Promise<DraftSession | null> {
       distanceKm: r.distanceKm,
     })),
   };
+}
+
+export async function upsertDraftSet(
+  db: AnyDb,
+  sessionId: number,
+  draft: SessionSetDraft,
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const existing = await (db as any)
+    .select({ id: sessionSets.id })
+    .from(sessionSets)
+    .where(
+      and(
+        eq(sessionSets.sessionId, sessionId),
+        eq(sessionSets.exercisePosition, draft.exercisePosition),
+        eq(sessionSets.setPosition, draft.setPosition),
+      ),
+    );
+  if (existing.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db as any)
+      .update(sessionSets)
+      .set({
+        exerciseId: draft.exerciseId,
+        reps: draft.reps,
+        weightKg: draft.weightKg,
+        durationSeconds: draft.durationSeconds,
+        distanceKm: draft.distanceKm,
+        isPr: 0,
+      })
+      .where(eq(sessionSets.id, existing[0].id));
+    return;
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (db as any)
+    .insert(sessionSets)
+    .values({
+      sessionId,
+      exerciseId: draft.exerciseId,
+      exercisePosition: draft.exercisePosition,
+      setPosition: draft.setPosition,
+      reps: draft.reps,
+      weightKg: draft.weightKg,
+      durationSeconds: draft.durationSeconds,
+      distanceKm: draft.distanceKm,
+      isPr: 0,
+    });
 }
