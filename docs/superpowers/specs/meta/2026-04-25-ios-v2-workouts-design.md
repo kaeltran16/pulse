@@ -1,7 +1,7 @@
 # Pulse — iOS v2 (Workouts) Meta-Spec
 
 **Date:** 2026-04-25
-**Status:** Draft, pending user review
+**Status:** ✅ Complete 2026-04-26 — all seven sub-slices (4a–4g) code complete; iPhone visual verification deferred per parent meta-spec §7.
 **Parent:** [`./2026-04-25-implementation-process-design.md`](./2026-04-25-implementation-process-design.md) §3 row 4
 **Scope:** Defines the decomposition of sub-project 4 (iOS v2 — workouts) into child sub-projects. This is a *map*, not a product spec. Each child below gets its own spec → plan → execute → review cycle.
 
@@ -45,7 +45,7 @@ Seven child sub-projects. Order is dependency-driven; each from 4c onward consum
 | **4c** ✅ | **Routine browse + edit** | PreWorkout (routine list), RoutineEditor (edit a routine's exercises and sets), ExerciseLibrary (browse seeded catalog by muscle group). | None (UI screens; visual verification) | List routines from 4a; open a routine; add/remove an exercise from the library; adjust a set's reps/weight; persist; reopen and see the change. |
 | **4d** ✅ | **Active Session** (the heart) | Rest timer state machine, set logging UI, in-flight PR detection, live HR readout via 4b. Cardio variant of the Active Session for cardio routines (duration/distance/pace input). | Rest timer state machine, in-flight PR detection against 4a's PRs table, set-completion side effects | Start a session from 4c → log sets → timer counts down per set → PR badge fires when a set beats prior best → HR shows with watch worn. Cardio variant: log a duration/distance row. |
 | **4e** ✅ | **Post-Workout + History** | PostWorkout summary (writes the session row locally + pushes a Health record via 4b), WorkoutDetail screen for past sessions. | Post-session aggregate (total volume, set count, PRs unlocked, duration), HealthKit payload assembly | Finish a session in 4d → summary screen shows correct volume/duration/PR count → row appears in WorkoutDetail history → record appears in Health.app with the right type and duration. |
-| **4f** | **AI Routine Generator** | RoutineGenerator screen → backend `/parse` (already deployed in SP2) → save returned routine to 4a's tables. | Generator response validation (schema check, exercise-id resolution against catalog, save path), error states | Type a prompt → backend round-trip → routine appears in 4c's list and is editable. |
+| **4f** ✅ | **AI Routine Generator** | RoutineGenerator screen → backend `/parse` (already deployed in SP2) → save returned routine to 4a's tables. | Generator response validation (schema check, exercise-id resolution against catalog, save path), error states | Type a prompt → backend round-trip → routine appears in 4c's list and is editable. |
 | **4g** ✅ | **Live Activities** *(verification deferred)* | Lock-screen workout timer via `@software-mansion-labs/expo-live-activity` driven by 4d's session state. | None — visual verify is deferred per parent meta-spec §7 | Code present, type-checks, app builds with the dev client. No visual smoke test required for SP4 to close. |
 
 ### Why this order
