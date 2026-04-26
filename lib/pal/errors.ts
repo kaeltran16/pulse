@@ -9,6 +9,7 @@ export class AuthError     extends PalError { constructor(m = 'Unauthorized', ri
 export class RateLimitError extends PalError { constructor(m = 'Rate limited', rid?: string) { super('rate_limited', m, rid); } }
 export class UpstreamError extends PalError { constructor(m = 'Upstream failed', rid?: string) { super('upstream_error', m, rid); } }
 export class ValidationError extends PalError { constructor(m = 'Validation failed', rid?: string) { super('validation_failed', m, rid); } }
+export class GenerationFailedError extends PalError { constructor(m = 'Could not generate', rid?: string) { super('generation_failed', m, rid); } }
 
 /** User-facing message for an error. */
 export function messageFor(e: unknown): string {
