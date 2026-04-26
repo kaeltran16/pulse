@@ -48,7 +48,8 @@
           "NSHealthShareUsageDescription": "Pulse reads your heart rate during workouts to show live BPM in the active-session screen.",
           "NSHealthUpdateUsageDescription": "Pulse saves completed workouts to the Health app so they appear alongside your other activity."
         }
-      ]
+      ],
+      ["expo-live-activity", { "enablePushNotifications": false }]
     ],
     "experiments": {
       "typedRoutes": true,

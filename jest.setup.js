@@ -13,3 +13,12 @@ jest.mock('@kingstinct/react-native-healthkit', () => ({
     other: 0,
   },
 }));
+
+// Stub expo-live-activity so any code path that imports lib/live-activity (or
+// transitively reaches it via activeSessionStore) doesn't crash in node.
+jest.mock('expo-live-activity', () => ({
+  __esModule: true,
+  startActivity: jest.fn().mockReturnValue('mock-activity-id'),
+  updateActivity: jest.fn(),
+  stopActivity: jest.fn(),
+}));
