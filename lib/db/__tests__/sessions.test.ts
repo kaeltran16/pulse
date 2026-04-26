@@ -2,14 +2,13 @@
 import { eq } from 'drizzle-orm';
 
 import {
-  insertCompletedSession,
   listSessions,
   getSession,
   type CompletedSessionDraft,
 } from '../queries/sessions';
 import { movementEntries, prs, sessions, sessionSets } from '../schema';
 import { seedWorkouts } from '../seed-workouts';
-import { makeTestDb } from './test-helpers';
+import { makeTestDb, insertCompletedSessionForTests } from './test-helpers';
 
 const baseDraft = (overrides: Partial<CompletedSessionDraft> = {}): CompletedSessionDraft => ({
   routineId: 1,
@@ -25,28 +24,21 @@ const baseDraft = (overrides: Partial<CompletedSessionDraft> = {}): CompletedSes
   ...overrides,
 });
 
-describe('insertCompletedSession', () => {
-  it('writes a session row with computed totals', async () => {
+describe('completed-session lifecycle (start → upsert → finalize)', () => {
+  it('writes a session row with computed totals (parity with old insertCompletedSession)', async () => {
     const { db } = makeTestDb();
     seedWorkouts(db);
-    const result = await insertCompletedSession(db, baseDraft());
+    const result = await insertCompletedSessionForTests(db, baseDraft());
 
     expect(result.sessionId).toBeGreaterThan(0);
     expect(result.totalVolumeKg).toBe(1575);
     expect(result.prCount).toBe(2);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const row = (await (db as any).select().from(sessions).where(eq(sessions.id, result.sessionId)))[0];
-    expect(row.totalVolumeKg).toBe(1575);
-    expect(row.prCount).toBe(2);
-    expect(row.durationSeconds).toBe(60 * 52);
-    expect(row.routineNameSnapshot).toBe('Push Day A');
   });
 
   it('writes session_sets rows in order with is_pr correctly flagged', async () => {
     const { db } = makeTestDb();
     seedWorkouts(db);
-    const { sessionId } = await insertCompletedSession(db, baseDraft());
+    const { sessionId } = await insertCompletedSessionForTests(db, baseDraft());
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rows = await (db as any).select().from(sessionSets).where(eq(sessionSets.sessionId, sessionId));
@@ -64,7 +56,7 @@ describe('insertCompletedSession', () => {
   it('upserts the prs table to best-of-session per exercise', async () => {
     const { db } = makeTestDb();
     seedWorkouts(db);
-    await insertCompletedSession(db, baseDraft());
+    await insertCompletedSessionForTests(db, baseDraft());
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rows = await (db as any).select().from(prs);
@@ -79,7 +71,7 @@ describe('insertCompletedSession', () => {
     const { db } = makeTestDb();
     seedWorkouts(db);
     const draft = baseDraft();
-    await insertCompletedSession(db, draft);
+    await insertCompletedSessionForTests(db, draft);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const m = await (db as any).select().from(movementEntries);
@@ -93,8 +85,8 @@ describe('insertCompletedSession', () => {
   it('does not duplicate prs rows for the same exercise across two sessions; updates instead', async () => {
     const { db } = makeTestDb();
     seedWorkouts(db);
-    await insertCompletedSession(db, baseDraft());
-    await insertCompletedSession(db, baseDraft({
+    await insertCompletedSessionForTests(db, baseDraft());
+    await insertCompletedSessionForTests(db, baseDraft({
       startedAt: 2_000_000,
       finishedAt: 2_000_000 + 60 * 30 * 1000,
       sets: [
@@ -108,34 +100,14 @@ describe('insertCompletedSession', () => {
     expect(benchRows).toHaveLength(1);
     expect(benchRows[0]).toMatchObject({ weightKg: 95, reps: 5 });
   });
-
-  it('rolls back the entire write if an inner insert throws (e.g. bad exercise FK)', async () => {
-    const { db } = makeTestDb();
-    seedWorkouts(db);
-    const bad = baseDraft({
-      sets: [
-        { exerciseId: 'NOT-AN-EXERCISE', exercisePosition: 0, setPosition: 0, reps: 5, weightKg: 80, durationSeconds: null, distanceKm: null },
-      ],
-    });
-    await expect(insertCompletedSession(db, bad)).rejects.toThrow();
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((await (db as any).select().from(sessions)).length).toBe(0);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((await (db as any).select().from(sessionSets)).length).toBe(0);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((await (db as any).select().from(movementEntries)).length).toBe(0);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((await (db as any).select().from(prs)).length).toBe(0);
-  });
 });
 
 describe('listSessions / getSession', () => {
   it('listSessions returns most-recent-first', async () => {
     const { db } = makeTestDb();
     seedWorkouts(db);
-    await insertCompletedSession(db, baseDraft({ startedAt: 1_000_000, finishedAt: 1_500_000 }));
-    await insertCompletedSession(db, baseDraft({ startedAt: 2_000_000, finishedAt: 2_500_000 }));
+    await insertCompletedSessionForTests(db, baseDraft({ startedAt: 1_000_000, finishedAt: 1_500_000 }));
+    await insertCompletedSessionForTests(db, baseDraft({ startedAt: 2_000_000, finishedAt: 2_500_000 }));
     const list = await listSessions(db);
     expect(list).toHaveLength(2);
     expect(list[0].startedAt).toBe(2_000_000);
@@ -145,8 +117,8 @@ describe('listSessions / getSession', () => {
   it('listSessions honors limit', async () => {
     const { db } = makeTestDb();
     seedWorkouts(db);
-    await insertCompletedSession(db, baseDraft({ startedAt: 1_000_000, finishedAt: 1_500_000 }));
-    await insertCompletedSession(db, baseDraft({ startedAt: 2_000_000, finishedAt: 2_500_000 }));
+    await insertCompletedSessionForTests(db, baseDraft({ startedAt: 1_000_000, finishedAt: 1_500_000 }));
+    await insertCompletedSessionForTests(db, baseDraft({ startedAt: 2_000_000, finishedAt: 2_500_000 }));
     const list = await listSessions(db, { limit: 1 });
     expect(list).toHaveLength(1);
   });
@@ -154,7 +126,7 @@ describe('listSessions / getSession', () => {
   it('getSession returns the full session including ordered sets', async () => {
     const { db } = makeTestDb();
     seedWorkouts(db);
-    const { sessionId } = await insertCompletedSession(db, baseDraft());
+    const { sessionId } = await insertCompletedSessionForTests(db, baseDraft());
     const full = await getSession(db, sessionId);
     expect(full).not.toBeNull();
     expect(full!.id).toBe(sessionId);

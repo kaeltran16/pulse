@@ -25,3 +25,37 @@ export function atLocal(year: number, month: number, day: number, hour = 12): Da
 export function tsLocal(year: number, month: number, day: number, hour = 12): number {
   return atLocal(year, month, day, hour).getTime();
 }
+
+import {
+  startDraftSession,
+  upsertDraftSet,
+  finalizeSession,
+  type CompletedSessionDraft,
+} from '../queries/sessions';
+
+/**
+ * Builds a completed session via the new lifecycle (start → upsert × N → finalize).
+ * Used by tests that just need a populated completed session as a fixture.
+ */
+export async function insertCompletedSessionForTests(
+  db: TestDb,
+  draft: CompletedSessionDraft,
+): Promise<{ sessionId: number; prCount: number; totalVolumeKg: number }> {
+  const { sessionId } = await startDraftSession(db, {
+    routineId: draft.routineId,
+    routineNameSnapshot: draft.routineNameSnapshot,
+    startedAt: draft.startedAt,
+  });
+  for (const s of draft.sets) {
+    await upsertDraftSet(db, sessionId, {
+      exerciseId: s.exerciseId,
+      exercisePosition: s.exercisePosition,
+      setPosition: s.setPosition,
+      reps: s.reps,
+      weightKg: s.weightKg,
+      durationSeconds: s.durationSeconds,
+      distanceKm: s.distanceKm,
+    });
+  }
+  return finalizeSession(db, sessionId, draft.finishedAt);
+}
