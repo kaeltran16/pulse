@@ -3,10 +3,11 @@ import { useTheme } from '@/lib/theme/provider';
 import { colors } from '@/lib/theme/tokens';
 
 export function RoutineActionSheet({
-  visible, onClose, onDuplicate, onRename, onDelete,
+  visible, onClose, onEdit, onDuplicate, onRename, onDelete,
 }: {
   visible: boolean;
   onClose: () => void;
+  onEdit: () => void;
   onDuplicate: () => void;
   onRename: () => void;
   onDelete: () => void;
@@ -30,6 +31,7 @@ export function RoutineActionSheet({
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} />
       <View style={{ backgroundColor: palette.surface }}>
+        <Row label="Edit" onPress={onEdit} />
         <Row label="Duplicate" onPress={onDuplicate} />
         <Row label="Rename" onPress={onRename} />
         <Row label="Delete" onPress={onDelete} danger />

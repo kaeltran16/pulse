@@ -10,6 +10,7 @@ import { CardioRow } from '@/components/workouts/CardioRow';
 import { RoutineActionSheet } from '@/components/workouts/RoutineActionSheet';
 import { RenameRoutineSheet } from '@/components/workouts/RenameRoutineSheet';
 import { useRoutineActions } from '@/lib/hooks/useRoutineActions';
+import { useActiveSessionStore } from '@/lib/state/activeSessionStore';
 
 export default function PreWorkout() {
   const router = useRouter();
@@ -35,6 +36,22 @@ export default function PreWorkout() {
   const strength = routines.filter((r) => r.tag !== 'Cardio');
   const cardio = routines.filter((r) => r.tag === 'Cardio');
 
+  const startSession = useActiveSessionStore((s) => s.startSession);
+  const startActive = async (routineId: number) => {
+    try {
+      await startSession(routineId);
+      router.push('/(tabs)/move/active');
+    } catch (e) {
+      // If a draft is already open (resume hook missed), route to active to let the user resume.
+      if (e instanceof Error && e.name === 'DraftAlreadyOpenError') {
+        router.push('/(tabs)/move/active');
+      } else {
+        // eslint-disable-next-line no-console
+        console.warn('startSession failed:', e);
+      }
+    }
+  };
+
   const onNew = async () => {
     const id = await createEmptyRoutine(db, { name: 'New routine', tag: 'Custom' });
     router.push({ pathname: '/(tabs)/move/[routineId]/edit', params: { routineId: String(id) } });
@@ -56,7 +73,7 @@ export default function PreWorkout() {
         <RoutineCard
           key={r.id}
           routine={r}
-          onPress={() => router.push({ pathname: '/(tabs)/move/[routineId]/edit', params: { routineId: String(r.id) } })}
+          onPress={() => startActive(r.id)}
           onLongPress={() => setActionTarget(r)}
         />
       ))}
@@ -70,7 +87,7 @@ export default function PreWorkout() {
             <CardioRow
               key={r.id}
               routine={r}
-              onPress={() => { /* SP4d: start cardio session. No-op in 4c. */ }}
+              onPress={() => startActive(r.id)}
             />
           ))}
         </>
@@ -94,6 +111,14 @@ export default function PreWorkout() {
       <RoutineActionSheet
         visible={actionTarget !== null}
         onClose={() => setActionTarget(null)}
+        onEdit={() => {
+          if (actionTarget) {
+            router.push({
+              pathname: '/(tabs)/move/[routineId]/edit',
+              params: { routineId: String(actionTarget.id) },
+            });
+          }
+        }}
         onDuplicate={async () => {
           if (actionTarget) {
             await actions.duplicate(actionTarget.id);
