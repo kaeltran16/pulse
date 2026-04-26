@@ -16,9 +16,9 @@ export async function writeWorkout(p: WorkoutWritePayload): Promise<void> {
     p.distanceKm !== undefined && p.distanceKm > 0
       ? [
           {
-            identifier: 'HKQuantityTypeIdentifierDistanceWalkingRunning' as const,
-            value: p.distanceKm,
-            unit: 'km' as const,
+            quantityType: 'HKQuantityTypeIdentifierDistanceWalkingRunning' as const,
+            quantity: p.distanceKm,
+            unit: 'km',
             startDate: p.start,
             endDate: p.end,
           },

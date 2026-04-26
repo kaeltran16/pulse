@@ -37,7 +37,7 @@ describe('writeWorkout', () => {
     expect(mockSaveWorkoutSample).toHaveBeenCalledTimes(1);
     const [, samples] = mockSaveWorkoutSample.mock.calls[0];
     expect(samples).toHaveLength(1);
-    expect(samples[0]).toMatchObject({ value: 3.5, unit: 'km' });
+    expect(samples[0]).toMatchObject({ quantity: 3.5, unit: 'km' });
   });
 
   it('omits distance sample when distanceKm is undefined', async () => {
