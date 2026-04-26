@@ -8,6 +8,7 @@ export type WorkoutWritePayload = {
   activityType: HKActivityType;
   start: Date;
   end: Date;
+  distanceKm?: number;
 };
 
 export type HRSample = {

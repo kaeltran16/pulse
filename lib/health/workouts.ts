@@ -12,5 +12,17 @@ const ACTIVITY_TYPE_ID: Record<HKActivityType, WorkoutActivityType> = {
 };
 
 export async function writeWorkout(p: WorkoutWritePayload): Promise<void> {
-  await saveWorkoutSample(ACTIVITY_TYPE_ID[p.activityType], [], p.start, p.end);
+  const samples =
+    p.distanceKm !== undefined && p.distanceKm > 0
+      ? [
+          {
+            identifier: 'HKQuantityTypeIdentifierDistanceWalkingRunning' as const,
+            value: p.distanceKm,
+            unit: 'km' as const,
+            startDate: p.start,
+            endDate: p.end,
+          },
+        ]
+      : [];
+  await saveWorkoutSample(ACTIVITY_TYPE_ID[p.activityType], samples, p.start, p.end);
 }
