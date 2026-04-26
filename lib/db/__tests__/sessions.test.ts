@@ -169,3 +169,58 @@ describe('listSessions / getSession', () => {
     expect(await getSession(db, 9999)).toBeNull();
   });
 });
+
+import { getOpenDraft } from '../queries/sessions';
+
+describe('getOpenDraft', () => {
+  it('returns null when no draft exists', async () => {
+    const { db } = makeTestDb();
+    seedWorkouts(db);
+    const draft = await getOpenDraft(db);
+    expect(draft).toBeNull();
+  });
+
+  it('returns the draft session with its sets when one exists', async () => {
+    const { db, raw } = makeTestDb();
+    seedWorkouts(db);
+    raw.prepare(`INSERT INTO sessions (routine_id, routine_name_snapshot, status, started_at, finished_at)
+                 VALUES (?, ?, 'draft', ?, NULL)`).run(1, 'Push Day A', 1_000_000);
+    const sessionId = (raw.prepare(`SELECT id FROM sessions WHERE status='draft'`).get() as { id: number }).id;
+    raw.prepare(`INSERT INTO session_sets
+                 (session_id, exercise_id, exercise_position, set_position, reps, weight_kg, duration_seconds, distance_km, is_pr)
+                 VALUES (?, 'bench', 0, 0, 5, 80, NULL, NULL, 0)`).run(sessionId);
+    raw.prepare(`INSERT INTO session_sets
+                 (session_id, exercise_id, exercise_position, set_position, reps, weight_kg, duration_seconds, distance_km, is_pr)
+                 VALUES (?, 'bench', 0, 1, 5, 85, NULL, NULL, 0)`).run(sessionId);
+
+    const draft = await getOpenDraft(db);
+    expect(draft).not.toBeNull();
+    expect(draft!.id).toBe(sessionId);
+    expect(draft!.routineId).toBe(1);
+    expect(draft!.routineNameSnapshot).toBe('Push Day A');
+    expect(draft!.startedAt).toBe(1_000_000);
+    expect(draft!.sets).toHaveLength(2);
+    expect(draft!.sets[0]).toMatchObject({ exerciseId: 'bench', setPosition: 0, reps: 5, weightKg: 80 });
+    expect(draft!.sets[1]).toMatchObject({ exerciseId: 'bench', setPosition: 1, reps: 5, weightKg: 85 });
+  });
+
+  it('orders sets by (exercisePosition, setPosition)', async () => {
+    const { db, raw } = makeTestDb();
+    seedWorkouts(db);
+    raw.prepare(`INSERT INTO sessions (routine_id, routine_name_snapshot, status, started_at)
+                 VALUES (?, ?, 'draft', ?)`).run(1, 'Push Day A', 1_000_000);
+    const sessionId = (raw.prepare(`SELECT id FROM sessions WHERE status='draft'`).get() as { id: number }).id;
+    raw.prepare(`INSERT INTO session_sets
+                 (session_id, exercise_id, exercise_position, set_position, reps, weight_kg, duration_seconds, distance_km, is_pr)
+                 VALUES (?, 'ohp', 1, 0, 6, 50, NULL, NULL, 0)`).run(sessionId);
+    raw.prepare(`INSERT INTO session_sets
+                 (session_id, exercise_id, exercise_position, set_position, reps, weight_kg, duration_seconds, distance_km, is_pr)
+                 VALUES (?, 'bench', 0, 1, 5, 85, NULL, NULL, 0)`).run(sessionId);
+    raw.prepare(`INSERT INTO session_sets
+                 (session_id, exercise_id, exercise_position, set_position, reps, weight_kg, duration_seconds, distance_km, is_pr)
+                 VALUES (?, 'bench', 0, 0, 5, 80, NULL, NULL, 0)`).run(sessionId);
+
+    const draft = await getOpenDraft(db);
+    expect(draft!.sets.map((s) => `${s.exercisePosition}:${s.setPosition}`)).toEqual(['0:0', '0:1', '1:0']);
+  });
+});

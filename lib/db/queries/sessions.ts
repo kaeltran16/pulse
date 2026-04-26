@@ -23,6 +23,24 @@ export interface CompletedSessionDraft {
   sets: CompletedSessionDraftSet[];
 }
 
+export interface SessionSetDraft {
+  exerciseId: string;
+  exercisePosition: number;
+  setPosition: number;
+  reps: number | null;
+  weightKg: number | null;
+  durationSeconds: number | null;
+  distanceKm: number | null;
+}
+
+export interface DraftSession {
+  id: number;
+  routineId: number | null;
+  routineNameSnapshot: string;
+  startedAt: number;
+  sets: SessionSetDraft[];
+}
+
 export interface CompletedSessionResult {
   sessionId: number;
   prCount: number;
@@ -178,5 +196,38 @@ export async function getSession(db: AnyDb, sessionId: number): Promise<SessionF
     totalVolumeKg: h.totalVolumeKg,
     prCount: h.prCount,
     sets,
+  };
+}
+
+export async function getOpenDraft(db: AnyDb): Promise<DraftSession | null> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const heads = await (db as any)
+    .select()
+    .from(sessions)
+    .where(eq(sessions.status, 'draft'));
+  if (heads.length === 0) return null;
+  const head = heads[0];
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sets = await (db as any)
+    .select()
+    .from(sessionSets)
+    .where(eq(sessionSets.sessionId, head.id))
+    .orderBy(asc(sessionSets.exercisePosition), asc(sessionSets.setPosition));
+
+  return {
+    id: head.id,
+    routineId: head.routineId,
+    routineNameSnapshot: head.routineNameSnapshot,
+    startedAt: head.startedAt,
+    sets: sets.map((r: typeof sessionSets.$inferSelect) => ({
+      exerciseId: r.exerciseId,
+      exercisePosition: r.exercisePosition,
+      setPosition: r.setPosition,
+      reps: r.reps,
+      weightKg: r.weightKg,
+      durationSeconds: r.durationSeconds,
+      distanceKm: r.distanceKm,
+    })),
   };
 }
