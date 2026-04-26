@@ -37,3 +37,46 @@ export function computeMuscleDistribution(
     }))
     .sort((a, b) => b.tonnageKg - a.tonnageKg);
 }
+
+export interface WeeklyVolumeBucket {
+  weekStart: number;
+  tonnageKg: number;
+}
+
+function mondayMidnightLocal(at: number): number {
+  const d = new Date(at);
+  const dow = d.getDay();
+  const daysSinceMonday = (dow + 6) % 7;
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - daysSinceMonday);
+  return d.getTime();
+}
+
+function addWeeks(monday: number, weeks: number): number {
+  const d = new Date(monday);
+  d.setDate(d.getDate() + weeks * 7);
+  return d.getTime();
+}
+
+export function computeWeeklyVolumeSeries(
+  sessions: { finishedAt: number; totalVolumeKg: number }[],
+  weeksBack: number,
+  now: number,
+): WeeklyVolumeBucket[] {
+  const currentMonday = mondayMidnightLocal(now);
+  const buckets: WeeklyVolumeBucket[] = [];
+  for (let i = weeksBack - 1; i >= 0; i--) {
+    buckets.push({ weekStart: addWeeks(currentMonday, -i), tonnageKg: 0 });
+  }
+  const idx = new Map<number, number>();
+  buckets.forEach((b, i) => idx.set(b.weekStart, i));
+
+  for (const s of sessions) {
+    const monday = mondayMidnightLocal(s.finishedAt);
+    const i = idx.get(monday);
+    if (i !== undefined) {
+      buckets[i].tonnageKg += s.totalVolumeKg;
+    }
+  }
+  return buckets;
+}
