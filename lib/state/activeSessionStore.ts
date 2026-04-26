@@ -221,12 +221,94 @@ export const useActiveSessionStore = create<ActiveSessionState>()((set, get) => 
     router.replace('/(tabs)/move');
   },
 
-  completeSet: async () => { throw new Error('completeSet: not yet implemented'); },
-  editSet: async () => { throw new Error('editSet: not yet implemented'); },
-  removeSet: async () => { throw new Error('removeSet: not yet implemented'); },
-  addSetToCurrent: async () => { throw new Error('addSetToCurrent: not yet implemented'); },
-  skipExercise: () => { throw new Error('skipExercise: not yet implemented'); },
-  goToNextExercise: () => { throw new Error('goToNextExercise: not yet implemented'); },
+  completeSet: async (exPos, setPos, payload) => {
+    const s = get();
+    if (s.phase !== 'active' || s.sessionId === null) return;
+    const draft: SessionSetDraft = {
+      exerciseId: s.exercises[exPos].exerciseId,
+      exercisePosition: exPos,
+      setPosition: setPos,
+      reps: payload.reps,
+      weightKg: payload.weightKg,
+      durationSeconds: payload.durationSeconds,
+      distanceKm: payload.distanceKm,
+    };
+    const next = [...s.setDrafts.filter((d) => !(d.exercisePosition === exPos && d.setPosition === setPos)), draft]
+      .sort((a, b) => a.exercisePosition - b.exercisePosition || a.setPosition - b.setPosition);
+
+    let nextExerciseIdx = s.currentExerciseIdx;
+    if (s.mode === 'strength' && exPos === s.currentExerciseIdx) {
+      const loggedAtCurrent = next.filter((d) => d.exercisePosition === exPos).length;
+      const prescribed = s.exercises[exPos].prescribedSets.length;
+      if (loggedAtCurrent >= prescribed && exPos + 1 < s.exercises.length) {
+        nextExerciseIdx = exPos + 1;
+      }
+    }
+
+    set({ setDrafts: next, currentExerciseIdx: nextExerciseIdx });
+
+    try {
+      await upsertDraftSet(db, s.sessionId, draft);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('upsertDraftSet failed (set kept locally):', e);
+    }
+
+    if (s.mode === 'strength') {
+      get().startRestTimer(s.restDefaultSeconds * 1000);
+    }
+  },
+
+  editSet: async (exPos, setPos, payload) => {
+    return get().completeSet(exPos, setPos, payload);
+  },
+
+  removeSet: async (exPos, setPos) => {
+    const s = get();
+    if (s.sessionId === null) return;
+    const next = s.setDrafts.filter((d) => !(d.exercisePosition === exPos && d.setPosition === setPos));
+    set({ setDrafts: next });
+    try {
+      await deleteDraftSet(db, s.sessionId, exPos, setPos);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('deleteDraftSet failed:', e);
+    }
+  },
+
+  addSetToCurrent: async () => {
+    const s = get();
+    if (s.phase !== 'active' || s.sessionId === null) return;
+    const exPos = s.currentExerciseIdx;
+    const ex = s.exercises[exPos];
+    if (!ex) return;
+    const loggedAt = s.setDrafts.filter((d) => d.exercisePosition === exPos);
+    const lastLogged = loggedAt[loggedAt.length - 1];
+    const lastPrescribed = ex.prescribedSets[ex.prescribedSets.length - 1];
+    const prescribed = {
+      reps: lastLogged?.reps ?? lastPrescribed?.reps ?? null,
+      weightKg: lastLogged?.weightKg ?? lastPrescribed?.weightKg ?? null,
+      durationSeconds: lastPrescribed?.durationSeconds ?? null,
+      distanceKm: lastPrescribed?.distanceKm ?? null,
+    };
+    const newPrescribed = [...ex.prescribedSets, prescribed];
+    const newExercises = s.exercises.map((e, i) => i === exPos ? { ...e, prescribedSets: newPrescribed } : e);
+    set({ exercises: newExercises });
+  },
+
+  skipExercise: () => {
+    const s = get();
+    if (s.phase !== 'active') return;
+    if (s.currentExerciseIdx + 1 >= s.exercises.length) return;
+    set({ currentExerciseIdx: s.currentExerciseIdx + 1 });
+  },
+
+  goToNextExercise: () => {
+    const s = get();
+    if (s.phase !== 'active') return;
+    if (s.currentExerciseIdx + 1 >= s.exercises.length) return;
+    set({ currentExerciseIdx: s.currentExerciseIdx + 1 });
+  },
 
   startRestTimer: () => { throw new Error('startRestTimer: not yet implemented'); },
   addRestTime: () => { throw new Error('addRestTime: not yet implemented'); },
