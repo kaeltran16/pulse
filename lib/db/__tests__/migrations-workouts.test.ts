@@ -42,6 +42,7 @@ describe('SP4a migration', () => {
       'idx_routine_sets_routine_exercise_position',
       'idx_session_sets_exercise_id',
       'idx_session_sets_session_id',
+      'idx_sessions_one_draft',
       'idx_sessions_started_at',
       'idx_spending_occurred_at',
     ]);

@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { integer, real, sqliteTable, text, index } from 'drizzle-orm/sqlite-core';
+import { integer, real, sqliteTable, text, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 export const goals = sqliteTable('goals', {
   id: integer('id').primaryKey(),
@@ -130,14 +130,16 @@ export const sessions = sqliteTable(
     id: integer('id').primaryKey({ autoIncrement: true }),
     routineId: integer('routine_id').references(() => routines.id, { onDelete: 'set null' }),
     routineNameSnapshot: text('routine_name_snapshot').notNull(),
+    status: text('status', { enum: ['draft', 'completed'] }).notNull().default('completed'),
     startedAt: integer('started_at').notNull(),
-    finishedAt: integer('finished_at').notNull(),
-    durationSeconds: integer('duration_seconds').notNull(),
+    finishedAt: integer('finished_at'),
+    durationSeconds: integer('duration_seconds').notNull().default(0),
     totalVolumeKg: real('total_volume_kg').notNull().default(0),
     prCount: integer('pr_count').notNull().default(0),
   },
   (t) => ({
     startedAtIdx: index('idx_sessions_started_at').on(t.startedAt),
+    oneDraftIdx: uniqueIndex('idx_sessions_one_draft').on(t.status).where(sql`status = 'draft'`),
   }),
 );
 
