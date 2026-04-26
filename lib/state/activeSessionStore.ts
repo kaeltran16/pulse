@@ -310,8 +310,33 @@ export const useActiveSessionStore = create<ActiveSessionState>()((set, get) => 
     set({ currentExerciseIdx: s.currentExerciseIdx + 1 });
   },
 
-  startRestTimer: () => { throw new Error('startRestTimer: not yet implemented'); },
-  addRestTime: () => { throw new Error('addRestTime: not yet implemented'); },
-  skipRest: () => { throw new Error('skipRest: not yet implemented'); },
-  tickRest: () => { throw new Error('tickRest: not yet implemented'); },
+  startRestTimer: (durationMs: number) => {
+    const next = reduceRest(get().rest, { type: 'START', now: Date.now(), durationMs });
+    set({ rest: next });
+  },
+
+  addRestTime: (secs: number) => {
+    if (secs === 30) {
+      const next = reduceRest(get().rest, { type: 'ADD_30S' });
+      set({ rest: next });
+      return;
+    }
+    let next = get().rest;
+    let remaining = secs;
+    while (remaining >= 30) {
+      next = reduceRest(next, { type: 'ADD_30S' });
+      remaining -= 30;
+    }
+    set({ rest: next });
+  },
+
+  skipRest: () => {
+    const next = reduceRest(get().rest, { type: 'SKIP' });
+    set({ rest: next });
+  },
+
+  tickRest: (now: number) => {
+    const next = reduceRest(get().rest, { type: 'TICK', now });
+    if (next !== get().rest) set({ rest: next });
+  },
 }));
