@@ -331,3 +331,27 @@ describe('updateRoutine', () => {
     expect(after.exercises[1].restSeconds).toBeNull();
   });
 });
+
+import { startDraftSession } from '../queries/sessions';
+import { insertCompletedSessionForTests } from './test-helpers';
+
+describe('listRoutines.lastDoneAt', () => {
+  it('uses the latest completed session, ignoring drafts even if they have a finishedAt', async () => {
+    const { db, raw } = makeTestDb();
+    seedWorkouts(db);
+    await insertCompletedSessionForTests(db, {
+      routineId: 1, routineNameSnapshot: 'Push Day A',
+      startedAt: 1_000_000, finishedAt: 1_100_000,
+      sets: [{ exerciseId: 'bench', exercisePosition: 0, setPosition: 0, reps: 5, weightKg: 80, durationSeconds: null, distanceKm: null }],
+    });
+    // Manually corrupt: a draft with a non-null finished_at — defensive against
+    // future code paths; the query layer never produces this state today.
+    raw.prepare(`INSERT INTO sessions (routine_id, routine_name_snapshot, status, started_at, finished_at)
+                 VALUES (1, 'Push Day A', 'draft', 9000000, 9100000)`).run();
+
+    const rows = await listRoutines(db);
+    const pushDayA = rows.find((r) => r.id === 1)!;
+    expect(pushDayA.lastDoneAt).toBe(1_100_000);
+  });
+});
+

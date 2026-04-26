@@ -56,7 +56,8 @@ export async function listRoutines(db: AnyDb): Promise<RoutineSummary[]> {
       restSecondsTotal: sql<number>`COALESCE(SUM(${routineExercises.restSeconds}), 0)`,
       cardioDurationSecondsTotal: sql<number>`COALESCE(SUM(${routineSets.targetDurationSeconds}), 0)`,
       lastDoneAt: sql<number | null>`(
-        SELECT MAX(${sessions.finishedAt}) FROM ${sessions} WHERE ${sessions.routineId} = ${routines.id}
+        SELECT MAX(${sessions.finishedAt}) FROM ${sessions}
+        WHERE ${sessions.routineId} = ${routines.id} AND ${sessions.status} = 'completed'
       )`,
     })
     .from(routines)
