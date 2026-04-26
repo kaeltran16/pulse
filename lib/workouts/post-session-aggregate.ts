@@ -80,3 +80,49 @@ export function computeWeeklyVolumeSeries(
   }
   return buckets;
 }
+
+export interface PrHighlight {
+  exerciseId: string;
+  exerciseName: string;
+  newWeightKg: number;
+  newReps: number;
+}
+
+export interface PrInput {
+  exerciseId: string;
+  weightKg: number;
+  reps: number;
+}
+
+export interface SelectedPRs {
+  top: PrHighlight[];
+  more: number;
+}
+
+export function selectTopPRs(
+  prs: PrInput[],
+  exerciseMetaById: Record<string, ExerciseMeta>,
+  n = 2,
+): SelectedPRs {
+  const bestByExercise = new Map<string, PrInput>();
+  for (const p of prs) {
+    const existing = bestByExercise.get(p.exerciseId);
+    if (!existing || p.weightKg * p.reps > existing.weightKg * existing.reps) {
+      bestByExercise.set(p.exerciseId, p);
+    }
+  }
+
+  const highlights: PrHighlight[] = Array.from(bestByExercise.values()).map((p) => ({
+    exerciseId: p.exerciseId,
+    exerciseName: exerciseMetaById[p.exerciseId]?.name ?? p.exerciseId,
+    newWeightKg: p.weightKg,
+    newReps: p.reps,
+  }));
+
+  highlights.sort((a, b) => b.newWeightKg - a.newWeightKg);
+
+  return {
+    top: highlights.slice(0, n),
+    more: Math.max(0, highlights.length - n),
+  };
+}

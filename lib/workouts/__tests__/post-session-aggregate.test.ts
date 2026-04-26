@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import { computeMuscleDistribution, computeWeeklyVolumeSeries } from '../post-session-aggregate';
+import { computeMuscleDistribution, computeWeeklyVolumeSeries, selectTopPRs } from '../post-session-aggregate';
 
 const meta = {
   bench:    { name: 'Bench Press',    muscle: 'Chest',     group: 'Push' },
@@ -133,5 +133,64 @@ describe('computeWeeklyVolumeSeries', () => {
     const sundaySession = new Date(2026, 3, 26, 9, 0, 0).getTime();
     const out = computeWeeklyVolumeSeries([session(sundaySession, 600)], 8, sundayNow);
     expect(out[7].tonnageKg).toBe(600); // current week is Mon Apr 20–Sun Apr 26
+  });
+});
+
+describe('selectTopPRs', () => {
+  const exMeta = {
+    bench: { name: 'Bench Press',    muscle: 'Chest',     group: 'Push' },
+    ohp:   { name: 'Overhead Press', muscle: 'Shoulders', group: 'Push' },
+    squat: { name: 'Back Squat',     muscle: 'Quads',     group: 'Legs' },
+  };
+
+  const prInput = (exerciseId: string, weightKg: number, reps: number) => ({
+    exerciseId,
+    weightKg,
+    reps,
+  });
+
+  it('returns empty top + 0 more when no PRs', () => {
+    const out = selectTopPRs([], exMeta);
+    expect(out).toEqual({ top: [], more: 0 });
+  });
+
+  it('caps top at N (default 2) and reports the rest in more', () => {
+    const out = selectTopPRs(
+      [prInput('bench', 90, 5), prInput('ohp', 50, 6), prInput('squat', 105, 5)],
+      exMeta,
+    );
+    expect(out.top).toHaveLength(2);
+    expect(out.more).toBe(1);
+  });
+
+  it('sorts by newWeightKg descending', () => {
+    const out = selectTopPRs(
+      [prInput('ohp', 50, 6), prInput('bench', 90, 5), prInput('squat', 105, 5)],
+      exMeta,
+      5,
+    );
+    expect(out.top.map((p) => p.exerciseId)).toEqual(['squat', 'bench', 'ohp']);
+  });
+
+  it('hydrates exerciseName from meta', () => {
+    const out = selectTopPRs([prInput('bench', 90, 5)], exMeta);
+    expect(out.top[0].exerciseName).toBe('Bench Press');
+    expect(out.top[0].newWeightKg).toBe(90);
+    expect(out.top[0].newReps).toBe(5);
+  });
+
+  it('falls back to exerciseId when meta is missing', () => {
+    const out = selectTopPRs([prInput('ghost', 30, 5)], exMeta);
+    expect(out.top[0].exerciseName).toBe('ghost');
+  });
+
+  it('deduplicates per exerciseId, keeping the best by weight × reps', () => {
+    const out = selectTopPRs(
+      [prInput('bench', 80, 5), prInput('bench', 90, 5), prInput('bench', 85, 5)],
+      exMeta,
+      5,
+    );
+    expect(out.top).toHaveLength(1);
+    expect(out.top[0].newWeightKg).toBe(90);
   });
 });
