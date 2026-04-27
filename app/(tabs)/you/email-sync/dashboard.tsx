@@ -1,11 +1,11 @@
-import { ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 
 import { db } from '@/lib/db/client';
-import { recentSynced, syncedStats, type SyncedRow } from '@/lib/db/queries/syncedEntries';
+import { recentSynced, subscriptionList, syncedStats, type SyncedRow } from '@/lib/db/queries/syncedEntries';
 import { spendingEntries } from '@/lib/db/schema';
 import { useImapStatus } from '@/lib/sync/useImapStatus';
 import { useRelativeTime } from '@/lib/sync/useRelativeTime';
@@ -46,6 +46,13 @@ export default function EmailSyncDashboard() {
   const recent = (() => {
     void liveSpending.data;
     return recentSynced(db, 6);
+  })();
+  const palCard = (() => {
+    void liveSpending.data;
+    const groups = subscriptionList(db);
+    if (groups.length === 0) return null;
+    const total = groups.reduce((s, g) => s + g.monthlyAmountCents, 0);
+    return { count: groups.length, totalDollars: Math.round(total / 100) };
   })();
 
   // If status confirms disconnected, bounce to Intro.
@@ -134,6 +141,29 @@ export default function EmailSyncDashboard() {
             ))}
           </View>
         </View>
+
+        {palCard && (
+          <View className="px-3 pb-3">
+            <View
+              className="rounded-2xl p-4"
+              style={{ backgroundColor: palette.accentTint, borderWidth: 0.5, borderColor: palette.accent + '22' }}
+            >
+              <Text className="text-caption2 uppercase mb-1" style={{ color: palette.accent, fontWeight: '700', letterSpacing: 0.5 }}>
+                ✨ Pal noticed
+              </Text>
+              <Text className="text-callout text-ink">
+                You have <Text style={{ fontWeight: '700' }}>{palCard.count} recurring subscription{palCard.count === 1 ? '' : 's'}</Text> totaling ${palCard.totalDollars}/mo.
+              </Text>
+              <Pressable
+                className="mt-3 rounded-full self-start px-3 py-1.5"
+                style={{ backgroundColor: palette.accent }}
+                onPress={() => router.push('/(tabs)/you/subscriptions')}
+              >
+                <Text className="text-caption1" style={{ color: '#fff', fontWeight: '600' }}>Review subscriptions</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
 
         <View className="px-3 pb-3">
           <Text className="text-caption1 text-ink3 uppercase mb-1 px-1">Recently synced</Text>
