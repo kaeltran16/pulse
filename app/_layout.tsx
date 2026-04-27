@@ -4,11 +4,20 @@ import React, { useEffect } from 'react';
 import { ActivityIndicator, AppState, type AppStateStatus, View } from 'react-native';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { eq } from 'drizzle-orm';
 
 import { db } from '@/lib/db/client';
 import { useDbMigrations } from '@/lib/db/migrate';
 import { isOnboardingComplete } from '@/lib/db/queries/onboarding';
+import { reseedDefaults } from '@/lib/db/queries/reseedDefaults';
 import { getOpenDraft } from '@/lib/db/queries/sessions';
+import { goals, rituals } from '@/lib/db/schema';
+import {
+  cancelDailyReminder,
+  ensurePermission,
+  reminderBody,
+  scheduleDailyReminder,
+} from '@/lib/notifications/dailyReminder';
 import { useActiveSessionStore } from '@/lib/state/activeSessionStore';
 import { ThemeProvider } from '@/lib/theme/provider';
 
@@ -64,6 +73,39 @@ function Boot({ children }: { children: React.ReactNode }) {
       cancelled = true;
     };
   }, [success, segments, router]);
+
+  // SP5e: reseed any new DEFAULT_RITUALS + ensure scheduled reminder matches goals.
+  useEffect(() => {
+    if (!success) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        reseedDefaults(db);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const goalRows = await (db as any).select().from(goals).where(eq(goals.id, 1));
+        if (cancelled) return;
+        const reminderTime = goalRows[0]?.reminderTimeMinutes ?? null;
+        if (reminderTime == null) {
+          await cancelDailyReminder();
+          return;
+        }
+        const perm = await ensurePermission();
+        if (cancelled) return;
+        if (perm === 'granted') {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const activeRituals = await (db as any).select().from(rituals).where(eq(rituals.active, true));
+          if (cancelled) return;
+          await scheduleDailyReminder(reminderTime, reminderBody(activeRituals));
+        } else {
+          await cancelDailyReminder();
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[sp5e] startup reminder check failed:', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [success]);
 
   useEffect(() => {
     if (!success) return;
