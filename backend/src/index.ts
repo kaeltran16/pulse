@@ -10,6 +10,7 @@ import { parseRouter } from "./routes/parse.js";
 import { chatRouter } from "./routes/chat.js";
 import { reviewRouter } from "./routes/review.js";
 import { suggestRitualsRouter } from "./routes/suggestRituals.js";
+import { nudgeTodayRouter } from "./routes/nudgeToday.js";
 import { generateRoutineRouter } from "./routes/generate-routine.js";
 import { imapRouter } from "./routes/imap.js";
 import { syncRouter } from "./routes/sync.js";
@@ -55,6 +56,12 @@ export function createApp(deps: AppDeps): Express {
     rateLimitMw,
     authMiddleware(config.jwtSecret, "chat"),
     suggestRitualsRouter({ llm: deps.llm, modelId: config.modelId })
+  );
+  app.use(
+    "/nudge-today",
+    rateLimitMw,
+    authMiddleware(config.jwtSecret, "chat"),
+    nudgeTodayRouter({ llm: deps.llm, modelId: config.modelId })
   );
   app.use(
     "/review",
