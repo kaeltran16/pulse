@@ -36,8 +36,9 @@ async function doSync(db: AnyDb): Promise<SyncResult> {
   // eslint-disable-next-line no-constant-condition
   while (true) {
     const page = await fetchSyncEntries({ since: cursor.lastSyncedId, limit: PAGE_LIMIT });
-    if (page.accountId !== cursor.accountId) {
-      // Account id changed mid-loop (rare disconnect+reconnect race) — bail.
+    // Account id may be null (no rows) or a different number than ours.
+    if (page.accountId === null || page.accountId !== cursor.accountId) {
+      // Disconnected or reconnected mid-loop — bail; next syncNow() resets cleanly.
       break;
     }
     if (page.entries.length > 0) {
