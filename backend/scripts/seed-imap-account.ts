@@ -6,10 +6,10 @@
 // The Gmail app password is prompted on stdin (hidden). It is never passed
 // as a CLI flag and never appears in shell history or `ps`.
 
-import { ImapFlow } from "imapflow";
 import { createDb } from "../src/db/client.js";
 import { loadWorkerConfig } from "../src/config.js";
-import { seedImapAccount, type ImapValidator } from "../src/lib/seedImapAccount.js";
+import { seedImapAccount } from "../src/lib/seedImapAccount.js";
+import { realImapValidator } from "../src/lib/imap/validator.js";
 
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`);
@@ -60,18 +60,6 @@ function readPasswordHidden(prompt: string): Promise<string> {
   });
 }
 
-const realValidator: ImapValidator = async ({ email, password }) => {
-  const client = new ImapFlow({
-    host: "imap.gmail.com",
-    port: 993,
-    secure: true,
-    auth: { user: email, pass: password },
-    logger: false,
-  });
-  await client.connect();
-  await client.logout();
-};
-
 async function main(): Promise<void> {
   const email = arg("email");
   if (!email) {
@@ -101,7 +89,7 @@ async function main(): Promise<void> {
 
   try {
     const { id } = await seedImapAccount(
-      { db, encryptionKey: config.imapEncryptionKey, validator: realValidator, now: Date.now },
+      { db, encryptionKey: config.imapEncryptionKey, validator: realImapValidator, now: Date.now },
       { email, password, allowlist },
     );
     process.stderr.write(`seeded imap_accounts id=${id} email=${email}\n`);
