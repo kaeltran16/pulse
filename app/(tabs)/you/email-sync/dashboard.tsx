@@ -5,12 +5,32 @@ import { useEffect } from 'react';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 
 import { db } from '@/lib/db/client';
-import { syncedStats } from '@/lib/db/queries/syncedEntries';
+import { recentSynced, syncedStats, type SyncedRow } from '@/lib/db/queries/syncedEntries';
 import { spendingEntries } from '@/lib/db/schema';
 import { useImapStatus } from '@/lib/sync/useImapStatus';
 import { useRelativeTime } from '@/lib/sync/useRelativeTime';
 import { useTheme } from '@/lib/theme/provider';
 import { colors } from '@/lib/theme/tokens';
+
+type Palette = typeof colors.light | typeof colors.dark;
+
+function RecentRow({ row, isLast, palette }: { row: SyncedRow; isLast: boolean; palette: Palette }) {
+  const dollars = `−$${(row.cents / 100).toFixed(2)}`;
+  return (
+    <View
+      className="flex-row items-center px-4 py-3"
+      style={{ borderBottomWidth: isLast ? 0 : 0.5, borderBottomColor: palette.hair }}
+    >
+      <View className="flex-1 min-w-0">
+        <Text className="text-callout text-ink" numberOfLines={1}>{row.merchant ?? 'Unknown merchant'}</Text>
+        <Text className="text-caption1 text-ink3 mt-1" numberOfLines={1}>
+          {row.category ?? 'Uncategorized'}
+        </Text>
+      </View>
+      <Text className="text-callout text-ink ml-3">{dollars}</Text>
+    </View>
+  );
+}
 
 export default function EmailSyncDashboard() {
   const router = useRouter();
@@ -22,6 +42,10 @@ export default function EmailSyncDashboard() {
   const stats = (() => {
     void liveSpending.data;
     return syncedStats(db);
+  })();
+  const recent = (() => {
+    void liveSpending.data;
+    return recentSynced(db, 6);
   })();
 
   // If status confirms disconnected, bounce to Intro.
@@ -108,6 +132,23 @@ export default function EmailSyncDashboard() {
                 <Text className="text-caption2 text-ink3 mt-1">{tile.label}</Text>
               </View>
             ))}
+          </View>
+        </View>
+
+        <View className="px-3 pb-3">
+          <Text className="text-caption1 text-ink3 uppercase mb-1 px-1">Recently synced</Text>
+          <View className="rounded-xl bg-surface overflow-hidden">
+            {recent.length === 0 ? (
+              <View className="px-4 py-6 items-center">
+                <Text className="text-callout text-ink3 text-center">
+                  No receipts yet — most banks send within ~24h.
+                </Text>
+              </View>
+            ) : (
+              recent.map((row, i) => (
+                <RecentRow key={row.id} row={row} isLast={i === recent.length - 1} palette={palette} />
+              ))
+            )}
           </View>
         </View>
       </ScrollView>
