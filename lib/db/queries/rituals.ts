@@ -54,3 +54,42 @@ export async function updateRitual(db: AnyDb, id: number, input: UpdateRitualInp
     .where(eq(rituals.id, id))
     .run();
 }
+
+export async function softDeleteRitual(db: AnyDb, id: number): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const dx = db as any;
+  dx.transaction((tx: any) => {
+    tx.update(rituals).set({ active: false }).where(eq(rituals.id, id)).run();
+    // Recompact positions of remaining active rituals
+    const activeIds = tx
+      .select({ id: rituals.id })
+      .from(rituals)
+      .where(eq(rituals.active, true))
+      .orderBy(sql`position ASC`)
+      .all() as Array<{ id: number }>;
+    activeIds.forEach((row, i) => {
+      tx.update(rituals).set({ position: i }).where(eq(rituals.id, row.id)).run();
+    });
+  });
+}
+
+export async function restoreRitual(db: AnyDb, id: number): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const dx = db as any;
+  const positionRows = dx.all(sql`
+    SELECT COALESCE(MAX(position) + 1, 0) AS pos
+    FROM rituals WHERE active = 1
+  `) as Array<{ pos: number }>;
+  const nextPos = Number(positionRows[0]?.pos ?? 0);
+  dx.update(rituals)
+    .set({ active: true, position: nextPos })
+    .where(eq(rituals.id, id))
+    .run();
+}
+
+export async function hardDeleteRitual(db: AnyDb, id: number): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const dx = db as any;
+  dx.delete(rituals).where(eq(rituals.id, id)).run();
+  // ritualEntries cascade via FK ON DELETE CASCADE
+}
