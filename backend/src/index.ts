@@ -10,6 +10,7 @@ import { parseRouter } from "./routes/parse.js";
 import { chatRouter } from "./routes/chat.js";
 import { reviewRouter } from "./routes/review.js";
 import { generateRoutineRouter } from "./routes/generate-routine.js";
+import { imapRouter } from "./routes/imap.js";
 import type { LlmClient } from "./lib/openrouter.js";
 import { createOpenRouterClient } from "./lib/openrouter.js";
 import type { Db } from "./db/client.js";
@@ -58,6 +59,16 @@ export function createApp(deps: AppDeps): Express {
     rateLimitMw,
     authMiddleware(config.jwtSecret, "generate-routine"),
     generateRoutineRouter({ llm: deps.llm, modelId: config.modelId, logger, promptTimeoutMs: config.promptTimeoutMs })
+  );
+  app.use(
+    "/imap",
+    rateLimitMw,
+    authMiddleware(config.jwtSecret, "sync"),
+    imapRouter({
+      db: deps.db,
+      encryptionKey: deps.encryptionKey,
+      validator: deps.imapValidator,
+    }),
   );
 
   app.use(errorHandler(logger));

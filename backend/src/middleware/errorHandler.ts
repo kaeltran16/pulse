@@ -18,9 +18,23 @@ export class GenerationFailedError extends Error {
   }
 }
 
+export class HttpError extends Error {
+  constructor(
+    public status: number,
+    public code: ErrorCode,
+    message: string,
+  ) {
+    super(message);
+    this.name = "HttpError";
+  }
+}
+
 type Mapped = { status: number; code: ErrorCode; message: string };
 
 function map(err: unknown): Mapped {
+  if (err instanceof HttpError) {
+    return { status: err.status, code: err.code, message: err.message };
+  }
   if (err instanceof AuthError) {
     const status = err.code === "forbidden" ? 403 : 401;
     return { status, code: err.code, message: err.message };

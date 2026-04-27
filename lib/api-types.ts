@@ -9,7 +9,12 @@ export type ErrorCode =
   | "validation_failed"
   | "generation_failed"
   | "upstream_error"
-  | "internal";
+  | "internal"
+  // SP5c — /imap and /sync routes
+  | "invalid_request"
+  | "imap_auth_failed"
+  | "already_connected"
+  | "server_misconfig";
 
 export type ErrorEnvelope = {
   error: { code: ErrorCode; message: string };
