@@ -14,6 +14,7 @@ describe('SP4a migration', () => {
       'exercises',
       'goals',
       'movement_entries',
+      'pal_cache',
       'prs',
       'ritual_entries',
       'rituals',
