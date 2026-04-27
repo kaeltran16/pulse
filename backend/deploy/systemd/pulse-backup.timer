@@ -1,0 +1,11 @@
+# backend/deploy/systemd/pulse-backup.timer — installed at /etc/systemd/system/pulse-backup.timer
+[Unit]
+Description=Daily Pulse backend backup
+
+[Timer]
+OnCalendar=*-*-* 03:00:00
+Persistent=true
+Unit=pulse-backup.service
+
+[Install]
+WantedBy=timers.target

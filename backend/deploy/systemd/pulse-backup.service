@@ -1,0 +1,10 @@
+# backend/deploy/systemd/pulse-backup.service — installed at /etc/systemd/system/pulse-backup.service
+[Unit]
+Description=Pulse backend daily backup
+
+[Service]
+Type=oneshot
+User=pulse-backend
+Group=pulse-backend
+ExecStart=/bin/bash -c '/usr/bin/sqlite3 /opt/pulse/data/pulse.db ".backup /opt/pulse/data/backups/pulse-$(date +%%F).db"'
+ExecStartPost=/usr/bin/find /opt/pulse/data/backups -name 'pulse-*.db' -mtime +14 -delete
