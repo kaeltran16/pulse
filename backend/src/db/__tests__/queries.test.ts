@@ -5,6 +5,7 @@ import { createDb, type Db } from "../client.js";
 import { runMigrations } from "../migrate.js";
 import * as imapAccountsQ from "../queries/imapAccounts.js";
 import * as syncedEntriesQ from "../queries/syncedEntries.js";
+import * as imapUidsQ from "../queries/imapUids.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(__dirname, "../migrations");
@@ -237,5 +238,32 @@ describe("syncedEntries queries", () => {
 
     const candidates = syncedEntriesQ.findRecurringCandidates(db, accountA, "Netflix", now);
     expect(candidates).toEqual([]);
+  });
+});
+
+describe("imapUids queries", () => {
+  it("markUidSeen + hasSeen", () => {
+    const accountId = seedAccount(db);
+
+    expect(imapUidsQ.hasSeen(db, accountId, 42)).toBe(false);
+    imapUidsQ.markUidSeen(db, accountId, 42, Date.now());
+    expect(imapUidsQ.hasSeen(db, accountId, 42)).toBe(true);
+  });
+
+  it("markUidSeen is idempotent", () => {
+    const accountId = seedAccount(db);
+    imapUidsQ.markUidSeen(db, accountId, 42, Date.now());
+    expect(() => imapUidsQ.markUidSeen(db, accountId, 42, Date.now())).not.toThrow();
+
+    const uids = imapUidsQ.listSeenUidsForAccount(db, accountId);
+    expect(uids).toEqual([42]);
+  });
+
+  it("listSeenUidsForAccount with sinceUid filters", () => {
+    const accountId = seedAccount(db);
+    [10, 20, 30].forEach((u) => imapUidsQ.markUidSeen(db, accountId, u, Date.now()));
+
+    expect(imapUidsQ.listSeenUidsForAccount(db, accountId)).toEqual([10, 20, 30]);
+    expect(imapUidsQ.listSeenUidsForAccount(db, accountId, 15)).toEqual([20, 30]);
   });
 });
