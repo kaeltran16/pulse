@@ -11,6 +11,7 @@ import { chatRouter } from "./routes/chat.js";
 import { reviewRouter } from "./routes/review.js";
 import { generateRoutineRouter } from "./routes/generate-routine.js";
 import { imapRouter } from "./routes/imap.js";
+import { syncRouter } from "./routes/sync.js";
 import type { LlmClient } from "./lib/openrouter.js";
 import { createOpenRouterClient } from "./lib/openrouter.js";
 import type { Db } from "./db/client.js";
@@ -69,6 +70,12 @@ export function createApp(deps: AppDeps): Express {
       encryptionKey: deps.encryptionKey,
       validator: deps.imapValidator,
     }),
+  );
+  app.use(
+    "/sync",
+    rateLimitMw,
+    authMiddleware(config.jwtSecret, "sync"),
+    syncRouter({ db: deps.db }),
   );
 
   app.use(errorHandler(logger));
