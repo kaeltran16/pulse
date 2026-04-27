@@ -126,6 +126,31 @@ export default function EmailSyncDashboard() {
           <Text className="text-largeTitle text-ink">Email sync</Text>
         </View>
 
+        {(status.status === 'error' || status.status === 'paused') && (
+          <View className="px-3 pb-2">
+            <View
+              className="rounded-xl px-4 py-3"
+              style={{
+                backgroundColor: status.status === 'error' ? '#FF3B3014' : palette.moneyTint,
+                borderWidth: 0.5,
+                borderColor: status.status === 'error' ? '#FF3B3033' : palette.money + '33',
+              }}
+            >
+              <Text className="text-callout text-ink">
+                {status.status === 'error'
+                  ? "Couldn't connect to Gmail — your app password may have been revoked."
+                  : 'Sync paused after repeated failures.'}
+              </Text>
+              <Pressable
+                onPress={() => router.replace('/(tabs)/you/email-sync/connect')}
+                className="mt-2"
+              >
+                <Text className="text-callout" style={{ color: palette.accent, fontWeight: '600' }}>Reconnect</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
+
         <View className="px-3 pb-3">
           <View className="rounded-2xl bg-surface p-4" style={{ borderWidth: 0.5, borderColor: palette.hair }}>
             <View className="flex-row items-center">
