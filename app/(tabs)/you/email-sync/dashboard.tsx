@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -8,6 +8,7 @@ import { SymbolView } from 'expo-symbols';
 import { db } from '@/lib/db/client';
 import { recentSynced, subscriptionList, syncedStats, type SyncedRow } from '@/lib/db/queries/syncedEntries';
 import { spendingEntries } from '@/lib/db/schema';
+import { imapDisconnect } from '@/lib/sync/client';
 import { AuthError } from '@/lib/sync/errors';
 import { syncNow } from '@/lib/sync/syncNow';
 import { useImapStatus } from '@/lib/sync/useImapStatus';
@@ -113,6 +114,33 @@ export default function EmailSyncDashboard() {
       setSyncing(false);
       void refetch();
     }
+  };
+
+  const onDisconnect = () => {
+    Alert.alert(
+      'Disconnect Gmail?',
+      'Synced receipts will stay on your device. You can reconnect anytime.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Disconnect',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await imapDisconnect();
+            } catch (e) {
+              const msg = e instanceof Error ? e.message.toLowerCase() : '';
+              if (!msg.includes('not_connected') && !msg.includes('not connected')) {
+                showChip("Couldn't disconnect — try again.");
+                return;
+              }
+            }
+            router.replace('/(tabs)/you/email-sync/intro');
+          },
+        },
+      ],
+      { cancelable: true },
+    );
   };
 
   // If status confirms disconnected, bounce to Intro.
@@ -321,6 +349,12 @@ export default function EmailSyncDashboard() {
               isLast
             />
           </View>
+        </View>
+
+        <View className="px-3 pt-2 pb-6">
+          <Pressable onPress={onDisconnect} className="items-center py-3">
+            <Text className="text-callout" style={{ color: '#FF3B30', fontWeight: '500' }}>Disconnect Gmail</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </SafeAreaView>
