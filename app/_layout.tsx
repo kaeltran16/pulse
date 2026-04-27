@@ -1,7 +1,7 @@
 import '../global.css';
 
 import React, { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, AppState, type AppStateStatus, View } from 'react-native';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
@@ -64,6 +64,42 @@ function Boot({ children }: { children: React.ReactNode }) {
       cancelled = true;
     };
   }, [success, segments, router]);
+
+  useEffect(() => {
+    if (!success) return;
+
+    let mounted = true;
+    (async () => {
+      try {
+        const { syncNow } = await import('@/lib/sync/syncNow');
+        const r = await syncNow(db);
+        if (!mounted) return;
+        // eslint-disable-next-line no-console
+        console.log('[sync] startup:', r);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[sync] startup failed:', e);
+      }
+    })();
+
+    const sub = AppState.addEventListener('change', async (state: AppStateStatus) => {
+      if (state !== 'active') return;
+      try {
+        const { syncNow } = await import('@/lib/sync/syncNow');
+        const r = await syncNow(db);
+        // eslint-disable-next-line no-console
+        console.log('[sync] foreground:', r);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[sync] foreground failed:', e);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      sub.remove();
+    };
+  }, [success]);
 
   if (error) {
     throw error;
