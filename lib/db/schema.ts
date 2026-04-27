@@ -1,11 +1,15 @@
 import { sql } from 'drizzle-orm';
 import { integer, real, sqliteTable, text, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
+export type RitualCadence = 'morning' | 'evening' | 'all_day' | 'weekdays' | 'daily';
+export type RitualColor   = 'rituals' | 'accent' | 'move' | 'money' | 'cyan';
+
 export const goals = sqliteTable('goals', {
   id: integer('id').primaryKey(),
   dailyBudgetCents: integer('daily_budget_cents').notNull(),
   dailyMoveMinutes: integer('daily_move_minutes').notNull(),
   dailyRitualTarget: integer('daily_ritual_target').notNull(),
+  reminderTimeMinutes: integer('reminder_time_minutes'),
   createdAt: integer('created_at').notNull().default(sql`(unixepoch() * 1000)`),
 });
 
@@ -16,6 +20,8 @@ export const rituals = sqliteTable('rituals', {
   active: integer('active', { mode: 'boolean' }).notNull().default(true),
   position: integer('position').notNull(),
   createdAt: integer('created_at').notNull().default(sql`(unixepoch() * 1000)`),
+  cadence: text('cadence').$type<RitualCadence>().notNull().default('daily'),
+  color: text('color').$type<RitualColor>().notNull().default('rituals'),
 });
 
 export const spendingEntries = sqliteTable(
@@ -200,6 +206,14 @@ export const syncCursor = sqliteTable('sync_cursor', {
 });
 
 export type SyncCursor = typeof syncCursor.$inferSelect;
+
+export const palCache = sqliteTable('pal_cache', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+  fetchedAt: integer('fetched_at').notNull(),
+});
+
+export type PalCacheRow = typeof palCache.$inferSelect;
 
 export type Goals = typeof goals.$inferSelect;
 export type Ritual = typeof rituals.$inferSelect;
