@@ -61,7 +61,7 @@ describe("synced_entries schema", () => {
     const byName = Object.fromEntries(cols.map((c) => [c.name, c]));
 
     expect(byName.id).toMatchObject({ type: "INTEGER", pk: 1 });
-    expect(byName.account_id).toMatchObject({ type: "INTEGER", notnull: 1 });
+    expect(byName.account_id).toMatchObject({ type: "INTEGER", notnull: 0 });
     expect(byName.imap_uid).toMatchObject({ type: "INTEGER", notnull: 1 });
     expect(byName.content_hash).toMatchObject({ type: "TEXT", notnull: 1 });
     expect(byName.cents).toMatchObject({ type: "INTEGER", notnull: 1 });
@@ -81,7 +81,7 @@ describe("synced_entries schema", () => {
     expect(names).toContain("idx_synced_entries_account_merchant_occurred");
   });
 
-  it("has FK to imap_accounts(id) ON DELETE CASCADE", () => {
+  it("has FK to imap_accounts(id) ON DELETE SET NULL", () => {
     const fks = sqlite.prepare("PRAGMA foreign_key_list(synced_entries)").all() as Array<{
       table: string;
       from: string;
@@ -92,7 +92,7 @@ describe("synced_entries schema", () => {
     expect(fk).toBeDefined();
     expect(fk!.from).toBe("account_id");
     expect(fk!.to).toBe("id");
-    expect(fk!.on_delete).toBe("CASCADE");
+    expect(fk!.on_delete).toBe("SET NULL");
   });
 });
 

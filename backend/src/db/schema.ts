@@ -17,9 +17,9 @@ export const syncedEntries = sqliteTable(
   "synced_entries",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    accountId: integer("account_id")
-      .notNull()
-      .references(() => imapAccounts.id, { onDelete: "cascade" }),
+    accountId: integer("account_id").references(() => imapAccounts.id, {
+      onDelete: "set null",
+    }),
     imapUid: integer("imap_uid").notNull(),
     contentHash: text("content_hash").notNull(),
     cents: integer("cents").notNull(),

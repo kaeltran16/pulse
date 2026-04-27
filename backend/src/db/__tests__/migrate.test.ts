@@ -23,15 +23,18 @@ describe("runMigrations", () => {
     expect(names).toContain("__drizzle_migrations");
   });
 
-  it("is idempotent — running twice leaves one migration row", () => {
-    const { db, sqlite } = createDb(":memory:");
-    runMigrations(db, migrationsFolder);
-    runMigrations(db, migrationsFolder);
-
-    const rows = sqlite
+  it("is idempotent — running twice does not duplicate applied migrations", () => {
+    const { db: db1, sqlite: sqlite1 } = createDb(":memory:");
+    runMigrations(db1, migrationsFolder);
+    const initial = sqlite1
       .prepare("SELECT count(*) as count FROM __drizzle_migrations")
       .get() as { count: number };
 
-    expect(rows.count).toBe(1);
+    runMigrations(db1, migrationsFolder);
+    const afterSecond = sqlite1
+      .prepare("SELECT count(*) as count FROM __drizzle_migrations")
+      .get() as { count: number };
+
+    expect(afterSecond.count).toBe(initial.count);
   });
 });

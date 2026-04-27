@@ -270,7 +270,7 @@ describe("imapUids queries", () => {
 });
 
 describe("FK cascade", () => {
-  it("deleting an imap_account cascades to synced_entries and imap_uids", () => {
+  it("deleting an imap_account: imap_uids cascade-deletes; synced_entries account_id set to NULL", () => {
     const accountId = seedAccount(db);
     const now = Date.now();
 
@@ -291,7 +291,13 @@ describe("FK cascade", () => {
 
     db.run(sql`DELETE FROM imap_accounts WHERE id = ${accountId}`);
 
-    expect(syncedEntriesQ.listSinceCursor(db, accountId, 0, 100)).toEqual([]);
     expect(imapUidsQ.listSeenUidsForAccount(db, accountId)).toEqual([]);
+
+    const remaining = db.all(sql`SELECT COUNT(*) AS n FROM synced_entries`)[0] as { n: number };
+    expect(remaining.n).toBe(1);
+    const nullified = db.all(
+      sql`SELECT COUNT(*) AS n FROM synced_entries WHERE account_id IS NULL`,
+    )[0] as { n: number };
+    expect(nullified.n).toBe(1);
   });
 });
