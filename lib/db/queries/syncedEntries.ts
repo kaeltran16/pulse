@@ -63,3 +63,60 @@ export function syncedStats(db: AnyDb, now: Date = new Date()): SyncedStats {
     recurringMerchants: Number(row.recurringMerchants) || 0,
   };
 }
+
+export const MS_PER_DAY_30 = 30 * 24 * 60 * 60 * 1000;
+
+export type SubscriptionGroup = {
+  merchant: string;
+  category: string | null;
+  currency: string;
+  lastCents: number;
+  lastSeenAt: number;
+  count: number;
+  monthlyAmountCents: number;
+  predictedNextChargeAt: number;
+};
+
+export function subscriptionList(db: AnyDb): SubscriptionGroup[] {
+  const dx = db as unknown as { all: (q: unknown) => Array<{
+    merchant: string;
+    category: string | null;
+    currency: string;
+    lastCents: number;
+    lastSeenAt: number;
+    count: number;
+  }> };
+  const rows = dx.all(sql`
+    SELECT
+      se.merchant AS merchant,
+      MAX(se.occurred_at) AS lastSeenAt,
+      COUNT(*) AS count,
+      MAX(se.currency) AS currency,
+      (SELECT inner1.cents FROM spending_entries inner1
+         WHERE inner1.merchant = se.merchant
+           AND inner1.synced_entry_id IS NOT NULL
+           AND inner1.recurring = 1
+         ORDER BY inner1.occurred_at DESC LIMIT 1) AS lastCents,
+      (SELECT inner2.category FROM spending_entries inner2
+         WHERE inner2.merchant = se.merchant
+           AND inner2.synced_entry_id IS NOT NULL
+           AND inner2.recurring = 1
+         ORDER BY inner2.occurred_at DESC LIMIT 1) AS category
+    FROM spending_entries se
+    WHERE se.synced_entry_id IS NOT NULL
+      AND se.recurring = 1
+      AND se.merchant IS NOT NULL
+    GROUP BY se.merchant
+    ORDER BY lastSeenAt ASC
+  `);
+  return rows.map((r) => ({
+    merchant: r.merchant,
+    category: r.category,
+    currency: r.currency,
+    lastCents: Number(r.lastCents),
+    lastSeenAt: Number(r.lastSeenAt),
+    count: Number(r.count),
+    monthlyAmountCents: Number(r.lastCents),
+    predictedNextChargeAt: Number(r.lastSeenAt) + MS_PER_DAY_30,
+  }));
+}

@@ -108,3 +108,81 @@ describe('syncedStats', () => {
     expect(syncedStats(db)).toEqual({ thisMonth: 0, allTime: 0, recurringMerchants: 0 });
   });
 });
+
+import { subscriptionList, MS_PER_DAY_30 } from '../syncedEntries';
+
+describe('subscriptionList', () => {
+  it('groups multiple receipts per merchant into one entry', () => {
+    const { db } = makeTestDb();
+    insertSyncedBatch(db, [
+      { ...sample(1, 1_000, true), merchant: 'Netflix', cents: 1599 },
+      { ...sample(2, 2_000, true), merchant: 'Netflix', cents: 1599 },
+      { ...sample(3, 3_000, true), merchant: 'Spotify', cents: 1099 },
+    ]);
+    const rows = subscriptionList(db);
+    expect(rows.map((r) => r.merchant).sort()).toEqual(['Netflix', 'Spotify']);
+  });
+
+  it('lastCents = cents of the most recent occurrence', () => {
+    const { db } = makeTestDb();
+    insertSyncedBatch(db, [
+      { ...sample(1, 1_000, true), merchant: 'Netflix', cents: 1499 },
+      { ...sample(2, 2_000, true), merchant: 'Netflix', cents: 1599 },
+    ]);
+    const rows = subscriptionList(db);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].lastCents).toBe(1599);
+    expect(rows[0].monthlyAmountCents).toBe(1599);
+  });
+
+  it('lastSeenAt = max(occurred_at) per merchant', () => {
+    const { db } = makeTestDb();
+    insertSyncedBatch(db, [
+      { ...sample(1, 1_000, true), merchant: 'Netflix' },
+      { ...sample(2, 5_000, true), merchant: 'Netflix' },
+      { ...sample(3, 3_000, true), merchant: 'Netflix' },
+    ]);
+    const rows = subscriptionList(db);
+    expect(rows[0].lastSeenAt).toBe(5_000);
+  });
+
+  it('predictedNextChargeAt = lastSeenAt + 30 days', () => {
+    const { db } = makeTestDb();
+    insertSyncedBatch(db, [
+      { ...sample(1, 1_000_000, true), merchant: 'Netflix' },
+    ]);
+    const rows = subscriptionList(db);
+    expect(rows[0].predictedNextChargeAt).toBe(1_000_000 + MS_PER_DAY_30);
+  });
+
+  it('sorts by predictedNextChargeAt ASC', () => {
+    const { db } = makeTestDb();
+    insertSyncedBatch(db, [
+      { ...sample(1, 5_000, true), merchant: 'A' },
+      { ...sample(2, 1_000, true), merchant: 'B' },
+      { ...sample(3, 3_000, true), merchant: 'C' },
+    ]);
+    const rows = subscriptionList(db);
+    expect(rows.map((r) => r.merchant)).toEqual(['B', 'C', 'A']);
+  });
+
+  it('excludes recurring=0 merchants', () => {
+    const { db } = makeTestDb();
+    insertSyncedBatch(db, [
+      { ...sample(1, 1_000, false), merchant: 'OnceOff' },
+      { ...sample(2, 2_000, true), merchant: 'Netflix' },
+    ]);
+    const rows = subscriptionList(db);
+    expect(rows.map((r) => r.merchant)).toEqual(['Netflix']);
+  });
+
+  it('excludes merchant=NULL', () => {
+    const { db } = makeTestDb();
+    insertSyncedBatch(db, [
+      { ...sample(1, 1_000, true), merchant: null },
+      { ...sample(2, 2_000, true), merchant: 'Netflix' },
+    ]);
+    const rows = subscriptionList(db);
+    expect(rows.map((r) => r.merchant)).toEqual(['Netflix']);
+  });
+});
