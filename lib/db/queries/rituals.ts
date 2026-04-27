@@ -1,6 +1,6 @@
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, gte, lt, sql } from 'drizzle-orm';
 
-import { rituals, type RitualCadence, type RitualColor } from '../schema';
+import { rituals, ritualEntries, type RitualCadence, type RitualColor } from '../schema';
 import { type AnyDb } from './onboarding';
 
 export interface InsertRitualInput {
@@ -102,4 +102,42 @@ export async function reorderRitualPositions(db: AnyDb, orderedIds: number[]): P
       tx.update(rituals).set({ position: i }).where(eq(rituals.id, id)).run();
     });
   });
+}
+
+function todayBounds(todayKey: string): { startMs: number; endMs: number } {
+  const [y, m, d] = todayKey.split('-').map(Number);
+  // Local-midnight bounds; constructed via new Date(y, m-1, d) is DST-safe
+  // (unlike adding 24h, which breaks across DST transitions).
+  const startMs = new Date(y, m - 1, d, 0, 0, 0, 0).getTime();
+  const endMs   = new Date(y, m - 1, d + 1, 0, 0, 0, 0).getTime();
+  return { startMs, endMs };
+}
+
+export async function toggleRitualToday(db: AnyDb, ritualId: number, todayKey: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const dx = db as any;
+  const { startMs, endMs } = todayBounds(todayKey);
+  const existing = dx
+    .select({ id: ritualEntries.id })
+    .from(ritualEntries)
+    .where(and(
+      eq(ritualEntries.ritualId, ritualId),
+      gte(ritualEntries.occurredAt, startMs),
+      lt(ritualEntries.occurredAt, endMs),
+    ))
+    .all() as Array<{ id: number }>;
+  if (existing.length > 0) {
+    dx.delete(ritualEntries)
+      .where(and(
+        eq(ritualEntries.ritualId, ritualId),
+        gte(ritualEntries.occurredAt, startMs),
+        lt(ritualEntries.occurredAt, endMs),
+      ))
+      .run();
+  } else {
+    dx.insert(ritualEntries).values({
+      ritualId,
+      occurredAt: Date.now(),
+    }).run();
+  }
 }

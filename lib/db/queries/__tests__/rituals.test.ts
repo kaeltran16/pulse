@@ -1,16 +1,14 @@
 /** @jest-environment node */
 import { eq } from 'drizzle-orm';
 import { makeTestDb } from '../../__tests__/test-helpers';
-import { rituals } from '../../schema';
-import { insertRitual, updateRitual } from '../rituals';
+import { rituals, type RitualCadence, type RitualColor } from '../../schema';
+import { type InsertRitualInput, insertRitual, updateRitual } from '../rituals';
 
-const sample = (overrides: Partial<{
-  title: string; icon: string; cadence: string; color: string;
-}> = {}) => ({
+const sample = (overrides: Partial<InsertRitualInput> = {}): InsertRitualInput => ({
   title: 'Test ritual',
   icon: 'sparkles',
-  cadence: 'daily' as const,
-  color: 'rituals' as const,
+  cadence: 'daily' as RitualCadence,
+  color: 'rituals' as RitualColor,
   active: true,
   ...overrides,
 });
@@ -178,5 +176,60 @@ describe('reorderRitualPositions', () => {
     const rows = (db as any).select().from(rituals).all() as Array<{ id: number; position: number }>;
     const byId = Object.fromEntries(rows.map((r) => [r.id, r.position]));
     expect(byId[c]).toBe(0);
+  });
+});
+
+import { toggleRitualToday } from '../rituals';
+import { dayKey } from '../dayKey';
+
+describe('toggleRitualToday', () => {
+  it('inserts a ritualEntries row when no entry exists today', async () => {
+    const { db } = makeTestDb();
+    const id = await insertRitual(db, sample());
+    await toggleRitualToday(db, id, dayKey(new Date()));
+    const entries = (db as any).select().from(ritualEntries).where(eq(ritualEntries.ritualId, id)).all();
+    expect(entries.length).toBe(1);
+  });
+
+  it('deletes ALL today rows when at least one exists today', async () => {
+    const { db } = makeTestDb();
+    const id = await insertRitual(db, sample());
+    const now = Date.now();
+    (db as any).insert(ritualEntries).values([
+      { ritualId: id, occurredAt: now - 1000 },
+      { ritualId: id, occurredAt: now - 500 },
+      { ritualId: id, occurredAt: now },
+    ]).run();
+    await toggleRitualToday(db, id, dayKey(new Date()));
+    const entries = (db as any).select().from(ritualEntries).where(eq(ritualEntries.ritualId, id)).all();
+    expect(entries.length).toBe(0);
+  });
+
+  it("does not touch prior days' entries", async () => {
+    const { db } = makeTestDb();
+    const id = await insertRitual(db, sample());
+    const now = new Date();
+    const today = dayKey(now);
+    const yesterdayMs = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 12).getTime();
+    (db as any).insert(ritualEntries).values([
+      { ritualId: id, occurredAt: yesterdayMs },
+      { ritualId: id, occurredAt: Date.now() },
+    ]).run();
+    await toggleRitualToday(db, id, today); // currently has an entry today, toggles off
+    const entries = (db as any).select().from(ritualEntries).where(eq(ritualEntries.ritualId, id)).all();
+    expect(entries.length).toBe(1);
+    expect(entries[0].occurredAt).toBe(yesterdayMs);
+  });
+
+  it('toggles off then on then off again — final state has 0 entries today', async () => {
+    const { db } = makeTestDb();
+    const id = await insertRitual(db, sample());
+    const today = dayKey(new Date());
+    await toggleRitualToday(db, id, today); // off→on (insert)
+    await toggleRitualToday(db, id, today); // on→off (delete all)
+    await toggleRitualToday(db, id, today); // off→on (insert)
+    await toggleRitualToday(db, id, today); // on→off (delete all)
+    const entries = (db as any).select().from(ritualEntries).where(eq(ritualEntries.ritualId, id)).all();
+    expect(entries.length).toBe(0);
   });
 });
