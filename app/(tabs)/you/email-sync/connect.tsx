@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 
+import { imapConnect } from '@/lib/sync/client';
 import { useTheme } from '@/lib/theme/provider';
 import { colors } from '@/lib/theme/tokens';
 
@@ -15,8 +16,24 @@ export default function EmailSyncConnectScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [bannerError, setBannerError] = useState<string | null>(null);
 
   const canSave = email.trim().length > 3 && password.trim().length > 3;
+
+  const onSave = async () => {
+    if (!canSave || submitting) return;
+    setBannerError(null);
+    setSubmitting(true);
+    try {
+      await imapConnect({ email: email.trim(), appPassword: password.trim() });
+      router.replace('/(tabs)/you/email-sync/dashboard');
+    } catch (e) {
+      setBannerError(e instanceof Error ? e.message : 'Something went wrong.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-bg">
@@ -27,18 +44,30 @@ export default function EmailSyncConnectScreen() {
           </Pressable>
           <Text className="text-headline text-ink">Gmail setup</Text>
           <Pressable
-            onPress={() => { /* wired in Task 13 */ }}
-            disabled={!canSave}
+            onPress={onSave}
+            disabled={!canSave || submitting}
             hitSlop={8}
           >
-            <Text
-              className="text-callout"
-              style={{ color: canSave ? palette.accent : palette.ink4, fontWeight: '600' }}
-            >
-              Save
-            </Text>
+            {submitting ? (
+              <ActivityIndicator size="small" color={palette.accent} />
+            ) : (
+              <Text
+                className="text-callout"
+                style={{ color: canSave ? palette.accent : palette.ink4, fontWeight: '600' }}
+              >
+                Save
+              </Text>
+            )}
           </Pressable>
         </View>
+
+        {bannerError && (
+          <View className="px-3 pt-1 pb-2">
+            <View className="rounded-xl px-4 py-3" style={{ backgroundColor: '#FF3B3014', borderWidth: 0.5, borderColor: '#FF3B3033' }}>
+              <Text className="text-callout" style={{ color: '#FF3B30' }}>{bannerError}</Text>
+            </View>
+          </View>
+        )}
 
         <View className="px-3 pb-2">
           <Text className="text-caption1 text-ink3 uppercase mb-1 px-1">Account</Text>
