@@ -6,6 +6,7 @@ import { runMigrations } from "../migrate.js";
 import * as imapAccountsQ from "../queries/imapAccounts.js";
 import * as syncedEntriesQ from "../queries/syncedEntries.js";
 import * as imapUidsQ from "../queries/imapUids.js";
+import { sql } from "drizzle-orm";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(__dirname, "../migrations");
@@ -265,5 +266,32 @@ describe("imapUids queries", () => {
 
     expect(imapUidsQ.listSeenUidsForAccount(db, accountId)).toEqual([10, 20, 30]);
     expect(imapUidsQ.listSeenUidsForAccount(db, accountId, 15)).toEqual([20, 30]);
+  });
+});
+
+describe("FK cascade", () => {
+  it("deleting an imap_account cascades to synced_entries and imap_uids", () => {
+    const accountId = seedAccount(db);
+    const now = Date.now();
+
+    syncedEntriesQ.insertSyncedEntry(db, {
+      accountId,
+      imapUid: 1,
+      contentHash: "h",
+      cents: 100,
+      currency: "USD",
+      occurredAt: now,
+      rawParseResponse: "{}",
+      createdAt: now,
+    });
+    imapUidsQ.markUidSeen(db, accountId, 1, now);
+
+    expect(syncedEntriesQ.listSinceCursor(db, accountId, 0, 100)).toHaveLength(1);
+    expect(imapUidsQ.listSeenUidsForAccount(db, accountId)).toHaveLength(1);
+
+    db.run(sql`DELETE FROM imap_accounts WHERE id = ${accountId}`);
+
+    expect(syncedEntriesQ.listSinceCursor(db, accountId, 0, 100)).toEqual([]);
+    expect(imapUidsQ.listSeenUidsForAccount(db, accountId)).toEqual([]);
   });
 });
