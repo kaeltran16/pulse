@@ -1,6 +1,6 @@
 # SP5e — iOS Rituals Tab + Builder Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Replace the `<StubTab>` Rituals tab with the full handoff: Today list (tap-to-toggle, Pal-written nudge), Builder (drag-reorder, swipe-delete, LLM-suggested rituals, daily reminder, daily-goal picker), full add/edit form per ritual. Bundle two new backend endpoints (`POST /suggest-rituals`, `POST /nudge-today`) under the existing `"chat"` JWT scope.
 
@@ -28,7 +28,7 @@
 
 The 5th color choice in the picker uses a new theme token `cyan` (#5AC8FA light / #64D2FF dark) plus `cyanTint` for the 14%/18% backgrounds.
 
-- [ ] **Step 1: Add `cyan` + `cyanTint` to `lib/theme/tokens.ts`**
+- [x] **Step 1: Add `cyan` + `cyanTint` to `lib/theme/tokens.ts`**
 
 In `lib/theme/tokens.ts`, find the `light` block and add after `accentTint:`:
 
@@ -50,7 +50,7 @@ In the `dark` block, after `accentTint:`:
     red: '#FF453A',
 ```
 
-- [ ] **Step 2: Run the parity test to confirm it fails**
+- [x] **Step 2: Run the parity test to confirm it fails**
 
 ```bash
 npm test -- parity
@@ -58,11 +58,11 @@ npm test -- parity
 
 Expected: FAIL — `cyan` and `cyanTint` are in `tokens.ts` but not in `tailwind.config.js`.
 
-- [ ] **Step 3: Add `cyan` + `cyanTint` to `tailwind.config.js`**
+- [x] **Step 3: Add `cyan` + `cyanTint` to `tailwind.config.js`**
 
 Find the `colors:` block in `tailwind.config.js` and add the two new keys (alphabetical order alongside the others) wherever the existing `accent` / `accentTint` / `money` / `moneyTint` keys live. Pattern matches what's already there — each is `<key>: 'var(--<key>)'`.
 
-- [ ] **Step 4: Run the parity test to confirm it passes**
+- [x] **Step 4: Run the parity test to confirm it passes**
 
 ```bash
 npm test -- parity
@@ -70,7 +70,7 @@ npm test -- parity
 
 Expected: PASS.
 
-- [ ] **Step 5: Verify typecheck still green**
+- [x] **Step 5: Verify typecheck still green**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -78,7 +78,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24` (no regression).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/theme/tokens.ts tailwind.config.js
@@ -95,7 +95,7 @@ git commit -m "feat(sp5e): add cyan theme token + tailwind parity"
 
 Move private `dayKey` / `dayKeyForMs` / `previousDayKey` from `streaks.ts` into a shared module so `rituals.ts` (Task 11) can use them. Keep `streaks.ts` re-exporting them so existing callers don't break.
 
-- [ ] **Step 1: Create `lib/db/queries/dayKey.ts` with the extracted helpers**
+- [x] **Step 1: Create `lib/db/queries/dayKey.ts` with the extracted helpers**
 
 ```ts
 /** ISO-like local-day key, e.g. "2026-04-28". */
@@ -118,7 +118,7 @@ export function previousDayKey(key: string): string {
 }
 ```
 
-- [ ] **Step 2: Replace the helpers in `streaks.ts` with imports + re-exports**
+- [x] **Step 2: Replace the helpers in `streaks.ts` with imports + re-exports**
 
 Replace the top of `lib/db/queries/streaks.ts` (lines 1–24, the helpers + StreakInput) with:
 
@@ -136,7 +136,7 @@ export interface StreakInput {
 
 The rest of the file (`streakForRitual` function) stays untouched.
 
-- [ ] **Step 3: Run the streaks tests to confirm no regression**
+- [x] **Step 3: Run the streaks tests to confirm no regression**
 
 ```bash
 npm test -- streaks
@@ -144,7 +144,7 @@ npm test -- streaks
 
 Expected: PASS at the existing count (no behavior change, just module move).
 
-- [ ] **Step 4: Verify typecheck still green**
+- [x] **Step 4: Verify typecheck still green**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -152,7 +152,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/queries/dayKey.ts lib/db/queries/streaks.ts
@@ -169,7 +169,7 @@ git commit -m "refactor(sp5e): extract day-key helpers into shared module"
 
 Pure mapping from `RitualCadence` enum + display context to display string. Tested standalone since both Today and Builder consume it.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `lib/sync/__tests__/cadenceDisplay.test.ts`:
 
@@ -204,7 +204,7 @@ describe('cadenceDisplay', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to confirm they fail**
+- [x] **Step 2: Run the tests to confirm they fail**
 
 ```bash
 npm test -- cadenceDisplay
@@ -212,7 +212,7 @@ npm test -- cadenceDisplay
 
 Expected: FAIL — module doesn't exist.
 
-- [ ] **Step 3: Implement `cadenceDisplay`**
+- [x] **Step 3: Implement `cadenceDisplay`**
 
 Create `lib/sync/cadenceDisplay.ts`:
 
@@ -244,7 +244,7 @@ export function cadenceDisplay(cadence: RitualCadence, context: CadenceDisplayCo
 
 (Note: the `RitualCadence` type lives in `lib/api-types.ts`. Task 12 adds it; this task imports it ahead of time. The import will type-error until Task 12 runs — see Step 4.)
 
-- [ ] **Step 4: Add a temporary local type so the file compiles before Task 12**
+- [x] **Step 4: Add a temporary local type so the file compiles before Task 12**
 
 In `lib/sync/cadenceDisplay.ts`, replace the import with a local type definition (will be replaced with the real import in Task 12):
 
@@ -259,7 +259,7 @@ export function cadenceDisplay(cadence: RitualCadence, context: CadenceDisplayCo
 }
 ```
 
-- [ ] **Step 5: Run the tests to confirm they pass**
+- [x] **Step 5: Run the tests to confirm they pass**
 
 ```bash
 npm test -- cadenceDisplay
@@ -267,7 +267,7 @@ npm test -- cadenceDisplay
 
 Expected: PASS — 10 tests.
 
-- [ ] **Step 6: Verify typecheck**
+- [x] **Step 6: Verify typecheck**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -275,7 +275,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add lib/sync/cadenceDisplay.ts lib/sync/__tests__/cadenceDisplay.test.ts
@@ -291,7 +291,7 @@ git commit -m "feat(sp5e): cadenceDisplay pure helper with TDD coverage"
 
 Update each existing seed to include cadence + color, and add `8 glasses water` as the 7th default. The columns themselves will be added in the migration in Task 5; until then `DEFAULT_RITUALS` is just data — no DB writes happen here.
 
-- [ ] **Step 1: Update `lib/db/seed-defaults.ts` to the new shape**
+- [x] **Step 1: Update `lib/db/seed-defaults.ts` to the new shape**
 
 Replace the file with:
 
@@ -318,7 +318,7 @@ export const DEFAULT_RITUALS: readonly DefaultRitual[] = [
 
 `RitualCadence` and `RitualColor` will be added to `lib/api-types.ts` in Task 12. Until then this file will type-error on the import. To unblock Task 4 in isolation:
 
-- [ ] **Step 2: Inline the types ahead of Task 12**
+- [x] **Step 2: Inline the types ahead of Task 12**
 
 Replace the import line with:
 
@@ -328,7 +328,7 @@ type RitualCadence = 'morning' | 'evening' | 'all_day' | 'weekdays' | 'daily';
 type RitualColor   = 'rituals' | 'accent' | 'move' | 'money' | 'cyan';
 ```
 
-- [ ] **Step 3: Verify the existing onboarding tests still pass**
+- [x] **Step 3: Verify the existing onboarding tests still pass**
 
 ```bash
 npm test -- onboarding
@@ -336,7 +336,7 @@ npm test -- onboarding
 
 Expected: PASS (the onboarding query just picks titles from `DEFAULT_RITUALS` — adding columns shouldn't break it; if it does, fix the onboarding query to ignore the new columns and keep this commit's scope to the data update).
 
-- [ ] **Step 4: Verify typecheck**
+- [x] **Step 4: Verify typecheck**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -344,7 +344,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/seed-defaults.ts
@@ -361,7 +361,7 @@ git commit -m "feat(sp5e): add cadence/color + 7th Water default to DEFAULT_RITU
 
 Add the new columns + new table to the schema and let drizzle-kit generate the SQL. Then add the `UPDATE rituals SET cadence=…` backfill statements by hand to the generated SQL (drizzle-kit doesn't author data migrations).
 
-- [ ] **Step 1: Update `lib/db/schema.ts` to add cadence + color cols + reminder_time_minutes + pal_cache table**
+- [x] **Step 1: Update `lib/db/schema.ts` to add cadence + color cols + reminder_time_minutes + pal_cache table**
 
 In `lib/db/schema.ts`, replace the `rituals` declaration:
 
@@ -410,7 +410,7 @@ export const palCache = sqliteTable('pal_cache', {
 export type PalCacheRow = typeof palCache.$inferSelect;
 ```
 
-- [ ] **Step 2: Generate the migration SQL**
+- [x] **Step 2: Generate the migration SQL**
 
 ```bash
 npx drizzle-kit generate
@@ -418,7 +418,7 @@ npx drizzle-kit generate
 
 Expected output: a new migration file in `lib/db/migrations/` (likely `0005_*.sql`). Open it and confirm it has `ALTER TABLE rituals ADD COLUMN cadence …`, `ALTER TABLE rituals ADD COLUMN color …`, `ALTER TABLE goals ADD COLUMN reminder_time_minutes …`, and `CREATE TABLE pal_cache …`.
 
-- [ ] **Step 3: Append the backfill UPDATEs to the generated SQL**
+- [x] **Step 3: Append the backfill UPDATEs to the generated SQL**
 
 Open the generated migration file. Append (at the end of the file) these 6 backfill statements:
 
@@ -434,7 +434,7 @@ UPDATE rituals SET cadence = 'morning',  color = 'rituals' WHERE title = 'Medita
 
 (These run after the column adds, so the column exists by the time `UPDATE` runs.)
 
-- [ ] **Step 4: Verify the migration applies cleanly to a fresh DB**
+- [x] **Step 4: Verify the migration applies cleanly to a fresh DB**
 
 ```bash
 npm test -- onboarding
@@ -442,7 +442,7 @@ npm test -- onboarding
 
 Expected: PASS. (The test helper `makeTestDb` runs all migrations against `:memory:`; if anything is wrong with the migration the tests will fail on setup.)
 
-- [ ] **Step 5: Verify typecheck**
+- [x] **Step 5: Verify typecheck**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -450,7 +450,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/db/schema.ts lib/db/migrations/
@@ -467,7 +467,7 @@ git commit -m "feat(sp5e): drizzle migration for rituals.cadence/color, goals.re
 
 Idempotent insert of `DEFAULT_RITUALS` rows whose title isn't already present. Lets us add new defaults (like Water) for already-onboarded users without re-running onboarding.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `lib/db/queries/__tests__/reseedDefaults.test.ts`:
 
@@ -528,7 +528,7 @@ describe('reseedDefaults', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to confirm they fail**
+- [x] **Step 2: Run the tests to confirm they fail**
 
 ```bash
 npm test -- reseedDefaults
@@ -536,7 +536,7 @@ npm test -- reseedDefaults
 
 Expected: FAIL — module doesn't exist.
 
-- [ ] **Step 3: Implement `reseedDefaults`**
+- [x] **Step 3: Implement `reseedDefaults`**
 
 Create `lib/db/queries/reseedDefaults.ts`:
 
@@ -568,7 +568,7 @@ export function reseedDefaults(db: AnyDb): void {
 }
 ```
 
-- [ ] **Step 4: Run the tests to confirm they pass**
+- [x] **Step 4: Run the tests to confirm they pass**
 
 ```bash
 npm test -- reseedDefaults
@@ -576,7 +576,7 @@ npm test -- reseedDefaults
 
 Expected: PASS — 4 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/queries/reseedDefaults.ts lib/db/queries/__tests__/reseedDefaults.test.ts
@@ -593,7 +593,7 @@ git commit -m "feat(sp5e): reseedDefaults query with TDD coverage"
 
 Generic key/value JSON cache for the two LLM-backed surfaces. Read returns `null` on miss or stale; write is upsert; vacuum + prefix delete handle invalidation.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `lib/db/queries/__tests__/palCache.test.ts`:
 
@@ -668,7 +668,7 @@ describe('palCache', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to confirm they fail**
+- [x] **Step 2: Run the tests to confirm they fail**
 
 ```bash
 npm test -- palCache
@@ -676,7 +676,7 @@ npm test -- palCache
 
 Expected: FAIL — module doesn't exist.
 
-- [ ] **Step 3: Implement `palCache`**
+- [x] **Step 3: Implement `palCache`**
 
 Create `lib/db/queries/palCache.ts`:
 
@@ -727,7 +727,7 @@ export function vacuumStaleNudges(db: AnyDb, todayKey: string): void {
 }
 ```
 
-- [ ] **Step 4: Run the tests to confirm they pass**
+- [x] **Step 4: Run the tests to confirm they pass**
 
 ```bash
 npm test -- palCache
@@ -735,7 +735,7 @@ npm test -- palCache
 
 Expected: PASS — 6 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/queries/palCache.ts lib/db/queries/__tests__/palCache.test.ts
@@ -752,7 +752,7 @@ git commit -m "feat(sp5e): palCache query module with TDD coverage"
 
 Two simple writes that anchor the rest of the module. The shared test helpers + sample factory live at the top of the test file so subsequent tasks can extend it.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `lib/db/queries/__tests__/rituals.test.ts`:
 
@@ -824,7 +824,7 @@ describe('updateRitual', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to confirm they fail**
+- [x] **Step 2: Run the tests to confirm they fail**
 
 ```bash
 npm test -- rituals
@@ -832,7 +832,7 @@ npm test -- rituals
 
 Expected: FAIL — module doesn't exist.
 
-- [ ] **Step 3: Implement `insertRitual` + `updateRitual`**
+- [x] **Step 3: Implement `insertRitual` + `updateRitual`**
 
 Create `lib/db/queries/rituals.ts`:
 
@@ -895,7 +895,7 @@ export async function updateRitual(db: AnyDb, id: number, input: UpdateRitualInp
 }
 ```
 
-- [ ] **Step 4: Run the tests to confirm they pass**
+- [x] **Step 4: Run the tests to confirm they pass**
 
 ```bash
 npm test -- rituals
@@ -903,7 +903,7 @@ npm test -- rituals
 
 Expected: PASS — 4 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/queries/rituals.ts lib/db/queries/__tests__/rituals.test.ts
@@ -920,7 +920,7 @@ git commit -m "feat(sp5e): insertRitual + updateRitual with TDD coverage"
 
 Three deletion paths. Soft delete preserves entries; restore re-activates and re-positions; hard delete cascades.
 
-- [ ] **Step 1: Append the failing tests**
+- [x] **Step 1: Append the failing tests**
 
 Append to `lib/db/queries/__tests__/rituals.test.ts`:
 
@@ -980,7 +980,7 @@ describe('hardDeleteRitual', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to confirm they fail**
+- [x] **Step 2: Run the tests to confirm they fail**
 
 ```bash
 npm test -- rituals
@@ -988,7 +988,7 @@ npm test -- rituals
 
 Expected: FAIL — three new functions missing.
 
-- [ ] **Step 3: Append the three implementations to `lib/db/queries/rituals.ts`**
+- [x] **Step 3: Append the three implementations to `lib/db/queries/rituals.ts`**
 
 ```ts
 export async function softDeleteRitual(db: AnyDb, id: number): Promise<void> {
@@ -1031,7 +1031,7 @@ export async function hardDeleteRitual(db: AnyDb, id: number): Promise<void> {
 }
 ```
 
-- [ ] **Step 4: Run the tests to confirm they pass**
+- [x] **Step 4: Run the tests to confirm they pass**
 
 ```bash
 npm test -- rituals
@@ -1039,7 +1039,7 @@ npm test -- rituals
 
 Expected: PASS — 7 tests total.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/queries/rituals.ts lib/db/queries/__tests__/rituals.test.ts
@@ -1056,7 +1056,7 @@ git commit -m "feat(sp5e): rituals soft-delete + restore + hard-delete with TDD 
 
 DraggableFlatList's `onDragEnd` returns the new ordered ID array; this function commits new positions in one transaction.
 
-- [ ] **Step 1: Append the failing tests**
+- [x] **Step 1: Append the failing tests**
 
 Append to `lib/db/queries/__tests__/rituals.test.ts`:
 
@@ -1125,7 +1125,7 @@ describe('reorderRitualPositions', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to confirm they fail**
+- [x] **Step 2: Run the tests to confirm they fail**
 
 ```bash
 npm test -- rituals
@@ -1133,7 +1133,7 @@ npm test -- rituals
 
 Expected: FAIL — `reorderRitualPositions` is not exported.
 
-- [ ] **Step 3: Append the implementation**
+- [x] **Step 3: Append the implementation**
 
 Append to `lib/db/queries/rituals.ts`:
 
@@ -1149,7 +1149,7 @@ export async function reorderRitualPositions(db: AnyDb, orderedIds: number[]): P
 }
 ```
 
-- [ ] **Step 4: Run the tests to confirm they pass**
+- [x] **Step 4: Run the tests to confirm they pass**
 
 ```bash
 npm test -- rituals
@@ -1157,7 +1157,7 @@ npm test -- rituals
 
 Expected: PASS — 12 tests total.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/queries/rituals.ts lib/db/queries/__tests__/rituals.test.ts
@@ -1174,7 +1174,7 @@ git commit -m "feat(sp5e): reorderRitualPositions with TDD coverage"
 
 Tap-on-Today-row semantics. Inserts a `ritualEntries` row when missing today; deletes ALL of today's rows for that ritual when present.
 
-- [ ] **Step 1: Append the failing tests**
+- [x] **Step 1: Append the failing tests**
 
 Append to `lib/db/queries/__tests__/rituals.test.ts`:
 
@@ -1235,7 +1235,7 @@ describe('toggleRitualToday', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to confirm they fail**
+- [x] **Step 2: Run the tests to confirm they fail**
 
 ```bash
 npm test -- rituals
@@ -1243,7 +1243,7 @@ npm test -- rituals
 
 Expected: FAIL — `toggleRitualToday` is not exported.
 
-- [ ] **Step 3: Append the implementation**
+- [x] **Step 3: Append the implementation**
 
 Append to `lib/db/queries/rituals.ts`:
 
@@ -1291,7 +1291,7 @@ export async function toggleRitualToday(db: AnyDb, ritualId: number, todayKey: s
 }
 ```
 
-- [ ] **Step 4: Run the tests to confirm they pass**
+- [x] **Step 4: Run the tests to confirm they pass**
 
 ```bash
 npm test -- rituals
@@ -1299,7 +1299,7 @@ npm test -- rituals
 
 Expected: PASS — 16 tests total.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/queries/rituals.ts lib/db/queries/__tests__/rituals.test.ts
@@ -1317,7 +1317,7 @@ git commit -m "feat(sp5e): toggleRitualToday (insert + cascading-delete-today) w
 
 Adds `RitualCadence`, `RitualColor`, `RITUAL_ICON_SHORTLIST`, `RitualIcon`, and the request/response types for the two new backend endpoints.
 
-- [ ] **Step 1: Append to `lib/api-types.ts`**
+- [x] **Step 1: Append to `lib/api-types.ts`**
 
 At the bottom of `lib/api-types.ts`:
 
@@ -1362,7 +1362,7 @@ export type NudgeTodayRequest = {
 export type NudgeTodayResponse = { sub: string };
 ```
 
-- [ ] **Step 2: Replace the inlined `RitualCadence` type in `lib/sync/cadenceDisplay.ts`**
+- [x] **Step 2: Replace the inlined `RitualCadence` type in `lib/sync/cadenceDisplay.ts`**
 
 Replace the top of `lib/sync/cadenceDisplay.ts`:
 
@@ -1375,7 +1375,7 @@ export type CadenceDisplayContext = 'today' | 'builder';
 
 (The function body stays.)
 
-- [ ] **Step 3: Replace the inlined types in `lib/db/seed-defaults.ts`**
+- [x] **Step 3: Replace the inlined types in `lib/db/seed-defaults.ts`**
 
 Replace the inlined `type RitualCadence` / `type RitualColor` lines at the top of `lib/db/seed-defaults.ts` with:
 
@@ -1385,7 +1385,7 @@ import type { RitualCadence, RitualColor } from '@/lib/api-types';
 
 (The `DEFAULT_RITUALS` declaration stays.)
 
-- [ ] **Step 4: Verify typecheck still green**
+- [x] **Step 4: Verify typecheck still green**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -1393,7 +1393,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`.
 
-- [ ] **Step 5: Verify all existing tests still pass**
+- [x] **Step 5: Verify all existing tests still pass**
 
 ```bash
 npm test -- cadenceDisplay rituals reseedDefaults palCache
@@ -1401,7 +1401,7 @@ npm test -- cadenceDisplay rituals reseedDefaults palCache
 
 Expected: PASS at the existing counts.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/api-types.ts lib/sync/cadenceDisplay.ts lib/db/seed-defaults.ts
@@ -1418,7 +1418,7 @@ git commit -m "feat(sp5e): add shared RitualCadence/RitualColor/RITUAL_ICON_SHOR
 
 Pure prompt-string builder; no LLM, no HTTP. Exercised standalone before the route handler is wired.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `backend/test/unit/suggestRituals.prompt.test.ts`:
 
@@ -1482,7 +1482,7 @@ describe("buildSuggestRitualsPrompt", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to confirm they fail**
+- [x] **Step 2: Run the tests to confirm they fail**
 
 ```bash
 cd backend && npm test -- suggestRituals.prompt
@@ -1490,7 +1490,7 @@ cd backend && npm test -- suggestRituals.prompt
 
 Expected: FAIL — module doesn't exist.
 
-- [ ] **Step 3: Implement the prompt builder**
+- [x] **Step 3: Implement the prompt builder**
 
 Create `backend/src/lib/prompts/suggestRituals.ts`:
 
@@ -1539,7 +1539,7 @@ export function buildSuggestRitualsPrompt(
 }
 ```
 
-- [ ] **Step 4: Run the tests to confirm they pass**
+- [x] **Step 4: Run the tests to confirm they pass**
 
 ```bash
 cd backend && npm test -- suggestRituals.prompt
@@ -1547,7 +1547,7 @@ cd backend && npm test -- suggestRituals.prompt
 
 Expected: PASS — 6 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/lib/prompts/suggestRituals.ts backend/test/unit/suggestRituals.prompt.test.ts
@@ -1566,7 +1566,7 @@ git commit -m "feat(sp5e): /suggest-rituals prompt builder with TDD coverage"
 
 Wires the prompt builder + Zod schemas + LLM call + retry-and-fallback into a route. Mounted under existing `"chat"` JWT scope.
 
-- [ ] **Step 1: Create the Zod schema**
+- [x] **Step 1: Create the Zod schema**
 
 Create `backend/src/schemas/suggestRituals.ts`:
 
@@ -1610,7 +1610,7 @@ export type SuggestRitualsRequestParsed = z.infer<typeof SuggestRitualsRequestSc
 export type SuggestRitualsResponseParsed = z.infer<typeof SuggestRitualsResponseSchema>;
 ```
 
-- [ ] **Step 2: Create the route handler**
+- [x] **Step 2: Create the route handler**
 
 Create `backend/src/routes/suggestRituals.ts`:
 
@@ -1657,7 +1657,7 @@ export function createSuggestRitualsRouter(deps: { llm: LlmClient; modelId: stri
 }
 ```
 
-- [ ] **Step 3: Mount the route in `backend/src/index.ts`**
+- [x] **Step 3: Mount the route in `backend/src/index.ts`**
 
 Find the section in `backend/src/index.ts` where existing `"chat"`-scoped routes are mounted (e.g., near `createChatRouter`). Add the import and mount:
 
@@ -1670,7 +1670,7 @@ app.use("/", requireScope("chat"), createSuggestRitualsRouter({ llm, modelId: co
 
 (If `createChatRouter` already mounts at `/`, adding the new router at `/` works because Express dispatches by path. Verify by checking how `createChatRouter` is wired — match its pattern.)
 
-- [ ] **Step 4: Write the integration test**
+- [x] **Step 4: Write the integration test**
 
 Create `backend/test/integration/suggestRituals.test.ts`:
 
@@ -1750,7 +1750,7 @@ describe("POST /suggest-rituals", () => {
 });
 ```
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 ```bash
 cd backend && npm test -- suggestRituals
@@ -1758,7 +1758,7 @@ cd backend && npm test -- suggestRituals
 
 Expected: PASS — 5 integration + 6 prompt = 11 total.
 
-- [ ] **Step 6: Verify backend typecheck**
+- [x] **Step 6: Verify backend typecheck**
 
 ```bash
 cd backend && npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -1766,7 +1766,7 @@ cd backend && npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: same baseline as before (no new backend errors).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/src/schemas/suggestRituals.ts backend/src/routes/suggestRituals.ts backend/src/index.ts backend/test/integration/suggestRituals.test.ts
@@ -1781,7 +1781,7 @@ git commit -m "feat(sp5e): POST /suggest-rituals route + Zod schema + integratio
 - Create: `backend/src/lib/prompts/nudgeToday.ts`
 - Create: `backend/test/unit/nudgeToday.prompt.test.ts`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `backend/test/unit/nudgeToday.prompt.test.ts`:
 
@@ -1844,7 +1844,7 @@ describe("buildNudgeTodayPrompt", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to confirm they fail**
+- [x] **Step 2: Run the tests to confirm they fail**
 
 ```bash
 cd backend && npm test -- nudgeToday.prompt
@@ -1852,7 +1852,7 @@ cd backend && npm test -- nudgeToday.prompt
 
 Expected: FAIL — module doesn't exist.
 
-- [ ] **Step 3: Implement the prompt builder**
+- [x] **Step 3: Implement the prompt builder**
 
 Create `backend/src/lib/prompts/nudgeToday.ts`:
 
@@ -1880,7 +1880,7 @@ export function buildNudgeTodayPrompt(req: NudgeTodayRequest): string {
 }
 ```
 
-- [ ] **Step 4: Run the tests to confirm they pass**
+- [x] **Step 4: Run the tests to confirm they pass**
 
 ```bash
 cd backend && npm test -- nudgeToday.prompt
@@ -1888,7 +1888,7 @@ cd backend && npm test -- nudgeToday.prompt
 
 Expected: PASS — 5 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/lib/prompts/nudgeToday.ts backend/test/unit/nudgeToday.prompt.test.ts
@@ -1905,7 +1905,7 @@ git commit -m "feat(sp5e): /nudge-today prompt builder with TDD coverage"
 - Create: `backend/test/integration/nudgeToday.test.ts`
 - Modify: `backend/src/index.ts` (mount the route)
 
-- [ ] **Step 1: Create the Zod schema**
+- [x] **Step 1: Create the Zod schema**
 
 Create `backend/src/schemas/nudgeToday.ts`:
 
@@ -1935,7 +1935,7 @@ export type NudgeTodayRequestParsed = z.infer<typeof NudgeTodayRequestSchema>;
 export type NudgeTodayResponseParsed = z.infer<typeof NudgeTodayResponseSchema>;
 ```
 
-- [ ] **Step 2: Create the route handler**
+- [x] **Step 2: Create the route handler**
 
 Create `backend/src/routes/nudgeToday.ts`:
 
@@ -2001,7 +2001,7 @@ import type { NudgeTodayRequestParsed } from "../schemas/nudgeToday.js";
 
 (Move the trailing `import type` line to the top of the file once the editor stops complaining — the order matters for some linters but not for TS.)
 
-- [ ] **Step 3: Mount the route in `backend/src/index.ts`**
+- [x] **Step 3: Mount the route in `backend/src/index.ts`**
 
 Add alongside the `/suggest-rituals` mount from Task 14:
 
@@ -2012,7 +2012,7 @@ import { createNudgeTodayRouter } from "./routes/nudgeToday.js";
 app.use("/", requireScope("chat"), createNudgeTodayRouter({ llm, modelId: config.modelId }));
 ```
 
-- [ ] **Step 4: Write the integration test**
+- [x] **Step 4: Write the integration test**
 
 Create `backend/test/integration/nudgeToday.test.ts`:
 
@@ -2079,7 +2079,7 @@ describe("POST /nudge-today", () => {
 });
 ```
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 ```bash
 cd backend && npm test -- nudgeToday
@@ -2087,7 +2087,7 @@ cd backend && npm test -- nudgeToday
 
 Expected: PASS — 5 integration + 5 prompt = 10 total.
 
-- [ ] **Step 6: Verify backend typecheck**
+- [x] **Step 6: Verify backend typecheck**
 
 ```bash
 cd backend && npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -2095,7 +2095,7 @@ cd backend && npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: same baseline as before.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/src/schemas/nudgeToday.ts backend/src/routes/nudgeToday.ts backend/src/index.ts backend/test/integration/nudgeToday.test.ts
@@ -2111,7 +2111,7 @@ git commit -m "feat(sp5e): POST /nudge-today route + Zod schema + integration te
 
 Fetch wrappers for both new endpoints. Mirrors `lib/sync/client.ts` from SP5c (auth header from `PAL_TOKEN`, mapped error taxonomy).
 
-- [ ] **Step 1: Implement the client**
+- [x] **Step 1: Implement the client**
 
 Create `lib/sync/palClient.ts`:
 
@@ -2188,7 +2188,7 @@ export async function postNudgeToday(req: NudgeTodayRequest): Promise<NudgeToday
 }
 ```
 
-- [ ] **Step 2: Verify typecheck**
+- [x] **Step 2: Verify typecheck**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -2196,7 +2196,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/sync/palClient.ts
@@ -2212,7 +2212,7 @@ git commit -m "feat(sp5e): palClient — postSuggestRituals + postNudgeToday fet
 
 24h TTL cache + invalidate-on-active-set-change + manual refresh. No tests (covered by Builder smoke).
 
-- [ ] **Step 1: Implement the hook**
+- [x] **Step 1: Implement the hook**
 
 Create `lib/sync/usePalSuggestions.ts`:
 
@@ -2299,7 +2299,7 @@ export function usePalSuggestions(active: Ritual[], recent: RitualEntry[]): UseP
 }
 ```
 
-- [ ] **Step 2: Verify typecheck**
+- [x] **Step 2: Verify typecheck**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -2307,7 +2307,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/sync/usePalSuggestions.ts
@@ -2323,7 +2323,7 @@ git commit -m "feat(sp5e): usePalSuggestions hook (24h TTL + active-hash invalid
 
 Cache-keyed on `(todayKey, done, total)`; vacuums stale nudges on mount. Headline templated locally; sub from cache or fetch.
 
-- [ ] **Step 1: Implement the hook**
+- [x] **Step 1: Implement the hook**
 
 Create `lib/sync/useRitualNudge.ts`:
 
@@ -2426,7 +2426,7 @@ export function useRitualNudge(input: UseRitualNudgeInput): UseRitualNudgeResult
 }
 ```
 
-- [ ] **Step 2: Verify typecheck**
+- [x] **Step 2: Verify typecheck**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -2434,7 +2434,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/sync/useRitualNudge.ts
@@ -2449,7 +2449,7 @@ git commit -m "feat(sp5e): useRitualNudge hook (state-keyed cache + local fallba
 - Modify: `package.json`
 - Modify: `package-lock.json`
 
-- [ ] **Step 1: Install both deps**
+- [x] **Step 1: Install both deps**
 
 ```bash
 npx expo install expo-notifications react-native-draggable-flatlist
@@ -2457,7 +2457,7 @@ npx expo install expo-notifications react-native-draggable-flatlist
 
 (`expo install` picks the version compatible with the current SDK; this is preferred over `npm install`.)
 
-- [ ] **Step 2: Verify deps land in `package.json`**
+- [x] **Step 2: Verify deps land in `package.json`**
 
 ```bash
 grep -E "expo-notifications|react-native-draggable-flatlist" package.json
@@ -2465,7 +2465,7 @@ grep -E "expo-notifications|react-native-draggable-flatlist" package.json
 
 Expected: both lines present.
 
-- [ ] **Step 3: Verify typecheck still green (no usage yet — should still be 24)**
+- [x] **Step 3: Verify typecheck still green (no usage yet — should still be 24)**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -2473,7 +2473,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`.
 
-- [ ] **Step 4: Verify tests still green**
+- [x] **Step 4: Verify tests still green**
 
 ```bash
 npm test 2>&1 | tail -6
@@ -2481,7 +2481,7 @@ npm test 2>&1 | tail -6
 
 Expected: PASS at the existing test count + the new query-module tests already added.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add package.json package-lock.json
@@ -2498,7 +2498,7 @@ git commit -m "deps(sp5e): add expo-notifications + react-native-draggable-flatl
 
 Wraps `expo-notifications` for the single repeating daily reminder. The pure `reminderBody()` templating is TDD'd; the schedule/cancel/permission wrappers are not (they're thin Expo SDK calls — covered by Builder smoke).
 
-- [ ] **Step 1: Write the failing tests for `reminderBody`**
+- [x] **Step 1: Write the failing tests for `reminderBody`**
 
 Create `lib/notifications/__tests__/dailyReminder.test.ts`:
 
@@ -2528,7 +2528,7 @@ describe('reminderBody', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to confirm they fail**
+- [x] **Step 2: Run the tests to confirm they fail**
 
 ```bash
 npm test -- dailyReminder
@@ -2536,7 +2536,7 @@ npm test -- dailyReminder
 
 Expected: FAIL — module doesn't exist.
 
-- [ ] **Step 3: Implement the module**
+- [x] **Step 3: Implement the module**
 
 Create `lib/notifications/dailyReminder.ts`:
 
@@ -2583,7 +2583,7 @@ export function reminderBody(activeRituals: Array<{ title: string }>): string {
 }
 ```
 
-- [ ] **Step 4: Run the tests to confirm they pass**
+- [x] **Step 4: Run the tests to confirm they pass**
 
 ```bash
 npm test -- dailyReminder
@@ -2591,7 +2591,7 @@ npm test -- dailyReminder
 
 Expected: PASS — 4 tests.
 
-- [ ] **Step 5: Verify typecheck**
+- [x] **Step 5: Verify typecheck**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -2599,7 +2599,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`. (If the trigger type complains, accept the cast — Expo's typing for daily repeats is awkward across SDK versions; the cast keeps the runtime call shape correct.)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/notifications/dailyReminder.ts lib/notifications/__tests__/dailyReminder.test.ts
@@ -2615,11 +2615,11 @@ git commit -m "feat(sp5e): dailyReminder module + reminderBody TDD coverage"
 
 Two new on-startup tasks: (1) reseed `DEFAULT_RITUALS` so already-onboarded users pick up Water; (2) ensure the scheduled notification matches `goals.reminderTimeMinutes`.
 
-- [ ] **Step 1: Find the post-`migrate()` block in `app/_layout.tsx`**
+- [x] **Step 1: Find the post-`migrate()` block in `app/_layout.tsx`**
 
 Open `app/_layout.tsx`. Locate where `migrate(...)` is called (likely inside a `useEffect`). The new logic runs immediately after `migrate()` succeeds.
 
-- [ ] **Step 2: Add the reseed + reminder-check after migrate**
+- [x] **Step 2: Add the reseed + reminder-check after migrate**
 
 Add the imports at the top:
 
@@ -2660,7 +2660,7 @@ if (reminderTime == null) {
 
 (The `await ... .all()` syntax matches existing `app/_layout.tsx` usage. If the existing layout uses synchronous selects, mirror that pattern.)
 
-- [ ] **Step 3: Verify typecheck**
+- [x] **Step 3: Verify typecheck**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -2668,7 +2668,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`.
 
-- [ ] **Step 4: Verify tests still green**
+- [x] **Step 4: Verify tests still green**
 
 ```bash
 npm test 2>&1 | tail -6
@@ -2676,7 +2676,7 @@ npm test 2>&1 | tail -6
 
 Expected: PASS at the existing count.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/_layout.tsx
@@ -2692,13 +2692,13 @@ git commit -m "feat(sp5e): startup wiring for reseedDefaults + scheduled-notific
 - Create: `app/(tabs)/rituals/_layout.tsx`
 - Create: `app/(tabs)/rituals/index.tsx` (placeholder)
 
-- [ ] **Step 1: Delete the stub**
+- [x] **Step 1: Delete the stub**
 
 ```bash
 git rm "app/(tabs)/rituals.tsx"
 ```
 
-- [ ] **Step 2: Create the stack layout**
+- [x] **Step 2: Create the stack layout**
 
 Create `app/(tabs)/rituals/_layout.tsx`:
 
@@ -2710,7 +2710,7 @@ export default function RitualsLayout() {
 }
 ```
 
-- [ ] **Step 3: Create a placeholder `index.tsx` (will be replaced in Task 24)**
+- [x] **Step 3: Create a placeholder `index.tsx` (will be replaced in Task 24)**
 
 Create `app/(tabs)/rituals/index.tsx`:
 
@@ -2729,7 +2729,7 @@ export default function RitualsTab() {
 }
 ```
 
-- [ ] **Step 4: Verify typecheck still green**
+- [x] **Step 4: Verify typecheck still green**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -2737,7 +2737,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`.
 
-- [ ] **Step 5: Regenerate route types (so future tasks' `router.push` calls type-check)**
+- [x] **Step 5: Regenerate route types (so future tasks' `router.push` calls type-check)**
 
 The plan's later tasks reference routes that don't exist yet (`builder`, `new`, `[id]/edit`, `goal`). Create stubs so the typed-routes generator knows about them:
 
@@ -2773,7 +2773,7 @@ node scripts/regen-route-types.js
 
 Expected: prints `Wrote .../router.d.ts`.
 
-- [ ] **Step 6: Verify typecheck still green**
+- [x] **Step 6: Verify typecheck still green**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -2781,7 +2781,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add "app/(tabs)/rituals/" -A
@@ -2797,7 +2797,7 @@ git commit -m "feat(sp5e): scaffold rituals route group with stub screens for ty
 
 Replace the placeholder with the full Today screen minus the Pal nudge card (Task 25 adds that).
 
-- [ ] **Step 1: Build the screen**
+- [x] **Step 1: Build the screen**
 
 Replace `app/(tabs)/rituals/index.tsx` with:
 
@@ -2972,7 +2972,7 @@ export default function RitualsTab() {
 }
 ```
 
-- [ ] **Step 2: Verify typecheck**
+- [x] **Step 2: Verify typecheck**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -2980,7 +2980,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`.
 
-- [ ] **Step 3: Verify tests still green**
+- [x] **Step 3: Verify tests still green**
 
 ```bash
 npm test 2>&1 | tail -6
@@ -2988,7 +2988,7 @@ npm test 2>&1 | tail -6
 
 Expected: PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add "app/(tabs)/rituals/index.tsx"
@@ -3004,7 +3004,7 @@ git commit -m "feat(sp5e): Today screen with active list + tap-toggle + empty st
 
 Insert the progress-ring + nudge card between the NavBar and the "Today" section.
 
-- [ ] **Step 1: Add the imports**
+- [x] **Step 1: Add the imports**
 
 In `app/(tabs)/rituals/index.tsx`, add to the imports block:
 
@@ -3016,7 +3016,7 @@ import { useRitualNudge } from '@/lib/sync/useRitualNudge';
 
 (`react-native-svg` is already a transitive Expo dep; if `npx tsc --noEmit` complains about a missing module, run `npx expo install react-native-svg` and update package.json/lock.)
 
-- [ ] **Step 2: Compute the streak map + bestStreak inside the component**
+- [x] **Step 2: Compute the streak map + bestStreak inside the component**
 
 Add inside `RitualsTab()` after `done` and `total` computation:
 
@@ -3054,7 +3054,7 @@ const nudge = useRitualNudge({
 });
 ```
 
-- [ ] **Step 3: Render the nudge card**
+- [x] **Step 3: Render the nudge card**
 
 Insert the new card between the NavBar `View` and the "Today" section `View`:
 
@@ -3099,7 +3099,7 @@ Insert the new card between the NavBar `View` and the "Today" section `View`:
 </View>
 ```
 
-- [ ] **Step 4: Verify typecheck**
+- [x] **Step 4: Verify typecheck**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -3107,7 +3107,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`.
 
-- [ ] **Step 5: Verify tests still green**
+- [x] **Step 5: Verify tests still green**
 
 ```bash
 npm test 2>&1 | tail -6
@@ -3115,7 +3115,7 @@ npm test 2>&1 | tail -6
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add "app/(tabs)/rituals/index.tsx"
@@ -3131,7 +3131,7 @@ git commit -m "feat(sp5e): Today screen Pal nudge card with progress ring + useR
 
 Replace the stub. Builds the NavBar + Active section with drag-reorder. Soft-delete + Inactive + Suggestions + Preferences ship in subsequent tasks.
 
-- [ ] **Step 1: Replace the stub with the scaffold**
+- [x] **Step 1: Replace the stub with the scaffold**
 
 Replace `app/(tabs)/rituals/builder.tsx`:
 
@@ -3251,7 +3251,7 @@ export default function RitualsBuilderScreen() {
 }
 ```
 
-- [ ] **Step 2: Verify typecheck**
+- [x] **Step 2: Verify typecheck**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -3259,7 +3259,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`.
 
-- [ ] **Step 3: Verify tests still green**
+- [x] **Step 3: Verify tests still green**
 
 ```bash
 npm test 2>&1 | tail -6
@@ -3267,7 +3267,7 @@ npm test 2>&1 | tail -6
 
 Expected: PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add "app/(tabs)/rituals/builder.tsx"
@@ -3283,7 +3283,7 @@ git commit -m "feat(sp5e): Builder scaffold with DraggableFlatList Active sectio
 
 Wraps each Active row in a `Swipeable` (from `react-native-gesture-handler`) for swipe-left "Remove"; renders an Inactive section below with swipe-right "Restore."
 
-- [ ] **Step 1: Add the imports**
+- [x] **Step 1: Add the imports**
 
 In `app/(tabs)/rituals/builder.tsx`, add to the imports block:
 
@@ -3294,7 +3294,7 @@ import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { restoreRitual, softDeleteRitual } from '@/lib/db/queries/rituals';
 ```
 
-- [ ] **Step 2: Wrap the page in `ScrollView` so multiple sections fit**
+- [x] **Step 2: Wrap the page in `ScrollView` so multiple sections fit**
 
 Change the root `SafeAreaView` body to a `ScrollView`. Replace the previous Active section block + its outer `View`s with the structure below. (Active section now lives inside a ScrollView, with Inactive + future sections appended.)
 
@@ -3443,7 +3443,7 @@ const onRestore = async (r: Ritual) => {
 };
 ```
 
-- [ ] **Step 3: Verify typecheck**
+- [x] **Step 3: Verify typecheck**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -3451,7 +3451,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`.
 
-- [ ] **Step 4: Verify tests still green**
+- [x] **Step 4: Verify tests still green**
 
 ```bash
 npm test 2>&1 | tail -6
@@ -3459,7 +3459,7 @@ npm test 2>&1 | tail -6
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add "app/(tabs)/rituals/builder.tsx"
@@ -3475,7 +3475,7 @@ git commit -m "feat(sp5e): Builder swipe-to-remove + Inactive section + swipe-to
 
 Loads two LLM suggestions; "Add" inserts and re-fetches; manual `↻` button.
 
-- [ ] **Step 1: Add the imports**
+- [x] **Step 1: Add the imports**
 
 In `app/(tabs)/rituals/builder.tsx`:
 
@@ -3486,7 +3486,7 @@ import { insertRitual } from '@/lib/db/queries/rituals';
 import { usePalSuggestions } from '@/lib/sync/usePalSuggestions';
 ```
 
-- [ ] **Step 2: Add the hook call inside the component**
+- [x] **Step 2: Add the hook call inside the component**
 
 After the `inactive` derivation:
 
@@ -3506,7 +3506,7 @@ const onAddSuggestion = async (s: typeof suggestions.suggestions[number]) => {
 };
 ```
 
-- [ ] **Step 3: Render the Suggested section above Preferences**
+- [x] **Step 3: Render the Suggested section above Preferences**
 
 Add inside the `ScrollView`, after the Inactive section (or after Active when there's no Inactive):
 
@@ -3565,7 +3565,7 @@ Add inside the `ScrollView`, after the Inactive section (or after Active when th
 
 (If `suggestions.suggestions.length === 0` and not loading and no error → the section doesn't render at all per spec; the conditional above hides the inner box but keeps the section header. Adjust if you'd rather hide the whole section: wrap the entire `<View>` in a conditional `{(suggestions.loading || suggestions.error || suggestions.suggestions.length > 0) && (…)}`.)
 
-- [ ] **Step 4: Verify typecheck**
+- [x] **Step 4: Verify typecheck**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -3573,7 +3573,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`.
 
-- [ ] **Step 5: Verify tests still green**
+- [x] **Step 5: Verify tests still green**
 
 ```bash
 npm test 2>&1 | tail -6
@@ -3581,7 +3581,7 @@ npm test 2>&1 | tail -6
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add "app/(tabs)/rituals/builder.tsx"
@@ -3595,7 +3595,7 @@ git commit -m "feat(sp5e): Builder Suggested by Pal section with manual refresh 
 **Files:**
 - Modify: `app/(tabs)/rituals/builder.tsx`
 
-- [ ] **Step 1: Add the imports**
+- [x] **Step 1: Add the imports**
 
 In `app/(tabs)/rituals/builder.tsx`:
 
@@ -3613,7 +3613,7 @@ import {
 
 (`@react-native-community/datetimepicker` is already in the project per Expo SDK 55 baseline; if not, run `npx expo install @react-native-community/datetimepicker`.)
 
-- [ ] **Step 2: Add live-query for goals + state**
+- [x] **Step 2: Add live-query for goals + state**
 
 Inside the component:
 
@@ -3655,7 +3655,7 @@ const formatTime = (minutes: number): string => {
 };
 ```
 
-- [ ] **Step 3: Render the Preferences section after Suggested**
+- [x] **Step 3: Render the Preferences section after Suggested**
 
 Inside the `ScrollView`, after Suggested:
 
@@ -3726,7 +3726,7 @@ Inside the `ScrollView`, after Suggested:
 )}
 ```
 
-- [ ] **Step 4: Verify typecheck**
+- [x] **Step 4: Verify typecheck**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -3734,7 +3734,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`.
 
-- [ ] **Step 5: Verify tests still green**
+- [x] **Step 5: Verify tests still green**
 
 ```bash
 npm test 2>&1 | tail -6
@@ -3742,7 +3742,7 @@ npm test 2>&1 | tail -6
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add "app/(tabs)/rituals/builder.tsx"
@@ -3758,7 +3758,7 @@ git commit -m "feat(sp5e): Builder Preferences (Remind me + Daily goal rows)"
 - Modify: `app/(tabs)/rituals/new.tsx`
 - Modify: `app/(tabs)/rituals/[id]/edit.tsx`
 
-- [ ] **Step 1: Create the shared form component**
+- [x] **Step 1: Create the shared form component**
 
 Create `components/RitualForm.tsx`:
 
@@ -3970,7 +3970,7 @@ export default function RitualForm(props: RitualFormProps) {
 }
 ```
 
-- [ ] **Step 2: Wire `new.tsx`**
+- [x] **Step 2: Wire `new.tsx`**
 
 Replace `app/(tabs)/rituals/new.tsx`:
 
@@ -3982,7 +3982,7 @@ export default function NewRitualScreen() {
 }
 ```
 
-- [ ] **Step 3: Wire `[id]/edit.tsx`**
+- [x] **Step 3: Wire `[id]/edit.tsx`**
 
 Replace `app/(tabs)/rituals/[id]/edit.tsx`:
 
@@ -4029,7 +4029,7 @@ export default function EditRitualScreen() {
 }
 ```
 
-- [ ] **Step 4: Verify typecheck**
+- [x] **Step 4: Verify typecheck**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -4037,7 +4037,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`.
 
-- [ ] **Step 5: Verify tests still green**
+- [x] **Step 5: Verify tests still green**
 
 ```bash
 npm test 2>&1 | tail -6
@@ -4045,7 +4045,7 @@ npm test 2>&1 | tail -6
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add components/RitualForm.tsx "app/(tabs)/rituals/new.tsx" "app/(tabs)/rituals/[id]/edit.tsx"
@@ -4061,7 +4061,7 @@ git commit -m "feat(sp5e): RitualForm + new.tsx + [id]/edit.tsx routes"
 
 Tiny screen: radio rows 1…N where N = active rituals count. Persists to `goals.dailyRitualTarget`.
 
-- [ ] **Step 1: Replace the stub**
+- [x] **Step 1: Replace the stub**
 
 Replace `app/(tabs)/rituals/goal.tsx`:
 
@@ -4137,7 +4137,7 @@ export default function DailyGoalScreen() {
 }
 ```
 
-- [ ] **Step 2: Verify typecheck**
+- [x] **Step 2: Verify typecheck**
 
 ```bash
 npx tsc --noEmit 2>&1 | grep -c "error TS"
@@ -4145,7 +4145,7 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: `24`.
 
-- [ ] **Step 3: Verify tests still green**
+- [x] **Step 3: Verify tests still green**
 
 ```bash
 npm test 2>&1 | tail -6
@@ -4153,7 +4153,7 @@ npm test 2>&1 | tail -6
 
 Expected: PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add "app/(tabs)/rituals/goal.tsx"
@@ -4169,7 +4169,7 @@ git commit -m "feat(sp5e): Daily-goal picker screen"
 
 Per the spec §10, four amendments to land before slice close.
 
-- [ ] **Step 1: Amendment A — §2 row 10 ("Triggers")**
+- [x] **Step 1: Amendment A — §2 row 10 ("Triggers")**
 
 Find the row in the §2 table where the "Triggers" decision lives ("All Reviews / Celebrations / Close-Out triggers are app-foreground checks…"). Replace its "Choice" column text with:
 
@@ -4177,7 +4177,7 @@ Find the row in the §2 table where the "Triggers" decision lives ("All Reviews 
 All Reviews / Celebrations / Close-Out triggers are **app-foreground checks** comparing local DB state to last-seen value. **No push notifications.** Local notifications via `expo-notifications` are allowed for one specific surface — the daily ritual reminder added in 5e (single repeating local notification scheduled at the user's chosen time). Permission is requested in-context (only when the user first sets a reminder time), not at app launch. No silent push, no remote push, no APNs config.
 ```
 
-- [ ] **Step 2: Amendment B — §6 (Scope cuts) — color/icon picker line**
+- [x] **Step 2: Amendment B — §6 (Scope cuts) — color/icon picker line**
 
 Find the row in the §6 table where "Editing rituals' icon/color picker beyond the seeded set" lives. Replace the "Reason" column with:
 
@@ -4185,7 +4185,7 @@ Find the row in the §6 table where "Editing rituals' icon/color picker beyond t
 The Builder lets you edit name, cadence, icon (16-symbol shortlist), color (5-token shortlist), and active-state, plus reorder. **No** custom icon uploads, **no** free-form color (HSL/hex). The 5 color tokens reuse existing theme tokens (`rituals`, `accent`, `move`, `money`) plus one new token `cyan` (#5AC8FA / #64D2FF) added to `lib/theme/tokens.ts`.
 ```
 
-- [ ] **Step 3: Amendment C — §3 5e row Surface + TDD columns**
+- [x] **Step 3: Amendment C — §3 5e row Surface + TDD columns**
 
 Find the **5e** row in the §3 decomposition table. Replace the "Surface" column with:
 
@@ -4199,7 +4199,7 @@ Replace the "TDD applies to" column with:
 Reorder semantics (position math, gap-handling, contiguous-position invariant), active/soft-delete/restore/hard-delete behavior, tap-toggle today (insert vs. cascading-delete-all-today's), reminder body templating, cache read/write/vacuum, `cadenceDisplay` mapping, idempotent reseed, prompt builders for both new endpoints, and route-level integration tests for both endpoints (auth + LLM-failure resilience).
 ```
 
-- [ ] **Step 4: Amendment D — §4 (Cross-cutting dependencies) — new row**
+- [x] **Step 4: Amendment D — §4 (Cross-cutting dependencies) — new row**
 
 Append a new row to the §4 table (after the last existing row):
 
@@ -4207,7 +4207,7 @@ Append a new row to the §4 table (after the last existing row):
 | `expo-notifications` | 5e only — single repeating local notification for daily ritual reminder. Permission asked in-context (Builder Preferences row). | New stack addition. Expo Go supports local notifications for development smoke; production iPhone install requires a dev-client rebuild (carry-over to end-of-SP5 deferred pass). |
 ```
 
-- [ ] **Step 5: Commit the amendments**
+- [x] **Step 5: Commit the amendments**
 
 ```bash
 git add docs/superpowers/specs/meta/2026-04-26-sp5-email-review-design.md
@@ -4221,7 +4221,7 @@ git commit -m "docs(sp5e): meta-spec amendments A/B/C/D — notifications, color
 **Files:**
 - Modify: `docs/superpowers/specs/meta/2026-04-26-sp5-email-review-design.md`
 
-- [ ] **Step 1: Run the full smoke**
+- [x] **Step 1: Run the full smoke**
 
 ```bash
 npm test
@@ -4232,7 +4232,7 @@ cd backend && npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 Expected: iOS ~372 tests green; backend ~220 tests green; root tsc still 24 errors; backend tsc baseline preserved. Record the exact test counts.
 
-- [ ] **Step 2: Web target visual smoke**
+- [ ] **Step 2: Web target visual smoke** (deferred to SP5-wide pass)
 
 ```bash
 npm run web
@@ -4257,7 +4257,7 @@ Open the browser and walk through the full flow:
 
 Stop the dev server.
 
-- [ ] **Step 3: Update SP5 meta-spec status table**
+- [x] **Step 3: Update SP5 meta-spec status table**
 
 Edit `docs/superpowers/specs/meta/2026-04-26-sp5-email-review-design.md`. In §3 "Sub-slice status," replace the line:
 
@@ -4271,7 +4271,7 @@ with:
 - **5e** ✅ Code complete 2026-04-28 — full `app/(tabs)/rituals/` route group (index, builder, new, [id]/edit, goal) replacing the SP3a stub. New iOS query modules: `lib/db/queries/rituals.ts` (insert/update/soft-delete/restore/hard-delete/reorder/toggle-today), `lib/db/queries/palCache.ts`, `lib/db/queries/reseedDefaults.ts`, `lib/db/queries/dayKey.ts` (extracted from streaks.ts). New hooks `lib/sync/usePalSuggestions.ts` (24h TTL + active-hash invalidation) and `lib/sync/useRitualNudge.ts` (state-keyed cache + local fallback sub). New iOS client `lib/sync/palClient.ts`. New `lib/notifications/dailyReminder.ts` module. New iOS deps: `expo-notifications`, `react-native-draggable-flatlist`. New theme token `cyan`. Schema delta: `rituals.cadence` + `rituals.color` enum cols, `goals.reminder_time_minutes`, new `pal_cache` table; idempotent reseed adds `8 glasses water` for already-onboarded users. New backend endpoints `POST /suggest-rituals` and `POST /nudge-today` mounted under existing `"chat"` JWT scope. Meta-spec amendments A/B/C/D applied (per spec §10) — notifications carve-out, color picker shortlist, 5e cross-tier scope, expo-notifications dep row. ~25 new iOS query tests + ~15 new backend tests. Live `/suggest-rituals` and `/nudge-today` against real OpenRouter + iPhone Expo Go visual verification + dev-client rebuild for `expo-notifications` carry over to the SP5-wide deferred pass — gated on the `OPENROUTER_API_KEY` deploy carryover from SP5b/SP5c. Manual web smoke green.
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/superpowers/specs/meta/2026-04-26-sp5-email-review-design.md
