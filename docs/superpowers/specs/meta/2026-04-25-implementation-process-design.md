@@ -179,7 +179,7 @@ pulse/
 ```
 
 ### Backend deploy
-- Plain `rsync` + `systemd` service unit. No Docker for v1 (YAGNI).
+- **Docker + Compose** (switched in SP5a). Image hosted on GHCR; deploy root at `/opt/pulse/`. Single `pulse-stack.service` systemd unit on the droplet runs `docker compose up -d` at boot. Compose handles per-service `restart: unless-stopped`. Bind-mount at `/opt/pulse/data/` holds the SQLite file.
 - TLS via Cloudflare Tunnel (no port-forwarding, no cert management) — re-evaluated in backend spec if user prefers Caddy.
 
 ### Claude Code config
