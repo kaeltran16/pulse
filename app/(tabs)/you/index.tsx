@@ -4,6 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
+
+import { db } from '@/lib/db/client';
+import { subscriptionList } from '@/lib/db/queries/syncedEntries';
+import { spendingEntries } from '@/lib/db/schema';
 import { useImapStatus } from '@/lib/sync/useImapStatus';
 import { useTheme } from '@/lib/theme/provider';
 import { colors } from '@/lib/theme/tokens';
@@ -52,6 +57,13 @@ export default function YouTabLanding() {
   const { resolved } = useTheme();
   const palette = colors[resolved];
   const { status, isLoading } = useImapStatus();
+  const subsLiveQuery = useLiveQuery(db.select().from(spendingEntries));
+  const subsMonthly = (() => {
+    void subsLiveQuery.data;
+    const groups = subscriptionList(db);
+    const total = groups.reduce((s, g) => s + g.monthlyAmountCents, 0);
+    return { count: groups.length, total };
+  })();
 
   const emailSyncPill = (() => {
     if (isLoading || status === null) return { text: '—', color: palette.ink4, kind: 'loading' as const };
@@ -82,7 +94,14 @@ export default function YouTabLanding() {
       title: 'Money',
       rows: [
         { key: 'bills', icon: 'house.fill', iconBg: palette.accent, title: 'Bills', value: 'Coming soon', disabled: true },
-        { key: 'subscriptions', icon: 'repeat', iconBg: palette.rituals, title: 'Subscriptions', value: 'Coming soon', disabled: true },
+        {
+          key: 'subscriptions',
+          icon: 'repeat',
+          iconBg: palette.rituals,
+          title: 'Subscriptions',
+          value: subsMonthly.count === 0 ? 'None yet' : `$${(subsMonthly.total / 100).toFixed(0)}/mo`,
+          onPress: () => router.push('/(tabs)/you/subscriptions'),
+        },
       ],
     },
     {
