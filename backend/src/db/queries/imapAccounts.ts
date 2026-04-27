@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import type { Db } from "../client.js";
 import { imapAccounts, type ImapAccount, type NewImapAccount } from "../schema.js";
 
@@ -42,4 +42,19 @@ export function updateError(db: Db, id: number, error: string | null): void {
     .set({ lastError: error, updatedAt: Date.now() })
     .where(eq(imapAccounts.id, id))
     .run();
+}
+
+// Returns the most recently created imap_accounts row, or undefined if none.
+// Meta-spec §6 commits to one inbox per Pulse install, so "active" = "most recent".
+export function getActiveAccount(db: Db): ImapAccount | undefined {
+  return db
+    .select()
+    .from(imapAccounts)
+    .orderBy(desc(imapAccounts.createdAt))
+    .limit(1)
+    .get();
+}
+
+export function deleteImapAccount(db: Db, id: number): void {
+  db.delete(imapAccounts).where(eq(imapAccounts.id, id)).run();
 }

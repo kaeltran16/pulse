@@ -90,6 +90,42 @@ describe("imapAccounts queries", () => {
     row = imapAccountsQ.getImapAccount(db, id);
     expect(row!.lastError).toBeNull();
   });
+
+  it("getActiveAccount returns undefined when no rows", () => {
+    expect(imapAccountsQ.getActiveAccount(db)).toBeUndefined();
+  });
+
+  it("getActiveAccount returns the most recently created row", () => {
+    const now = Date.now();
+    imapAccountsQ.createImapAccount(db, {
+      emailAddress: "old@gmail.com",
+      credentialsCiphertext: "c1",
+      senderAllowlist: "[]",
+      createdAt: now - 1000,
+      updatedAt: now - 1000,
+    });
+    imapAccountsQ.createImapAccount(db, {
+      emailAddress: "new@gmail.com",
+      credentialsCiphertext: "c2",
+      senderAllowlist: "[]",
+      createdAt: now,
+      updatedAt: now,
+    });
+    expect(imapAccountsQ.getActiveAccount(db)?.emailAddress).toBe("new@gmail.com");
+  });
+
+  it("deleteImapAccount removes the row by id", () => {
+    const now = Date.now();
+    const { id } = imapAccountsQ.createImapAccount(db, {
+      emailAddress: "x@gmail.com",
+      credentialsCiphertext: "c",
+      senderAllowlist: "[]",
+      createdAt: now,
+      updatedAt: now,
+    });
+    imapAccountsQ.deleteImapAccount(db, id);
+    expect(imapAccountsQ.getActiveAccount(db)).toBeUndefined();
+  });
 });
 
 function seedAccount(db: Db, email = "u@example.com"): number {
