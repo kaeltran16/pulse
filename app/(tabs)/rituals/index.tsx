@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { asc, eq } from 'drizzle-orm';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
+import Svg, { Circle } from 'react-native-svg';
 
 import { db } from '@/lib/db/client';
 import { goals, rituals, ritualEntries } from '@/lib/db/schema';
@@ -12,6 +13,7 @@ import { dayKey, dayKeyForMs } from '@/lib/db/queries/dayKey';
 import { toggleRitualToday } from '@/lib/db/queries/rituals';
 import { streakForRitual } from '@/lib/db/queries/streaks';
 import { cadenceDisplay } from '@/lib/sync/cadenceDisplay';
+import { useRitualNudge } from '@/lib/sync/useRitualNudge';
 import { useTheme } from '@/lib/theme/provider';
 import { colors } from '@/lib/theme/tokens';
 
@@ -64,6 +66,38 @@ export default function RitualsTab() {
   const total = activeRituals.length;
   const done  = doneToday.size;
 
+  const streakByRitual = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const r of activeRituals) {
+      map.set(r.id, streakForRitual({
+        ritualEntries: entriesLive.data,
+        ritualId: r.id,
+        asOf: new Date(),
+      }));
+    }
+    return map;
+  }, [activeRituals, entriesLive.data]);
+
+  const bestStreak = useMemo(() => {
+    let best: { title: string; streak: number } | undefined;
+    for (const r of activeRituals) {
+      const s = streakByRitual.get(r.id) ?? 0;
+      if (s > 0 && (best === undefined || s > best.streak)) {
+        best = { title: r.title, streak: s };
+      }
+    }
+    return best;
+  }, [activeRituals, streakByRitual]);
+
+  const nudge = useRitualNudge({
+    done, total,
+    rituals: activeRituals,
+    doneSet: doneToday,
+    todayKey,
+    bestStreak,
+    streakByRitual,
+  });
+
   const onTap = async (ritualId: number) => {
     await toggleRitualToday(db, ritualId, todayKey);
   };
@@ -104,6 +138,45 @@ export default function RitualsTab() {
           >
             <SymbolView name="plus" size={22} tintColor={palette.accent} />
           </Pressable>
+        </View>
+
+        <View className="px-3 pb-3">
+          <View
+            className="rounded-2xl bg-surface flex-row items-center p-4"
+            style={{ borderWidth: 0.5, borderColor: palette.hair }}
+          >
+            <View style={{ width: 72, height: 72, marginRight: 16, position: 'relative' }}>
+              <Svg width={72} height={72} style={{ transform: [{ rotate: '-90deg' }] }}>
+                <Circle cx={36} cy={36} r={30} fill="none" stroke={palette.ritualsTint} strokeWidth={8} />
+                <Circle
+                  cx={36}
+                  cy={36}
+                  r={30}
+                  fill="none"
+                  stroke={palette.rituals}
+                  strokeWidth={8}
+                  strokeLinecap="round"
+                  strokeDasharray={`${total > 0 ? (done / total) * 188 : 0} 188`}
+                />
+              </Svg>
+              <View
+                style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                  alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <Text className="text-title3 text-ink" style={{ fontWeight: '700' }}>
+                  {done}/{total}
+                </Text>
+              </View>
+            </View>
+            <View className="flex-1 min-w-0">
+              <Text className="text-callout text-ink">{nudge.headline}</Text>
+              <Text className="text-caption1 text-ink3 mt-1" numberOfLines={2}>
+                {nudge.loading ? '…' : nudge.sub || ' '}
+              </Text>
+            </View>
+          </View>
         </View>
 
         <View className="px-3 pb-3">
