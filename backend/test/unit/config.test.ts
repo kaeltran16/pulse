@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { loadConfig } from "../../src/config.js";
+import { loadConfig, loadWorkerConfig } from "../../src/config.js";
 
 const ORIGINAL = { ...process.env };
 
@@ -50,5 +50,34 @@ describe("loadConfig", () => {
     expect(cfg.modelId).toBe("anthropic/claude-haiku-4.5");
     expect(cfg.rateLimitPerMin).toBe(60);
     expect(cfg.logLevel).toBe("info");
+  });
+});
+
+describe("loadWorkerConfig", () => {
+  const baseEnv = {
+    OPENROUTER_API_KEY: "k",
+    JWT_SECRET: "x".repeat(32),
+    PULSE_IMAP_ENCRYPTION_KEY: "a".repeat(64),
+  };
+
+  it("loads when PULSE_IMAP_ENCRYPTION_KEY is 64 hex chars", () => {
+    const cfg = loadWorkerConfig(baseEnv);
+    expect(cfg.imapEncryptionKey).toBe("a".repeat(64));
+    expect(cfg.modelId).toBe("anthropic/claude-haiku-4.5"); // default
+  });
+
+  it("rejects a missing PULSE_IMAP_ENCRYPTION_KEY", () => {
+    const env = { ...baseEnv, PULSE_IMAP_ENCRYPTION_KEY: undefined as unknown as string };
+    expect(() => loadWorkerConfig(env)).toThrow(/PULSE_IMAP_ENCRYPTION_KEY/);
+  });
+
+  it("rejects a malformed (non-hex) PULSE_IMAP_ENCRYPTION_KEY", () => {
+    const env = { ...baseEnv, PULSE_IMAP_ENCRYPTION_KEY: "not-hex" };
+    expect(() => loadWorkerConfig(env)).toThrow();
+  });
+
+  it("rejects a wrong-length PULSE_IMAP_ENCRYPTION_KEY (32 chars instead of 64)", () => {
+    const env = { ...baseEnv, PULSE_IMAP_ENCRYPTION_KEY: "a".repeat(32) };
+    expect(() => loadWorkerConfig(env)).toThrow();
   });
 });
