@@ -1,12 +1,43 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 
 import { imapConnect } from '@/lib/sync/client';
+import { AuthError, NetworkError, RateLimitError, UpstreamError, ValidationError } from '@/lib/sync/errors';
 import { useTheme } from '@/lib/theme/provider';
 import { colors } from '@/lib/theme/tokens';
+
+type BannerSpec = { copy: string; cta?: { label: string; onPress: () => void } } | null;
+
+function mapConnectError(e: unknown): BannerSpec {
+  // imap_auth_failed comes back as ValidationError per lib/sync/client.ts mapHttpError
+  // (status 400 → ValidationError). The message string contains "imap_auth_failed"
+  // when the backend rejects the credentials. We branch on message contents.
+  if (e instanceof ValidationError) {
+    const msg = (e.message ?? '').toLowerCase();
+    if (msg.includes('imap_auth_failed') || msg.includes('app password') || msg.includes('credentials')) {
+      return {
+        copy: 'Wrong app password — Gmail rejected it.',
+        cta: {
+          label: 'Generate a new one →',
+          onPress: () => { void Linking.openURL('https://myaccount.google.com/apppasswords'); },
+        },
+      };
+    }
+    if (msg.includes('already_connected')) {
+      // Caller should instead route to dashboard; treat as a sentinel.
+      return null;
+    }
+    return { copy: 'Check the email format and try again.' };
+  }
+  if (e instanceof RateLimitError) return { copy: 'Too many attempts. Wait a moment, then try again.' };
+  if (e instanceof NetworkError)   return { copy: "Couldn't reach the server. Check your connection." };
+  if (e instanceof AuthError)      return { copy: 'Server error. Try again.' };
+  if (e instanceof UpstreamError)  return { copy: 'Server error. Try again.' };
+  return { copy: 'Something went wrong. Try again.' };
+}
 
 export default function EmailSyncConnectScreen() {
   const router = useRouter();
@@ -17,19 +48,23 @@ export default function EmailSyncConnectScreen() {
   const [password, setPassword] = useState('');
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [bannerError, setBannerError] = useState<string | null>(null);
+  const [banner, setBanner] = useState<BannerSpec>(null);
 
   const canSave = email.trim().length > 3 && password.trim().length > 3;
 
   const onSave = async () => {
     if (!canSave || submitting) return;
-    setBannerError(null);
+    setBanner(null);
     setSubmitting(true);
     try {
       await imapConnect({ email: email.trim(), appPassword: password.trim() });
       router.replace('/(tabs)/you/email-sync/dashboard');
     } catch (e) {
-      setBannerError(e instanceof Error ? e.message : 'Something went wrong.');
+      if (e instanceof ValidationError && (e.message ?? '').toLowerCase().includes('already_connected')) {
+        router.replace('/(tabs)/you/email-sync/dashboard');
+        return;
+      }
+      setBanner(mapConnectError(e));
     } finally {
       setSubmitting(false);
     }
@@ -61,10 +96,15 @@ export default function EmailSyncConnectScreen() {
           </Pressable>
         </View>
 
-        {bannerError && (
+        {banner && (
           <View className="px-3 pt-1 pb-2">
             <View className="rounded-xl px-4 py-3" style={{ backgroundColor: '#FF3B3014', borderWidth: 0.5, borderColor: '#FF3B3033' }}>
-              <Text className="text-callout" style={{ color: '#FF3B30' }}>{bannerError}</Text>
+              <Text className="text-callout" style={{ color: '#FF3B30' }}>{banner.copy}</Text>
+              {banner.cta && (
+                <Pressable onPress={banner.cta.onPress} className="mt-2">
+                  <Text className="text-callout" style={{ color: palette.accent, fontWeight: '600' }}>{banner.cta.label}</Text>
+                </Pressable>
+              )}
             </View>
           </View>
         )}
