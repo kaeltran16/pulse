@@ -1,6 +1,6 @@
 # SP5a — Backend Data Store Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Stand up the backend SQLite data layer (schema, migrations, query modules, tests) and replace the existing rsync+systemd deploy with a Docker+Compose deploy at `/opt/pulse/`. End state: live droplet running the Docker-ized backend with three empty new tables (`imap_accounts`, `synced_entries`, `imap_uids`) ready for SP5b.
 
@@ -58,7 +58,7 @@
 **Files:**
 - Modify: `backend/package.json`
 
-- [ ] **Step 1: Install runtime + dev deps**
+- [x] **Step 1: Install runtime + dev deps**
 
 Run from `backend/`:
 
@@ -69,7 +69,7 @@ npm install -D drizzle-kit @types/better-sqlite3
 
 Expected: `package.json` updated with `drizzle-orm`, `better-sqlite3` in `dependencies`, `drizzle-kit`, `@types/better-sqlite3` in `devDependencies`. `package-lock.json` updated.
 
-- [ ] **Step 2: Add db:generate script**
+- [x] **Step 2: Add db:generate script**
 
 Edit `backend/package.json` `"scripts"` section to add:
 
@@ -89,7 +89,7 @@ Edit `backend/package.json` `"scripts"` section to add:
 
 `db:generate` produces SQL migrations from schema changes. `db:migrate` is for local/dev runs against a real file.
 
-- [ ] **Step 3: Verify install**
+- [x] **Step 3: Verify install**
 
 ```bash
 npm test
@@ -97,7 +97,7 @@ npm test
 
 Expected: existing 56 SP2 tests still pass. No new tests yet.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add backend/package.json backend/package-lock.json
@@ -112,7 +112,7 @@ git commit -m "chore(backend): add drizzle + better-sqlite3 deps"
 - Create: `backend/drizzle.config.ts`
 - Create: `backend/src/db/schema.ts`
 
-- [ ] **Step 1: Write `drizzle.config.ts`**
+- [x] **Step 1: Write `drizzle.config.ts`**
 
 ```ts
 // backend/drizzle.config.ts
@@ -125,7 +125,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 2: Write `schema.ts`**
+- [x] **Step 2: Write `schema.ts`**
 
 ```ts
 // backend/src/db/schema.ts
@@ -196,7 +196,7 @@ export type ImapUid = typeof imapUids.$inferSelect;
 export type NewImapUid = typeof imapUids.$inferInsert;
 ```
 
-- [ ] **Step 3: Generate migration**
+- [x] **Step 3: Generate migration**
 
 ```bash
 cd backend && npm run db:generate
@@ -204,7 +204,7 @@ cd backend && npm run db:generate
 
 Expected: creates `backend/src/db/migrations/0000_*.sql` and `backend/src/db/migrations/meta/{_journal.json, 0000_snapshot.json}`.
 
-- [ ] **Step 4: Inspect generated SQL**
+- [x] **Step 4: Inspect generated SQL**
 
 Open `backend/src/db/migrations/0000_*.sql` and confirm:
 - `CREATE TABLE imap_accounts` with all 10 columns
@@ -216,7 +216,7 @@ Open `backend/src/db/migrations/0000_*.sql` and confirm:
 
 If any are missing, fix the schema and re-run `db:generate`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/drizzle.config.ts backend/src/db/schema.ts backend/src/db/migrations
@@ -230,7 +230,7 @@ git commit -m "feat(backend): add SP5a schema + initial migration"
 **Files:**
 - Create: `backend/src/db/client.ts`
 
-- [ ] **Step 1: Write `client.ts`**
+- [x] **Step 1: Write `client.ts`**
 
 ```ts
 // backend/src/db/client.ts
@@ -252,7 +252,7 @@ export function createDb(path: string) {
 
 `Db` is the typed Drizzle instance; query modules accept `Db` as their first arg so tests can pass `:memory:` instances.
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add backend/src/db/client.ts
@@ -267,7 +267,7 @@ git commit -m "feat(backend): add db client with PRAGMAs"
 - Create: `backend/src/db/migrate.ts`
 - Create: `backend/src/db/cli/migrate.ts`
 
-- [ ] **Step 1: Write `migrate.ts`**
+- [x] **Step 1: Write `migrate.ts`**
 
 ```ts
 // backend/src/db/migrate.ts
@@ -279,7 +279,7 @@ export function runMigrations(db: Db, migrationsFolder: string): void {
 }
 ```
 
-- [ ] **Step 2: Write `cli/migrate.ts`**
+- [x] **Step 2: Write `cli/migrate.ts`**
 
 ```ts
 // backend/src/db/cli/migrate.ts
@@ -306,7 +306,7 @@ try {
 }
 ```
 
-- [ ] **Step 3: Smoke test the CLI locally**
+- [x] **Step 3: Smoke test the CLI locally**
 
 ```bash
 cd backend && DB_PATH=/tmp/pulse-test.db npm run db:migrate
@@ -320,7 +320,7 @@ sqlite3 /tmp/pulse-test.db '.tables'
 
 Expected output: `__drizzle_migrations imap_accounts imap_uids synced_entries`
 
-- [ ] **Step 4: Clean up and commit**
+- [x] **Step 4: Clean up and commit**
 
 ```bash
 rm /tmp/pulse-test.db
@@ -336,7 +336,7 @@ git commit -m "feat(backend): add migration runner + CLI"
 - Modify: `backend/vitest.config.ts`
 - Modify: `backend/.gitignore`
 
-- [ ] **Step 1: Update `vitest.config.ts`**
+- [x] **Step 1: Update `vitest.config.ts`**
 
 ```ts
 import { defineConfig } from "vitest/config";
@@ -351,7 +351,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 2: Update `.gitignore` if not present**
+- [x] **Step 2: Update `.gitignore` if not present**
 
 Check `backend/.gitignore` for SQLite artifacts. If missing, append:
 
@@ -364,7 +364,7 @@ Check `backend/.gitignore` for SQLite artifacts. If missing, append:
 
 (Exclude path `src/db/migrations/**` from this — those are SQL files we want.)
 
-- [ ] **Step 3: Verify existing tests still discoverable**
+- [x] **Step 3: Verify existing tests still discoverable**
 
 ```bash
 cd backend && npm test
@@ -372,7 +372,7 @@ cd backend && npm test
 
 Expected: 56 existing tests still pass.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add backend/vitest.config.ts backend/.gitignore
@@ -386,7 +386,7 @@ git commit -m "chore(backend): include __tests__ in vitest discovery"
 **Files:**
 - Create: `backend/src/db/__tests__/schema.test.ts`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 // backend/src/db/__tests__/schema.test.ts
@@ -542,7 +542,7 @@ describe("sender_allowlist round-trip", () => {
 });
 ```
 
-- [ ] **Step 2: Run and verify it passes**
+- [x] **Step 2: Run and verify it passes**
 
 ```bash
 cd backend && npm test -- src/db/__tests__/schema.test.ts
@@ -552,7 +552,7 @@ Expected: all schema tests pass on the first run (the schema and migration alrea
 
 If anything fails, fix the schema (and re-run `db:generate`) until green.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add backend/src/db/__tests__/schema.test.ts
@@ -566,7 +566,7 @@ git commit -m "test(backend): SP5a schema integrity"
 **Files:**
 - Create: `backend/src/db/__tests__/migrate.test.ts`
 
-- [ ] **Step 1: Write the tests**
+- [x] **Step 1: Write the tests**
 
 ```ts
 // backend/src/db/__tests__/migrate.test.ts
@@ -609,7 +609,7 @@ describe("runMigrations", () => {
 });
 ```
 
-- [ ] **Step 2: Run and verify it passes**
+- [x] **Step 2: Run and verify it passes**
 
 ```bash
 cd backend && npm test -- src/db/__tests__/migrate.test.ts
@@ -617,7 +617,7 @@ cd backend && npm test -- src/db/__tests__/migrate.test.ts
 
 Expected: PASS — both tests green.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add backend/src/db/__tests__/migrate.test.ts
@@ -632,7 +632,7 @@ git commit -m "test(backend): SP5a migration runner"
 - Create: `backend/src/db/queries/imapAccounts.ts`
 - Modify: `backend/src/db/__tests__/queries.test.ts` (created here, extended in later tasks)
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 // backend/src/db/__tests__/queries.test.ts
@@ -728,7 +728,7 @@ describe("imapAccounts queries", () => {
 });
 ```
 
-- [ ] **Step 2: Verify the tests fail**
+- [x] **Step 2: Verify the tests fail**
 
 ```bash
 cd backend && npm test -- src/db/__tests__/queries.test.ts
@@ -736,7 +736,7 @@ cd backend && npm test -- src/db/__tests__/queries.test.ts
 
 Expected: FAIL — module `../queries/imapAccounts.js` not found.
 
-- [ ] **Step 3: Implement `queries/imapAccounts.ts`**
+- [x] **Step 3: Implement `queries/imapAccounts.ts`**
 
 ```ts
 // backend/src/db/queries/imapAccounts.ts
@@ -787,7 +787,7 @@ export function updateError(db: Db, id: number, error: string | null): void {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 ```bash
 cd backend && npm test -- src/db/__tests__/queries.test.ts
@@ -795,7 +795,7 @@ cd backend && npm test -- src/db/__tests__/queries.test.ts
 
 Expected: PASS — all four `imapAccounts queries` tests green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/db/queries/imapAccounts.ts backend/src/db/__tests__/queries.test.ts
@@ -810,7 +810,7 @@ git commit -m "feat(backend): SP5a imapAccounts queries"
 - Create: `backend/src/db/queries/syncedEntries.ts`
 - Modify: `backend/src/db/__tests__/queries.test.ts`
 
-- [ ] **Step 1: Add failing tests to `queries.test.ts`**
+- [x] **Step 1: Add failing tests to `queries.test.ts`**
 
 Append to `queries.test.ts` (after the imapAccounts describe block):
 
@@ -971,7 +971,7 @@ describe("syncedEntries queries", () => {
 });
 ```
 
-- [ ] **Step 2: Verify tests fail**
+- [x] **Step 2: Verify tests fail**
 
 ```bash
 cd backend && npm test -- src/db/__tests__/queries.test.ts
@@ -979,7 +979,7 @@ cd backend && npm test -- src/db/__tests__/queries.test.ts
 
 Expected: FAIL — module `../queries/syncedEntries.js` not found.
 
-- [ ] **Step 3: Implement `queries/syncedEntries.ts`**
+- [x] **Step 3: Implement `queries/syncedEntries.ts`**
 
 ```ts
 // backend/src/db/queries/syncedEntries.ts
@@ -1035,7 +1035,7 @@ export function findRecurringCandidates(
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 ```bash
 cd backend && npm test -- src/db/__tests__/queries.test.ts
@@ -1043,7 +1043,7 @@ cd backend && npm test -- src/db/__tests__/queries.test.ts
 
 Expected: PASS — both `imapAccounts queries` and `syncedEntries queries` describe blocks green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/db/queries/syncedEntries.ts backend/src/db/__tests__/queries.test.ts
@@ -1058,7 +1058,7 @@ git commit -m "feat(backend): SP5a syncedEntries queries"
 - Create: `backend/src/db/queries/imapUids.ts`
 - Modify: `backend/src/db/__tests__/queries.test.ts`
 
-- [ ] **Step 1: Add failing tests**
+- [x] **Step 1: Add failing tests**
 
 Append to `queries.test.ts`:
 
@@ -1093,7 +1093,7 @@ describe("imapUids queries", () => {
 });
 ```
 
-- [ ] **Step 2: Verify it fails**
+- [x] **Step 2: Verify it fails**
 
 ```bash
 cd backend && npm test -- src/db/__tests__/queries.test.ts
@@ -1101,7 +1101,7 @@ cd backend && npm test -- src/db/__tests__/queries.test.ts
 
 Expected: FAIL — module not found.
 
-- [ ] **Step 3: Implement `queries/imapUids.ts`**
+- [x] **Step 3: Implement `queries/imapUids.ts`**
 
 ```ts
 // backend/src/db/queries/imapUids.ts
@@ -1150,7 +1150,7 @@ export function listSeenUidsForAccount(
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 ```bash
 cd backend && npm test -- src/db/__tests__/queries.test.ts
@@ -1158,7 +1158,7 @@ cd backend && npm test -- src/db/__tests__/queries.test.ts
 
 Expected: PASS — all three query module describe blocks green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/db/queries/imapUids.ts backend/src/db/__tests__/queries.test.ts
@@ -1172,7 +1172,7 @@ git commit -m "feat(backend): SP5a imapUids queries"
 **Files:**
 - Modify: `backend/src/db/__tests__/queries.test.ts`
 
-- [ ] **Step 1: Add the cascade test**
+- [x] **Step 1: Add the cascade test**
 
 Append to `queries.test.ts`:
 
@@ -1210,7 +1210,7 @@ describe("FK cascade", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify it passes**
+- [x] **Step 2: Run tests to verify it passes**
 
 ```bash
 cd backend && npm test -- src/db/__tests__/queries.test.ts
@@ -1218,7 +1218,7 @@ cd backend && npm test -- src/db/__tests__/queries.test.ts
 
 Expected: PASS — cascade test green (FK enforcement is on via PRAGMA from `createDb`).
 
-- [ ] **Step 3: Run full backend test suite**
+- [x] **Step 3: Run full backend test suite**
 
 ```bash
 cd backend && npm test
@@ -1226,7 +1226,7 @@ cd backend && npm test
 
 Expected: 56 prior SP2 tests + new SP5a tests all green.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add backend/src/db/__tests__/queries.test.ts
@@ -1243,7 +1243,7 @@ git commit -m "test(backend): SP5a FK cascade"
 - Create: `backend/Dockerfile`
 - Create: `backend/.dockerignore`
 
-- [ ] **Step 1: Write `Dockerfile`**
+- [x] **Step 1: Write `Dockerfile`**
 
 ```dockerfile
 # syntax=docker/dockerfile:1.7
@@ -1275,7 +1275,7 @@ CMD ["node", "dist/backend/src/index.js"]
 
 **Why migrations copied separately:** `tsc` does not copy `.sql` files to `dist/`; we copy them manually so the migrator can find them at `dist/backend/src/db/migrations/`.
 
-- [ ] **Step 2: Write `.dockerignore`**
+- [x] **Step 2: Write `.dockerignore`**
 
 ```
 **/node_modules
@@ -1300,7 +1300,7 @@ lib/pal
 
 `lib/api-types.ts` is the one file under `lib/` the build needs (per the existing `tsconfig.json`'s `include`); iOS-only directories `lib/db/`, `lib/sync/`, `lib/pal/` are excluded so Docker doesn't ship the React Native code.
 
-- [ ] **Step 3: Build the image locally**
+- [x] **Step 3: Build the image locally**
 
 From repo root:
 
@@ -1310,7 +1310,7 @@ docker build -f backend/Dockerfile -t pulse-backend:dev .
 
 Expected: image builds successfully. Image size around 200-250 MB.
 
-- [ ] **Step 4: Run image locally to confirm it boots**
+- [x] **Step 4: Run image locally to confirm it boots**
 
 ```bash
 docker run --rm -p 3000:3000 -e JWT_SECRET=dev -e OPENROUTER_API_KEY=fake -e DB_PATH=/tmp/test.db pulse-backend:dev
@@ -1318,7 +1318,7 @@ docker run --rm -p 3000:3000 -e JWT_SECRET=dev -e OPENROUTER_API_KEY=fake -e DB_
 
 Expected: container starts, Express listens on 3000. `curl http://localhost:3000/health` returns 200. `Ctrl-C` to stop. (DB never opened in this run because no route uses it; `DB_PATH=/tmp/test.db` is a no-op until 5b's worker reads it.)
 
-- [ ] **Step 5: Run migrator command in image**
+- [x] **Step 5: Run migrator command in image**
 
 ```bash
 mkdir -p /tmp/pulse-test-data
@@ -1336,7 +1336,7 @@ Expected: prints `migrations applied to /data/pulse.db`. **Note:** the host dire
 
 Clean up: `rm -rf /tmp/pulse-test-data`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/Dockerfile backend/.dockerignore
@@ -1350,7 +1350,7 @@ git commit -m "feat(backend): Dockerfile (multi-stage, non-root)"
 **Files:**
 - Create: `backend/deploy/compose.yml`
 
-- [ ] **Step 1: Write `compose.yml`**
+- [x] **Step 1: Write `compose.yml`**
 
 Replace `<gh-user>` with the user's GitHub username (an open item — confirmed before starting Task 17).
 
@@ -1384,7 +1384,7 @@ services:
     restart: unless-stopped
 ```
 
-- [ ] **Step 2: Test compose locally (optional but recommended)**
+- [x] **Step 2: Test compose locally (optional but recommended)**
 
 From `backend/deploy/`:
 
@@ -1408,7 +1408,7 @@ rm -rf data .env
 
 Skip if you're running on Windows where `chown 1500:1500` is awkward — Task 19's droplet test covers it.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add backend/deploy/compose.yml
@@ -1424,7 +1424,7 @@ git commit -m "feat(backend): compose.yml with migrator + backend services"
 - Create: `backend/deploy/systemd/pulse-backup.service`
 - Create: `backend/deploy/systemd/pulse-backup.timer`
 
-- [ ] **Step 1: Write `pulse-stack.service`**
+- [x] **Step 1: Write `pulse-stack.service`**
 
 ```ini
 # backend/deploy/systemd/pulse-stack.service — installed at /etc/systemd/system/pulse-stack.service
@@ -1444,7 +1444,7 @@ ExecStop=/usr/bin/docker compose down
 WantedBy=multi-user.target
 ```
 
-- [ ] **Step 2: Write `pulse-backup.service`**
+- [x] **Step 2: Write `pulse-backup.service`**
 
 ```ini
 # backend/deploy/systemd/pulse-backup.service — installed at /etc/systemd/system/pulse-backup.service
@@ -1459,7 +1459,7 @@ ExecStart=/bin/bash -c '/usr/bin/sqlite3 /opt/pulse/data/pulse.db ".backup /opt/
 ExecStartPost=/usr/bin/find /opt/pulse/data/backups -name 'pulse-*.db' -mtime +14 -delete
 ```
 
-- [ ] **Step 3: Write `pulse-backup.timer`**
+- [x] **Step 3: Write `pulse-backup.timer`**
 
 ```ini
 # backend/deploy/systemd/pulse-backup.timer — installed at /etc/systemd/system/pulse-backup.timer
@@ -1475,7 +1475,7 @@ Unit=pulse-backup.service
 WantedBy=timers.target
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add backend/deploy/systemd
@@ -1493,13 +1493,13 @@ git commit -m "feat(backend): systemd units for compose stack + daily backup"
 
 The cutover script captures the §9 process. Bake the username in once it's known; pause and ask the user if not yet confirmed.
 
-- [ ] **Step 1: Confirm GitHub username**
+- [x] **Step 1: Confirm GitHub username**
 
 Ask the user: *"What's the GitHub username/org that owns this repo? It will be the GHCR namespace: `ghcr.io/<gh-user>/pulse-backend`."*
 
 Record it; replace `<gh-user>` in `backend/deploy/compose.yml` from Task 13 with the real value (use Edit; commit the change with a `chore(backend): pin GHCR namespace` message).
 
-- [ ] **Step 2: Write `backend/deploy/cutover.md`**
+- [x] **Step 2: Write `backend/deploy/cutover.md`**
 
 ```markdown
 # SP5a cutover — `/srv/pulse-backend` → `/opt/pulse`
@@ -1508,10 +1508,10 @@ Run as root via SSH against the droplet (`root@178.128.81.14`). All steps idempo
 
 ## Pre-flight
 
-- [ ] Confirm Docker installed: `docker --version` (need v24+ for compose v2 syntax)
+- [x] Confirm Docker installed: `docker --version` (need v24+ for compose v2 syntax)
   - If absent: `apt-get update && apt-get install -y docker.io docker-compose-plugin`
-- [ ] Confirm outbound to ghcr.io: `curl -sI https://ghcr.io/v2/`
-- [ ] Note current `/etc/pulse-backend.env` contents:
+- [x] Confirm outbound to ghcr.io: `curl -sI https://ghcr.io/v2/`
+- [x] Note current `/etc/pulse-backend.env` contents:
   ```
   cat /etc/pulse-backend.env
   ```
@@ -1627,7 +1627,7 @@ systemctl enable --now pulse-backend.service
 (Then debug the failure and try again later.)
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add backend/deploy/cutover.md
@@ -1641,15 +1641,15 @@ git commit -m "docs(backend): SP5a cutover checklist"
 
 This is a manual step the user does on github.com. Document for posterity.
 
-- [ ] **Step 1: Confirm or add `DEPLOY_SSH_KEY` secret**
+- [x] **Step 1: Confirm or add `DEPLOY_SSH_KEY` secret**
 
 Already exists from SP2. Confirm via repo Settings → Secrets and variables → Actions.
 
-- [ ] **Step 2: Confirm or add `DEV_JWT` secret**
+- [x] **Step 2: Confirm or add `DEV_JWT` secret**
 
 Already exists from SP2.
 
-- [ ] **Step 3: No new secrets needed for GHCR push**
+- [x] **Step 3: No new secrets needed for GHCR push**
 
 The default `GITHUB_TOKEN` available in the action has package write permissions when the workflow declares them — see Task 17.
 
@@ -1660,7 +1660,7 @@ The default `GITHUB_TOKEN` available in the action has package write permissions
 **Files:**
 - Modify: `.github/workflows/deploy-backend.yml`
 
-- [ ] **Step 1: Rewrite the workflow**
+- [x] **Step 1: Rewrite the workflow**
 
 Replace the entire file with:
 
@@ -1780,7 +1780,7 @@ jobs:
 
 **Why two jobs (`test-and-build` then `deploy`):** if test or image push fails, deploy never runs and the droplet keeps running the prior image. Single-job alternative would still work since the bash steps short-circuit, but two jobs make the dependency explicit and fail faster on the GH side.
 
-- [ ] **Step 2: Confirm `backend/scripts/smoke.sh` still works against the new path**
+- [x] **Step 2: Confirm `backend/scripts/smoke.sh` still works against the new path**
 
 The smoke script hits `BASE_URL/health` etc. Since 5a doesn't change SP2's routes, the smoke script should pass unchanged. Read it to confirm:
 
@@ -1790,7 +1790,7 @@ cat backend/scripts/smoke.sh
 
 If it expected the old `/srv/pulse-backend` path or any local file in CI, adjust. Likely it's just `curl` against the public URL, which doesn't care about the deploy primitive.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add .github/workflows/deploy-backend.yml
@@ -1807,7 +1807,7 @@ These tasks involve **live SSH actions against production**. Pause before each `
 
 **Files:** none modified.
 
-- [ ] **Step 1: Pre-flight checks**
+- [x] **Step 1: Pre-flight checks**
 
 Ask the user to SSH to the droplet (`! ssh root@178.128.81.14` from this session, or directly) and run:
 
@@ -1824,7 +1824,7 @@ Record the output. Confirm:
 - Env file has the SP2 secrets (write them down for step 3 of cutover)
 - `pulse-backend.service` is `active (running)` — the cutover replaces this
 
-- [ ] **Step 2: Trigger initial GH Action manually**
+- [x] **Step 2: Trigger initial GH Action manually**
 
 The cutover step 5 needs a `:latest` image to exist on GHCR. Trigger one without merging anything:
 
@@ -1845,13 +1845,13 @@ Verify in the GH Actions UI that the `test-and-build` job completed and the imag
 
 **Files:** none modified in repo. Real SSH actions.
 
-- [ ] **Step 1: Walk through `backend/deploy/cutover.md` steps 1–6 with the user**
+- [x] **Step 1: Walk through `backend/deploy/cutover.md` steps 1–6 with the user**
 
 Read `backend/deploy/cutover.md` aloud. For each block, run the SSH command and confirm output before proceeding to the next.
 
 ⚠️ Step 6 stops the running SP2 backend. Expect ~30s downtime while compose pulls and starts.
 
-- [ ] **Step 2: Run verify (cutover.md step 7)**
+- [x] **Step 2: Run verify (cutover.md step 7)**
 
 ```
 ssh root@178.128.81.14 'curl -fsS http://localhost:3000/health'
@@ -1863,7 +1863,7 @@ ssh root@178.128.81.14 'systemctl status pulse-backup.timer'
 
 Each command must succeed. If any fail, run rollback (cutover.md "Rollback" section) and debug.
 
-- [ ] **Step 3: Trigger first backup (cutover.md step 8)**
+- [x] **Step 3: Trigger first backup (cutover.md step 8)**
 
 ```
 ssh root@178.128.81.14 'systemctl start pulse-backup.service'
@@ -1872,7 +1872,7 @@ ssh root@178.128.81.14 'ls /opt/pulse/data/backups/'
 
 Expect: a file named `pulse-YYYY-MM-DD.db`.
 
-- [ ] **Step 4: Clean up old artifacts (cutover.md step 9)**
+- [x] **Step 4: Clean up old artifacts (cutover.md step 9)**
 
 Only after verify succeeds:
 
@@ -1881,7 +1881,7 @@ ssh root@178.128.81.14 'rm -rf /srv/pulse-backend'
 ssh root@178.128.81.14 'rm /etc/pulse-backend.env'
 ```
 
-- [ ] **Step 5: Re-run the GH Action to verify end-to-end deploy**
+- [x] **Step 5: Re-run the GH Action to verify end-to-end deploy**
 
 ```bash
 gh workflow run deploy-backend.yml
@@ -1899,7 +1899,7 @@ If anything fails: debug, do not proceed.
 - Delete: `backend/deploy/pulse-backend.service`
 - Delete or rewrite: `backend/deploy/bootstrap.md`
 
-- [ ] **Step 1: Inspect bootstrap.md**
+- [x] **Step 1: Inspect bootstrap.md**
 
 ```bash
 cat backend/deploy/bootstrap.md
@@ -1907,14 +1907,14 @@ cat backend/deploy/bootstrap.md
 
 If it contains useful SP2-era reference content (firewall rules, droplet setup), preserve it as `backend/deploy/bootstrap-historical.md` or fold the still-relevant parts into `cutover.md`. If it's all stale, delete.
 
-- [ ] **Step 2: Delete obsolete files**
+- [x] **Step 2: Delete obsolete files**
 
 ```bash
 git rm backend/deploy/pulse-backend.service
 git rm backend/deploy/bootstrap.md   # only if confirmed obsolete in step 1
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git commit -m "chore(backend): remove rsync-era deploy files (replaced by cutover.md)"
@@ -1929,7 +1929,7 @@ git commit -m "chore(backend): remove rsync-era deploy files (replaced by cutove
 **Files:**
 - Modify: `docs/superpowers/specs/meta/2026-04-25-implementation-process-design.md`
 
-- [ ] **Step 1: Edit §6 "Backend deploy" subsection**
+- [x] **Step 1: Edit §6 "Backend deploy" subsection**
 
 Replace this paragraph:
 
@@ -1947,7 +1947,7 @@ With:
 - TLS via Cloudflare Tunnel (no port-forwarding, no cert management) — re-evaluated in backend spec if user prefers Caddy.
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add docs/superpowers/specs/meta/2026-04-25-implementation-process-design.md
@@ -1961,7 +1961,7 @@ git commit -m "docs(meta): patch §6 — Docker deploy (SP5a)"
 **Files:**
 - Modify: `docs/superpowers/specs/meta/2026-04-26-sp5-email-review-design.md`
 
-- [ ] **Step 1: Edit §2 "Locked decisions" row 8 (Process model)**
+- [x] **Step 1: Edit §2 "Locked decisions" row 8 (Process model)**
 
 Find this row:
 
@@ -1975,7 +1975,7 @@ Replace with:
 | Process model | **Two compose services** on a shared bind-mounted volume: `backend` (HTTP) and `worker` (poller, added in 5b). Both run as the `pulse-backend` OS user (UID 1500) inside the container. Same SQLite file (worker is the only writer of `synced_entries`). One `pulse-stack.service` systemd unit on the droplet brings up the compose stack at boot. (Updated in SP5a.) | Crash isolation; cleanly bounded compose services; one OS user keeps file ownership simple at one-user scale. |
 ```
 
-- [ ] **Step 2: Edit §4 row 3 (DO droplet)**
+- [x] **Step 2: Edit §4 row 3 (DO droplet)**
 
 Find this row:
 
@@ -1989,7 +1989,7 @@ Replace with:
 | DO droplet, root access | 5a (initial SQLite + Drizzle install + Docker cutover), 5b (new compose service) | Already provisioned (`root@178.128.81.14`). 5a's plan stands up `/opt/pulse/`, the `pulse-backend` user (UID 1500), and the Docker-based deploy; 5b's plan adds the `worker` compose service alongside `backend`. |
 ```
 
-- [ ] **Step 3: Edit §3 sub-slice status — mark 5a code-complete**
+- [x] **Step 3: Edit §3 sub-slice status — mark 5a code-complete**
 
 Find this line:
 
@@ -2003,7 +2003,7 @@ Replace with (substitute today's date and verify the smoke-test sentence reflect
 - **5a** ✅ Code complete YYYY-MM-DD — three new tables (`imap_accounts`, `synced_entries`, `imap_uids`) via Drizzle + `better-sqlite3`; query modules + cascade tests; multi-stage Dockerfile (`node:22-slim`, `USER 1500`); compose stack at `/opt/pulse/` with `migrator` + `backend` services; daily `sqlite3 .backup` via systemd timer; GH Action rebuilt for GHCR + Docker. Cutover from `/srv/pulse-backend` rsync deploy to `/opt/pulse/` Docker deploy executed live. Parent meta-spec §6 amended; this spec's §2 row 8 + §4 row 3 amended. `npm test` green (56 SP2 + new SP5a tests).
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/superpowers/specs/meta/2026-04-26-sp5-email-review-design.md
@@ -2018,7 +2018,7 @@ git commit -m "docs(sp5a): mark 5a complete + amend §2/§4 (Docker)"
 
 **Files:** none modified.
 
-- [ ] **Step 1: Run full backend test suite**
+- [x] **Step 1: Run full backend test suite**
 
 ```bash
 cd backend && npm test
@@ -2026,7 +2026,7 @@ cd backend && npm test
 
 Expected: 56 SP2 tests + new SP5a tests (~15-20 new) all pass.
 
-- [ ] **Step 2: Verify the live deploy via the droplet URL**
+- [x] **Step 2: Verify the live deploy via the droplet URL**
 
 ```bash
 curl -fsS http://178.128.81.14:3000/health
@@ -2034,7 +2034,7 @@ curl -fsS http://178.128.81.14:3000/health
 
 Expected: 200 OK. (This matches the smoke step's `BASE_URL` in the GH Action — Cloudflare Tunnel, if configured, points at the same backend; setting up Tunnel is out of scope for SP5a.)
 
-- [ ] **Step 3: Verify the DB file exists and is readable**
+- [x] **Step 3: Verify the DB file exists and is readable**
 
 ```bash
 ssh root@178.128.81.14 "sqlite3 /opt/pulse/data/pulse.db '.schema imap_accounts'"
@@ -2042,7 +2042,7 @@ ssh root@178.128.81.14 "sqlite3 /opt/pulse/data/pulse.db '.schema imap_accounts'
 
 Expected: `CREATE TABLE imap_accounts (...)` printed.
 
-- [ ] **Step 4: Verify the next-day backup ran**
+- [x] **Step 4: Verify the next-day backup ran**
 
 (If you do this verification 24h+ after cutover.)
 
@@ -2052,7 +2052,7 @@ ssh root@178.128.81.14 'ls /opt/pulse/data/backups/'
 
 Expected: at least one `pulse-YYYY-MM-DD.db` file dated after the cutover. If the timer hasn't fired yet, manually trigger and verify (already done in Task 19 step 3).
 
-- [ ] **Step 5: Verify `git status` is clean and CI is green on `main`**
+- [x] **Step 5: Verify `git status` is clean and CI is green on `main`**
 
 ```bash
 git status
