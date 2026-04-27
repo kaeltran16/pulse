@@ -102,7 +102,11 @@ jobs:
 
       - name: Up backend
         run: |
-          ssh "$DEPLOY_HOST" "cd $DEPLOY_PATH && docker compose up -d backend && docker compose ps"
+          ssh "$DEPLOY_HOST" "cd $DEPLOY_PATH && docker compose up -d backend"
+
+      - name: Up worker
+        run: |
+          ssh "$DEPLOY_HOST" "cd $DEPLOY_PATH && docker compose up -d worker && docker compose ps"
 
       - name: Smoke test
         env:
