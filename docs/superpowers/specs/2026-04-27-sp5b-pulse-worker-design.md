@@ -85,8 +85,8 @@ These are settled inputs to 5b's implementation plan and **not** open for reliti
    Apply per-tick soft cap of 50 (decision §2 row 11).
 
 5. For each kept UID (sequential, await each):
-   a. fetch envelope + body (text/plain preferred, text/html stripped if no plain part)
-   b. plaintext := extractPlaintext(struct, body)  // lib/email/extract.ts
+   a. fetch full RFC822 source via imapflow `client.fetchOne(uid, { source: true, envelope: true })`
+   b. plaintext := await extractPlaintext(msg.source)  // lib/email/extract.ts via mailparser
    c. truncated  := plaintext.slice(0, 4096)
    d. text := `Subject: ${envelope.subject}\n\n${truncated}`
    e. contentHash := sha256(envelope.subject + '\n' + plaintext)
@@ -134,7 +134,7 @@ These are settled inputs to 5b's implementation plan and **not** open for reliti
 
 - **`occurredAt`** comes from the email envelope `date` (when the bank sent the alert), **not** `Date.now()`. Critical for the 60-day recurring window — using `now` would mis-bucket alerts about transactions that happened weeks ago.
 - **Recurring heuristic runs inside the same transaction as the INSERT** (specifically: query `findRecurringCandidates` *before* the INSERT). SQLite's read-then-write inside a transaction makes this trivial.
-- **Body extraction:** prefer `text/plain` MIME part; fall back to stripping `text/html` with `node-html-parser`. Truncate to 4 KB *after* strip.
+- **Body extraction:** `mailparser.simpleParser` over the RFC822 source returns `parsed.text` either as the original `text/plain` part or (when only `text/html` is present) as mailparser's auto-converted plaintext. Truncate to 4 KB *after* extraction.
 - **Sequential per-UID processing:** an LLM error on UID 3 of 10 means we break out of the loop and retry the whole tick later. UIDs 1–2 already have rows + are marked seen, so the retry naturally resumes from UID 3 next tick.
 
 ---
@@ -147,7 +147,7 @@ These are settled inputs to 5b's implementation plan and **not** open for reliti
 |---|---|
 | `backend/src/lib/parse.ts` | `parseEntry(deps, input): Promise<ParseResponse>`. Owns the model call + Zod validation + raw-output logging. Throws `UpstreamError` on LLM/network failure; throws `ZodError` on schema failure. Pure function; injectable `LlmClient` and `Logger`. |
 | `backend/src/lib/crypto/credentials.ts` | `encryptCredential(plaintext, keyHex): string` and `decryptCredential(ciphertext, keyHex): string`. ~25 lines total. `keyHex` decoded from hex into a 32-byte Buffer. Decrypt throws on tag mismatch (fail closed). |
-| `backend/src/lib/email/extract.ts` | `extractPlaintext(struct, body): string`. Picks `text/plain` if present; else strips `text/html` via `node-html-parser`; else returns empty string. **Untruncated** — caller truncates. Pure function, fixture-tested. |
+| `backend/src/lib/email/extract.ts` | `extractPlaintext(rfc822: Buffer): Promise<string>`. Wraps `mailparser.simpleParser`; returns `parsed.text` if present (already plaintext for `text/plain` parts; mailparser auto-converts HTML→text via its built-in `html-to-text`), else empty string. **Untruncated** — caller truncates. Async; fixture-tested. |
 | `backend/src/lib/seedImapAccount.ts` | The seeder's pure logic, extracted for testability: `seedImapAccount({ db, imapFactory, crypto }, { email, password, allowlist }): Promise<{ id: number }>`. Validates against IMAP, encrypts, inserts, returns id. Throws on auth failure or duplicate email. |
 | `backend/src/worker/imap.ts` | `pollAccount(args)` — owns search-by-UID-range or search-by-date, allowlist filter on envelope, sequential body fetch, per-tick soft cap of 50. Mockable for unit tests via injected `client: ImapFlow`. |
 | `backend/src/worker/recurring.ts` | `isRecurring(prior: SyncedEntry[], candidate: { cents; currency }): boolean`. Pure implementation of decision §2 row 5. Table-tested. |
@@ -164,7 +164,7 @@ These are settled inputs to 5b's implementation plan and **not** open for reliti
 | `backend/src/config.ts` | Split `loadConfig()` into `loadHttpConfig()` (existing fields, keeps the existing exported `loadConfig` as an alias for backwards compat) and `loadWorkerConfig()` (HTTP fields minus `PORT`/`RATE_LIMIT_PER_MIN`, plus `PULSE_IMAP_ENCRYPTION_KEY: regex(/^[0-9a-fA-F]{64}$/)`). |
 | `backend/deploy/compose.yml` | Add the `worker` service alongside `backend`. Same image, `command: node dist/backend/src/worker/index.js`. No port mapping. `depends_on: { migrator: { condition: service_completed_successfully } }`. `restart: unless-stopped`. |
 | `.github/workflows/deploy-backend.yml` | After "Up backend", add a step: `ssh "$DEPLOY_HOST" "cd $DEPLOY_PATH && docker compose up -d worker"`. Same `up -d` semantics — recreates if image changed, otherwise no-op. |
-| `backend/package.json` | Add deps: `imapflow`, `node-html-parser`. No new devDeps. |
+| `backend/package.json` | Add deps: `imapflow`, `mailparser`. Add devDep: `@types/mailparser`. |
 
 ### Existing files unchanged
 
