@@ -23,6 +23,7 @@ describe('SP4a migration', () => {
       'session_sets',
       'sessions',
       'spending_entries',
+      'sync_cursor',
     ]);
   });
 
@@ -45,6 +46,7 @@ describe('SP4a migration', () => {
       'idx_sessions_one_draft',
       'idx_sessions_started_at',
       'idx_spending_occurred_at',
+      'idx_spending_synced_entry_id',
     ]);
   });
 

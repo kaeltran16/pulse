@@ -26,9 +26,17 @@ export const spendingEntries = sqliteTable(
     note: text('note'),
     category: text('category'),
     occurredAt: integer('occurred_at').notNull(),
+    // SP5c: sync metadata. Hand-logged entries leave these at defaults.
+    merchant: text('merchant'),
+    currency: text('currency').notNull().default('USD'),
+    recurring: integer('recurring', { mode: 'boolean' }).notNull().default(false),
+    syncedEntryId: integer('synced_entry_id'),
   },
   (t) => ({
     occurredAtIdx: index('idx_spending_occurred_at').on(t.occurredAt),
+    syncedEntryIdIdx: uniqueIndex('idx_spending_synced_entry_id')
+      .on(t.syncedEntryId)
+      .where(sql`synced_entry_id IS NOT NULL`),
   }),
 );
 
@@ -180,6 +188,18 @@ export const prs = sqliteTable('prs', {
     .references(() => sessions.id, { onDelete: 'cascade' }),
   achievedAt: integer('achieved_at').notNull(),
 });
+
+// SP5c: single-row cursor table tracking last successfully-synced entry per
+// connected account. The (id = 1) CHECK is added by hand in 0004_*.sql since
+// Drizzle's column DSL cannot express it.
+export const syncCursor = sqliteTable('sync_cursor', {
+  id: integer('id').primaryKey(),
+  accountId: integer('account_id'),
+  lastSyncedId: integer('last_synced_id').notNull().default(0),
+  updatedAt: integer('updated_at').notNull().default(0),
+});
+
+export type SyncCursor = typeof syncCursor.$inferSelect;
 
 export type Goals = typeof goals.$inferSelect;
 export type Ritual = typeof rituals.$inferSelect;
