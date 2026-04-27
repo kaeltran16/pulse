@@ -24,13 +24,13 @@
 - Create: `app/(tabs)/you/index.tsx`
 - Create: `app/(tabs)/you/email-sync/_layout.tsx`
 
-- [ ] **Step 1: Delete the existing `you.tsx` stub**
+- [x] **Step 1: Delete the existing `you.tsx` stub**
 
 ```bash
 git rm app/(tabs)/you.tsx
 ```
 
-- [ ] **Step 2: Create the You stack layout**
+- [x] **Step 2: Create the You stack layout**
 
 Create `app/(tabs)/you/_layout.tsx`:
 
@@ -42,7 +42,7 @@ export default function YouLayout() {
 }
 ```
 
-- [ ] **Step 3: Create a placeholder index that proves the route resolves**
+- [x] **Step 3: Create a placeholder index that proves the route resolves**
 
 Create `app/(tabs)/you/index.tsx`:
 
@@ -61,7 +61,7 @@ export default function YouTabLanding() {
 }
 ```
 
-- [ ] **Step 4: Create the nested email-sync stack layout**
+- [x] **Step 4: Create the nested email-sync stack layout**
 
 Create `app/(tabs)/you/email-sync/_layout.tsx`:
 
@@ -73,7 +73,7 @@ export default function EmailSyncLayout() {
 }
 ```
 
-- [ ] **Step 5: Verify typecheck + tests still green**
+- [x] **Step 5: Verify typecheck + tests still green**
 
 ```bash
 npx tsc --noEmit
@@ -82,7 +82,7 @@ npm test
 
 Expected: tsc clean; test count unchanged (~331).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/(tabs)/you/_layout.tsx app/(tabs)/you/index.tsx app/(tabs)/you/email-sync/_layout.tsx
@@ -98,7 +98,7 @@ git commit -m "feat(sp5d): scaffold You route group with nested email-sync stack
 
 This is a pure UI helper (no network, no DB). No tests — covered by visual smoke. Lives in `lib/sync/` because it's used only by the Sync card.
 
-- [ ] **Step 1: Implement the hook**
+- [x] **Step 1: Implement the hook**
 
 Create `lib/sync/useRelativeTime.ts`:
 
@@ -139,7 +139,7 @@ export function useRelativeTime(timestamp: number | null | undefined): string | 
 }
 ```
 
-- [ ] **Step 2: Verify typecheck**
+- [x] **Step 2: Verify typecheck**
 
 ```bash
 npx tsc --noEmit
@@ -147,7 +147,7 @@ npx tsc --noEmit
 
 Expected: clean.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/sync/useRelativeTime.ts
@@ -161,7 +161,7 @@ git commit -m "feat(sp5d): useRelativeTime hook with 60s tick"
 **Files:**
 - Create: `lib/sync/categoryColor.ts`
 
-- [ ] **Step 1: Implement the map**
+- [x] **Step 1: Implement the map**
 
 Create `lib/sync/categoryColor.ts`:
 
@@ -195,7 +195,7 @@ export function categoryToToken(category: string | null | undefined): string {
 }
 ```
 
-- [ ] **Step 2: Verify typecheck**
+- [x] **Step 2: Verify typecheck**
 
 ```bash
 npx tsc --noEmit
@@ -203,7 +203,7 @@ npx tsc --noEmit
 
 Expected: clean.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/sync/categoryColor.ts
@@ -218,7 +218,7 @@ git commit -m "feat(sp5d): categoryColor map for Subscriptions stacked bar"
 - Create: `lib/db/queries/syncedEntries.ts`
 - Create: `lib/db/queries/__tests__/syncedEntries.test.ts`
 
-- [ ] **Step 1: Write the failing tests for `recentSynced`**
+- [x] **Step 1: Write the failing tests for `recentSynced`**
 
 Create `lib/db/queries/__tests__/syncedEntries.test.ts`:
 
@@ -281,7 +281,7 @@ describe('recentSynced', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to confirm they fail**
+- [x] **Step 2: Run the tests to confirm they fail**
 
 ```bash
 npm test -- syncedEntries
@@ -289,7 +289,7 @@ npm test -- syncedEntries
 
 Expected: FAIL — "recentSynced is not a function" (module doesn't exist yet).
 
-- [ ] **Step 3: Implement `recentSynced`**
+- [x] **Step 3: Implement `recentSynced`**
 
 Create `lib/db/queries/syncedEntries.ts`:
 
@@ -331,7 +331,7 @@ export function recentSynced(db: AnyDb, limit = 6): SyncedRow[] {
 }
 ```
 
-- [ ] **Step 4: Run the tests to confirm they pass**
+- [x] **Step 4: Run the tests to confirm they pass**
 
 ```bash
 npm test -- syncedEntries
@@ -339,7 +339,7 @@ npm test -- syncedEntries
 
 Expected: 4 tests PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/queries/syncedEntries.ts lib/db/queries/__tests__/syncedEntries.test.ts
@@ -354,7 +354,7 @@ git commit -m "feat(sp5d): recentSynced query with TDD coverage"
 - Modify: `lib/db/queries/syncedEntries.ts`
 - Modify: `lib/db/queries/__tests__/syncedEntries.test.ts`
 
-- [ ] **Step 1: Append failing tests for `syncedStats`**
+- [x] **Step 1: Append failing tests for `syncedStats`**
 
 Append to `lib/db/queries/__tests__/syncedEntries.test.ts`:
 
@@ -414,7 +414,7 @@ describe('syncedStats', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to confirm they fail**
+- [x] **Step 2: Run the tests to confirm they fail**
 
 ```bash
 npm test -- syncedEntries
@@ -422,7 +422,7 @@ npm test -- syncedEntries
 
 Expected: FAIL — "syncedStats is not a function".
 
-- [ ] **Step 3: Implement `syncedStats`**
+- [x] **Step 3: Implement `syncedStats`**
 
 Append to `lib/db/queries/syncedEntries.ts`:
 
@@ -458,7 +458,7 @@ export function syncedStats(db: AnyDb, now: Date = new Date()): SyncedStats {
 }
 ```
 
-- [ ] **Step 4: Run the tests to confirm they pass**
+- [x] **Step 4: Run the tests to confirm they pass**
 
 ```bash
 npm test -- syncedEntries
@@ -466,7 +466,7 @@ npm test -- syncedEntries
 
 Expected: 9 tests PASS (4 from Task 4 + 5 new).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/queries/syncedEntries.ts lib/db/queries/__tests__/syncedEntries.test.ts
@@ -481,7 +481,7 @@ git commit -m "feat(sp5d): syncedStats query with TDD coverage"
 - Modify: `lib/db/queries/syncedEntries.ts`
 - Modify: `lib/db/queries/__tests__/syncedEntries.test.ts`
 
-- [ ] **Step 1: Append failing tests for `subscriptionList`**
+- [x] **Step 1: Append failing tests for `subscriptionList`**
 
 Append to `lib/db/queries/__tests__/syncedEntries.test.ts`:
 
@@ -565,7 +565,7 @@ describe('subscriptionList', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to confirm they fail**
+- [x] **Step 2: Run the tests to confirm they fail**
 
 ```bash
 npm test -- syncedEntries
@@ -573,7 +573,7 @@ npm test -- syncedEntries
 
 Expected: FAIL — "subscriptionList is not a function" / "MS_PER_DAY_30 is not exported".
 
-- [ ] **Step 3: Implement `subscriptionList`**
+- [x] **Step 3: Implement `subscriptionList`**
 
 Append to `lib/db/queries/syncedEntries.ts`:
 
@@ -636,7 +636,7 @@ export function subscriptionList(db: AnyDb): SubscriptionGroup[] {
 }
 ```
 
-- [ ] **Step 4: Run the tests to confirm they pass**
+- [x] **Step 4: Run the tests to confirm they pass**
 
 ```bash
 npm test -- syncedEntries
@@ -644,7 +644,7 @@ npm test -- syncedEntries
 
 Expected: 16 tests PASS (4 + 5 + 7 new).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/queries/syncedEntries.ts lib/db/queries/__tests__/syncedEntries.test.ts
@@ -660,7 +660,7 @@ git commit -m "feat(sp5d): subscriptionList query with TDD coverage"
 
 This hook owns the dashboard's server-state surface (per spec §3.5). No tests — AppState wiring isn't unit-testable in this codebase (mirrors existing `app/_layout.tsx` AppState wiring which is also untested); covered by visual smoke.
 
-- [ ] **Step 1: Implement the hook**
+- [x] **Step 1: Implement the hook**
 
 Create `lib/sync/useImapStatus.ts`:
 
@@ -718,7 +718,7 @@ export function useImapStatus(): UseImapStatusResult {
 }
 ```
 
-- [ ] **Step 2: Verify typecheck**
+- [x] **Step 2: Verify typecheck**
 
 ```bash
 npx tsc --noEmit
@@ -726,7 +726,7 @@ npx tsc --noEmit
 
 Expected: clean.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/sync/useImapStatus.ts
@@ -742,7 +742,7 @@ git commit -m "feat(sp5d): useImapStatus hook (mount + foreground + on-demand)"
 
 This task builds the full sectioned-list UI with all rows visible-but-disabled. Tasks 9–10 wire the two functional rows (Email sync, Subscriptions) on top of this scaffold.
 
-- [ ] **Step 1: Replace placeholder with the sectioned list**
+- [x] **Step 1: Replace placeholder with the sectioned list**
 
 Replace `app/(tabs)/you/index.tsx` with:
 
@@ -854,7 +854,7 @@ export default function YouTabLanding() {
 }
 ```
 
-- [ ] **Step 2: Run web target to visually confirm**
+- [x] **Step 2: Run web target to visually confirm**
 
 ```bash
 npm run web
@@ -862,7 +862,7 @@ npm run web
 
 Open the You tab in the browser. Expected: sectioned list renders with all rows greyed; no taps respond. Stop the dev server.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/(tabs)/you/index.tsx
@@ -876,7 +876,7 @@ git commit -m "feat(sp5d): You tab landing skeleton with disabled scaffold rows"
 **Files:**
 - Modify: `app/(tabs)/you/index.tsx`
 
-- [ ] **Step 1: Replace the disabled email-sync row with a status-driven implementation**
+- [x] **Step 1: Replace the disabled email-sync row with a status-driven implementation**
 
 In `app/(tabs)/you/index.tsx`, add at top:
 
@@ -969,7 +969,7 @@ Pass `valueElement` for the Email sync row:
 },
 ```
 
-- [ ] **Step 2: Verify typecheck**
+- [x] **Step 2: Verify typecheck**
 
 ```bash
 npx tsc --noEmit
@@ -977,7 +977,7 @@ npx tsc --noEmit
 
 Expected: clean.
 
-- [ ] **Step 3: Verify tests still green**
+- [x] **Step 3: Verify tests still green**
 
 ```bash
 npm test
@@ -985,7 +985,7 @@ npm test
 
 Expected: no regression (~16 + existing).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/(tabs)/you/index.tsx
@@ -999,7 +999,7 @@ git commit -m "feat(sp5d): wire functional Email sync row with status pill"
 **Files:**
 - Modify: `app/(tabs)/you/index.tsx`
 
-- [ ] **Step 1: Add live monthly total to the Subscriptions row**
+- [x] **Step 1: Add live monthly total to the Subscriptions row**
 
 In `app/(tabs)/you/index.tsx`, add imports:
 
@@ -1039,7 +1039,7 @@ Replace the Subscriptions row in the `Money` section:
 
 (Bills row stays disabled.)
 
-- [ ] **Step 2: Verify typecheck**
+- [x] **Step 2: Verify typecheck**
 
 ```bash
 npx tsc --noEmit
@@ -1047,7 +1047,7 @@ npx tsc --noEmit
 
 Expected: clean. (`Subscriptions` route is created in Task 24; for now `router.push` will resolve at runtime — that's fine, web smoke covers it after Task 24.)
 
-- [ ] **Step 3: Verify tests still green**
+- [x] **Step 3: Verify tests still green**
 
 ```bash
 npm test
@@ -1055,7 +1055,7 @@ npm test
 
 Expected: no regression.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/(tabs)/you/index.tsx
@@ -1069,7 +1069,7 @@ git commit -m "feat(sp5d): wire functional Subscriptions row with live monthly t
 **Files:**
 - Create: `app/(tabs)/you/email-sync/intro.tsx`
 
-- [ ] **Step 1: Build the screen**
+- [x] **Step 1: Build the screen**
 
 Create `app/(tabs)/you/email-sync/intro.tsx`:
 
@@ -1169,7 +1169,7 @@ export default function EmailSyncIntroScreen() {
 }
 ```
 
-- [ ] **Step 2: Web smoke**
+- [x] **Step 2: Web smoke**
 
 ```bash
 npm run web
@@ -1177,7 +1177,7 @@ npm run web
 
 You tab → "Email sync" → Intro renders. Tapping "Set up Gmail sync" 404s for now (Connect screen is Task 12). Stop dev server.
 
-- [ ] **Step 3: Verify typecheck**
+- [x] **Step 3: Verify typecheck**
 
 ```bash
 npx tsc --noEmit
@@ -1185,7 +1185,7 @@ npx tsc --noEmit
 
 Expected: clean.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/(tabs)/you/email-sync/intro.tsx
@@ -1201,7 +1201,7 @@ git commit -m "feat(sp5d): EmailSyncIntroScreen with copy amendment per meta-spe
 
 This task builds the form skeleton (fields, layout, advanced section). Tasks 13–14 wire submit + error mapping.
 
-- [ ] **Step 1: Build the screen scaffold**
+- [x] **Step 1: Build the screen scaffold**
 
 Create `app/(tabs)/you/email-sync/connect.tsx`:
 
@@ -1333,7 +1333,7 @@ export default function EmailSyncConnectScreen() {
 }
 ```
 
-- [ ] **Step 2: Web smoke**
+- [x] **Step 2: Web smoke**
 
 ```bash
 npm run web
@@ -1341,7 +1341,7 @@ npm run web
 
 Navigate to Connect via Intro. Form renders, fields accept input, advanced disclosure expands. Save button is grey when fields empty, blue when filled. Tap Save → no-op (next task wires it). Stop dev server.
 
-- [ ] **Step 3: Verify typecheck**
+- [x] **Step 3: Verify typecheck**
 
 ```bash
 npx tsc --noEmit
@@ -1349,7 +1349,7 @@ npx tsc --noEmit
 
 Expected: clean.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/(tabs)/you/email-sync/connect.tsx
@@ -1363,7 +1363,7 @@ git commit -m "feat(sp5d): EmailSyncConnectScreen form scaffold (no submit yet)"
 **Files:**
 - Modify: `app/(tabs)/you/email-sync/connect.tsx`
 
-- [ ] **Step 1: Add submit handler with success path**
+- [x] **Step 1: Add submit handler with success path**
 
 In `connect.tsx`, add imports (only what Task 13 needs — Task 14 adds the error classes):
 
@@ -1428,7 +1428,7 @@ Update the Save header button:
 </Pressable>
 ```
 
-- [ ] **Step 2: Verify typecheck**
+- [x] **Step 2: Verify typecheck**
 
 ```bash
 npx tsc --noEmit
@@ -1436,7 +1436,7 @@ npx tsc --noEmit
 
 Expected: clean.
 
-- [ ] **Step 3: Verify tests still green**
+- [x] **Step 3: Verify tests still green**
 
 ```bash
 npm test
@@ -1444,7 +1444,7 @@ npm test
 
 Expected: no regression.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/(tabs)/you/email-sync/connect.tsx
@@ -1458,7 +1458,7 @@ git commit -m "feat(sp5d): wire Connect submit with success-path replace to dash
 **Files:**
 - Modify: `app/(tabs)/you/email-sync/connect.tsx`
 
-- [ ] **Step 1: Import error classes + Linking**
+- [x] **Step 1: Import error classes + Linking**
 
 In `connect.tsx`, add imports:
 
@@ -1468,7 +1468,7 @@ import { Linking } from 'react-native';
 import { ValidationError, AuthError, NetworkError, RateLimitError, UpstreamError } from '@/lib/sync/errors';
 ```
 
-- [ ] **Step 2: Add an error-mapping helper**
+- [x] **Step 2: Add an error-mapping helper**
 
 Add above `EmailSyncConnectScreen`:
 
@@ -1504,7 +1504,7 @@ function mapConnectError(e: unknown): BannerSpec {
 }
 ```
 
-- [ ] **Step 3: Update the submit handler**
+- [x] **Step 3: Update the submit handler**
 
 Replace the existing `onSave` body:
 
@@ -1552,11 +1552,11 @@ Render the banner above the Account section (insert after the nav row, before th
 )}
 ```
 
-- [ ] **Step 4: Remove the now-superseded `bannerError` state and its temporary banner**
+- [x] **Step 4: Remove the now-superseded `bannerError` state and its temporary banner**
 
 Delete the `bannerError` state declaration from Task 13 (`const [bannerError, setBannerError] = useState<string | null>(null);`) and the temporary banner JSX block from Task 13 (the one rendered when `bannerError` is set). The new `banner` state and richer banner JSX above replace both.
 
-- [ ] **Step 5: Verify typecheck**
+- [x] **Step 5: Verify typecheck**
 
 ```bash
 npx tsc --noEmit
@@ -1564,7 +1564,7 @@ npx tsc --noEmit
 
 Expected: clean.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/(tabs)/you/email-sync/connect.tsx
@@ -1580,7 +1580,7 @@ git commit -m "feat(sp5d): Connect inline error banner with mapped copy + linkin
 
 This task builds the Dashboard up to the Sync card. Stats tiles, Pal card, Recently synced, settings, disconnect, sync-now, error banner ship in Tasks 16–22.
 
-- [ ] **Step 1: Build the skeleton**
+- [x] **Step 1: Build the skeleton**
 
 Create `app/(tabs)/you/email-sync/dashboard.tsx`:
 
@@ -1672,7 +1672,7 @@ export default function EmailSyncDashboard() {
 }
 ```
 
-- [ ] **Step 2: Web smoke**
+- [x] **Step 2: Web smoke**
 
 ```bash
 npm run web
@@ -1680,7 +1680,7 @@ npm run web
 
 Tap the You tab → "Email sync" row routes to either Intro (if not connected) or Dashboard (if connected). Without a real connected account in the local DB, this lands on Intro. To smoke the Dashboard skeleton, you can temporarily simulate by hitting the route directly: navigate to `/you/email-sync/dashboard` in the browser URL — you'll see the loading state, then the bounce to Intro. Stop dev server.
 
-- [ ] **Step 3: Verify typecheck**
+- [x] **Step 3: Verify typecheck**
 
 ```bash
 npx tsc --noEmit
@@ -1688,7 +1688,7 @@ npx tsc --noEmit
 
 Expected: clean.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/(tabs)/you/email-sync/dashboard.tsx
@@ -1702,7 +1702,7 @@ git commit -m "feat(sp5d): EmailSyncDashboard skeleton with Sync card + relative
 **Files:**
 - Modify: `app/(tabs)/you/email-sync/dashboard.tsx`
 
-- [ ] **Step 1: Add live-query stats**
+- [x] **Step 1: Add live-query stats**
 
 In `dashboard.tsx`, add imports:
 
@@ -1750,7 +1750,7 @@ After the Sync card `View`, append:
 </View>
 ```
 
-- [ ] **Step 2: Verify typecheck + tests**
+- [x] **Step 2: Verify typecheck + tests**
 
 ```bash
 npx tsc --noEmit
@@ -1759,7 +1759,7 @@ npm test
 
 Expected: clean + green.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/(tabs)/you/email-sync/dashboard.tsx
@@ -1773,7 +1773,7 @@ git commit -m "feat(sp5d): Dashboard stats tiles via useLiveQuery"
 **Files:**
 - Modify: `app/(tabs)/you/email-sync/dashboard.tsx`
 
-- [ ] **Step 1: Add Recently-synced section**
+- [x] **Step 1: Add Recently-synced section**
 
 Add import:
 
@@ -1833,7 +1833,7 @@ function RecentRow({ row, isLast, palette }: { row: SyncedRow; isLast: boolean; 
 }
 ```
 
-- [ ] **Step 2: Verify typecheck + tests**
+- [x] **Step 2: Verify typecheck + tests**
 
 ```bash
 npx tsc --noEmit
@@ -1842,7 +1842,7 @@ npm test
 
 Expected: clean + green.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/(tabs)/you/email-sync/dashboard.tsx
@@ -1856,7 +1856,7 @@ git commit -m "feat(sp5d): Dashboard Recently synced list with empty-state place
 **Files:**
 - Modify: `app/(tabs)/you/email-sync/dashboard.tsx`
 
-- [ ] **Step 1: Compute monthly total + render the Pal card**
+- [x] **Step 1: Compute monthly total + render the Pal card**
 
 Add import:
 
@@ -1905,7 +1905,7 @@ After the stats tiles `View` and BEFORE the Recently-synced section, insert:
 
 Add `Pressable` to the imports if not already present.
 
-- [ ] **Step 2: Verify typecheck + tests**
+- [x] **Step 2: Verify typecheck + tests**
 
 ```bash
 npx tsc --noEmit
@@ -1914,7 +1914,7 @@ npm test
 
 Expected: clean + green.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/(tabs)/you/email-sync/dashboard.tsx
@@ -1928,7 +1928,7 @@ git commit -m "feat(sp5d): Dashboard Pal-noticed card (hidden when count=0)"
 **Files:**
 - Modify: `app/(tabs)/you/email-sync/dashboard.tsx`
 
-- [ ] **Step 1: Add the settings list section**
+- [x] **Step 1: Add the settings list section**
 
 After the Recently-synced section, append:
 
@@ -2012,7 +2012,7 @@ Add `SymbolView` to imports:
 import { SymbolView } from 'expo-symbols';
 ```
 
-- [ ] **Step 2: Verify typecheck + tests**
+- [x] **Step 2: Verify typecheck + tests**
 
 ```bash
 npx tsc --noEmit
@@ -2021,7 +2021,7 @@ npm test
 
 Expected: clean + green.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/(tabs)/you/email-sync/dashboard.tsx
@@ -2035,7 +2035,7 @@ git commit -m "feat(sp5d): Dashboard Sync settings list (Detected senders intera
 **Files:**
 - Modify: `app/(tabs)/you/email-sync/dashboard.tsx`
 
-- [ ] **Step 1: Render banner above the Sync card when status is non-active**
+- [x] **Step 1: Render banner above the Sync card when status is non-active**
 
 Inside the connected branch return, immediately before the Sync card section:
 
@@ -2066,7 +2066,7 @@ Inside the connected branch return, immediately before the Sync card section:
 )}
 ```
 
-- [ ] **Step 2: Verify typecheck + tests**
+- [x] **Step 2: Verify typecheck + tests**
 
 ```bash
 npx tsc --noEmit
@@ -2075,7 +2075,7 @@ npm test
 
 Expected: clean + green.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/(tabs)/you/email-sync/dashboard.tsx
@@ -2089,7 +2089,7 @@ git commit -m "feat(sp5d): Dashboard error/paused banner with Reconnect CTA"
 **Files:**
 - Modify: `app/(tabs)/you/email-sync/dashboard.tsx`
 
-- [ ] **Step 1: Add Sync-now state + handler**
+- [x] **Step 1: Add Sync-now state + handler**
 
 Add imports:
 
@@ -2171,7 +2171,7 @@ Add a Sync-now button at the bottom of the Sync card (inside the Sync card View,
 )}
 ```
 
-- [ ] **Step 2: Verify typecheck + tests**
+- [x] **Step 2: Verify typecheck + tests**
 
 ```bash
 npx tsc --noEmit
@@ -2180,7 +2180,7 @@ npm test
 
 Expected: clean + green.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/(tabs)/you/email-sync/dashboard.tsx
@@ -2194,7 +2194,7 @@ git commit -m "feat(sp5d): Dashboard Sync now button with transient feedback chi
 **Files:**
 - Modify: `app/(tabs)/you/email-sync/dashboard.tsx`
 
-- [ ] **Step 1: Add Disconnect button**
+- [x] **Step 1: Add Disconnect button**
 
 Add imports:
 
@@ -2246,7 +2246,7 @@ After the Sync settings list section (or wherever you'd like the action — keep
 </View>
 ```
 
-- [ ] **Step 2: Verify typecheck + tests**
+- [x] **Step 2: Verify typecheck + tests**
 
 ```bash
 npx tsc --noEmit
@@ -2255,7 +2255,7 @@ npm test
 
 Expected: clean + green.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/(tabs)/you/email-sync/dashboard.tsx
@@ -2269,7 +2269,7 @@ git commit -m "feat(sp5d): Dashboard Disconnect button with Alert confirmation"
 **Files:**
 - Create: `app/(tabs)/you/email-sync/senders.tsx`
 
-- [ ] **Step 1: Build the screen**
+- [x] **Step 1: Build the screen**
 
 Create `app/(tabs)/you/email-sync/senders.tsx`:
 
@@ -2341,7 +2341,7 @@ export default function AllowlistScreen() {
 }
 ```
 
-- [ ] **Step 2: Verify typecheck**
+- [x] **Step 2: Verify typecheck**
 
 ```bash
 npx tsc --noEmit
@@ -2349,7 +2349,7 @@ npx tsc --noEmit
 
 Expected: clean.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/(tabs)/you/email-sync/senders.tsx
@@ -2363,7 +2363,7 @@ git commit -m "feat(sp5d): AllowlistScreen (read-only list from imapStatus)"
 **Files:**
 - Create: `app/(tabs)/you/subscriptions.tsx`
 
-- [ ] **Step 1: Build the screen**
+- [x] **Step 1: Build the screen**
 
 Create `app/(tabs)/you/subscriptions.tsx`:
 
@@ -2543,7 +2543,7 @@ export default function SubscriptionsScreen() {
 }
 ```
 
-- [ ] **Step 2: Web smoke**
+- [x] **Step 2: Web smoke**
 
 ```bash
 npm run web
@@ -2551,7 +2551,7 @@ npm run web
 
 You tab → "Subscriptions" row → empty-state placeholder renders. (No real recurring data exists locally yet.) Stop dev server.
 
-- [ ] **Step 3: Verify typecheck + tests**
+- [x] **Step 3: Verify typecheck + tests**
 
 ```bash
 npx tsc --noEmit
@@ -2560,7 +2560,7 @@ npm test
 
 Expected: clean + green.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/(tabs)/you/subscriptions.tsx
@@ -2574,7 +2574,7 @@ git commit -m "feat(sp5d): SubscriptionsScreen with stacked-bar + heuristic next
 **Files:**
 - Modify: `docs/superpowers/specs/meta/2026-04-26-sp5-email-review-design.md`
 
-- [ ] **Step 1: Run the full smoke**
+- [x] **Step 1: Run the full smoke**
 
 ```bash
 npm test
@@ -2583,7 +2583,7 @@ npx tsc --noEmit
 
 Expected: ~341 tests green; tsc clean. Record the exact test count.
 
-- [ ] **Step 2: Web target visual smoke**
+- [x] **Step 2: Web target visual smoke**
 
 ```bash
 npm run web
@@ -2591,18 +2591,18 @@ npm run web
 
 Open the browser and walk through the full flow:
 
-- [ ] You tab → sectioned list renders, all disabled rows visibly muted, no taps respond
-- [ ] Email sync row shows "Not connected" pill (assuming no IMAP account)
-- [ ] Tap Email sync → Intro screen renders with title, how-it-works steps, app-password reassurance, "Set up Gmail sync" button
-- [ ] Tap "Set up Gmail sync" → Connect screen renders with form, advanced disclosure expands/collapses
-- [ ] Save button disabled when fields empty; enabled when both have ≥4 chars
-- [ ] Cancel returns to Intro
-- [ ] Subscriptions row in You tab → opens Subscriptions screen with empty placeholder
-- [ ] Settings list rows "Coming soon" don't navigate
+- [x] You tab → sectioned list renders, all disabled rows visibly muted, no taps respond
+- [x] Email sync row shows "Not connected" pill (assuming no IMAP account)
+- [x] Tap Email sync → Intro screen renders with title, how-it-works steps, app-password reassurance, "Set up Gmail sync" button
+- [x] Tap "Set up Gmail sync" → Connect screen renders with form, advanced disclosure expands/collapses
+- [x] Save button disabled when fields empty; enabled when both have ≥4 chars
+- [x] Cancel returns to Intro
+- [x] Subscriptions row in You tab → opens Subscriptions screen with empty placeholder
+- [x] Settings list rows "Coming soon" don't navigate
 
 Stop dev server.
 
-- [ ] **Step 3: Update SP5 meta-spec status table**
+- [x] **Step 3: Update SP5 meta-spec status table**
 
 Edit `docs/superpowers/specs/meta/2026-04-26-sp5-email-review-design.md`. In §3 "Sub-slice status," replace the line:
 
@@ -2616,7 +2616,7 @@ with:
 - **5d** ✅ Code complete 2026-04-27 — You-tab settings hub (`app/(tabs)/you/index.tsx`) with sectioned-list landing replaces the SP3b stub; functional Email-sync + Subscriptions rows, 8 disabled scaffolding rows. Three Email Sync screens (Intro, Connect, Dashboard) + AllowlistScreen + SubscriptionsScreen wired to existing SP5c `lib/sync/` client. New: `lib/db/queries/syncedEntries.ts` (`recentSynced` / `syncedStats` / `subscriptionList`), `lib/sync/useImapStatus.ts` (mount + AppState foreground + on-demand), `lib/sync/useRelativeTime.ts`, `lib/sync/categoryColor.ts`. No backend changes; no schema delta. ~16 new query tests on top of SP5c's suite. Live end-to-end smoke + iPhone Expo Go visual verification carry over to the SP5-wide deferred pass — gated on SP5b/SP5c live deploy tasks. Manual web smoke green.
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/superpowers/specs/meta/2026-04-26-sp5-email-review-design.md
