@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
 
@@ -16,6 +16,7 @@ const fmt$ = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 export default function SpendingDetail() {
   const router = useRouter();
   const [data, setData] = useState<TodaySpend>({ totalCents: 0, budgetCents: 0, entries: [] });
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -25,6 +26,18 @@ export default function SpendingDetail() {
     })();
     return () => { live = false; };
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const { syncNow } = await import('@/lib/sync/syncNow');
+      await syncNow(db);
+      const r = await getTodaySpend(db, new Date());
+      setData(r);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const overBudget = data.budgetCents > 0 && data.totalCents > data.budgetCents;
   const pct = data.budgetCents > 0 ? Math.min(1, data.totalCents / data.budgetCents) : 0;
@@ -55,7 +68,10 @@ export default function SpendingDetail() {
         )}
       </View>
 
-      <ScrollView className="flex-1 px-4">
+      <ScrollView
+        className="flex-1 px-4"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
         {data.entries.length === 0 ? (
           <View className="items-center py-12">
             <Text className="text-body text-ink3">No spending logged today.</Text>
