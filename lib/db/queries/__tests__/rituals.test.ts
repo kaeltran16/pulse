@@ -117,3 +117,66 @@ describe('hardDeleteRitual', () => {
     expect(entries.length).toBe(0);
   });
 });
+
+import { reorderRitualPositions } from '../rituals';
+
+describe('reorderRitualPositions', () => {
+  it('rewrites positions to match the supplied array order', async () => {
+    const { db } = makeTestDb();
+    const a = await insertRitual(db, sample({ title: 'A' }));
+    const b = await insertRitual(db, sample({ title: 'B' }));
+    const c = await insertRitual(db, sample({ title: 'C' }));
+    await reorderRitualPositions(db, [c, a, b]);
+    const rows = (db as any).select().from(rituals).all() as Array<{ id: number; position: number }>;
+    const byId = Object.fromEntries(rows.map((r) => [r.id, r.position]));
+    expect(byId[c]).toBe(0);
+    expect(byId[a]).toBe(1);
+    expect(byId[b]).toBe(2);
+  });
+
+  it('preserves contiguous positions [0, 1, 2, ...] with no gaps', async () => {
+    const { db } = makeTestDb();
+    const ids: number[] = [];
+    for (let i = 0; i < 5; i++) ids.push(await insertRitual(db, sample({ title: `R${i}` })));
+    const shuffled = [ids[3], ids[0], ids[4], ids[2], ids[1]];
+    await reorderRitualPositions(db, shuffled);
+    const positions = ((db as any).select().from(rituals).all() as Array<{ position: number }>)
+      .map((r) => r.position).sort((x, y) => x - y);
+    expect(positions).toEqual([0, 1, 2, 3, 4]);
+  });
+
+  it('adjacent swap → just those two move', async () => {
+    const { db } = makeTestDb();
+    const a = await insertRitual(db, sample({ title: 'A' }));
+    const b = await insertRitual(db, sample({ title: 'B' }));
+    const c = await insertRitual(db, sample({ title: 'C' }));
+    await reorderRitualPositions(db, [a, c, b]);
+    const rows = (db as any).select().from(rituals).all() as Array<{ id: number; position: number }>;
+    const byId = Object.fromEntries(rows.map((r) => [r.id, r.position]));
+    expect(byId[a]).toBe(0);
+    expect(byId[c]).toBe(1);
+    expect(byId[b]).toBe(2);
+  });
+
+  it('drag-to-end works', async () => {
+    const { db } = makeTestDb();
+    const a = await insertRitual(db, sample({ title: 'A' }));
+    const b = await insertRitual(db, sample({ title: 'B' }));
+    const c = await insertRitual(db, sample({ title: 'C' }));
+    await reorderRitualPositions(db, [b, c, a]);
+    const rows = (db as any).select().from(rituals).all() as Array<{ id: number; position: number }>;
+    const byId = Object.fromEntries(rows.map((r) => [r.id, r.position]));
+    expect(byId[a]).toBe(2);
+  });
+
+  it('drag-to-start works', async () => {
+    const { db } = makeTestDb();
+    const a = await insertRitual(db, sample({ title: 'A' }));
+    const b = await insertRitual(db, sample({ title: 'B' }));
+    const c = await insertRitual(db, sample({ title: 'C' }));
+    await reorderRitualPositions(db, [c, a, b]);
+    const rows = (db as any).select().from(rituals).all() as Array<{ id: number; position: number }>;
+    const byId = Object.fromEntries(rows.map((r) => [r.id, r.position]));
+    expect(byId[c]).toBe(0);
+  });
+});

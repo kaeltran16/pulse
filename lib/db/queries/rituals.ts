@@ -93,3 +93,13 @@ export async function hardDeleteRitual(db: AnyDb, id: number): Promise<void> {
   dx.delete(rituals).where(eq(rituals.id, id)).run();
   // ritualEntries cascade via FK ON DELETE CASCADE
 }
+
+export async function reorderRitualPositions(db: AnyDb, orderedIds: number[]): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const dx = db as any;
+  dx.transaction((tx: any) => {
+    orderedIds.forEach((id, i) => {
+      tx.update(rituals).set({ position: i }).where(eq(rituals.id, id)).run();
+    });
+  });
+}
