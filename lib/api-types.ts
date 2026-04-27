@@ -99,3 +99,48 @@ export type ReviewResponse = {
   markdown: string;
   generatedAt: string; // ISO 8601 UTC
 };
+
+// --- SP5c — Email sync ---
+
+export type ConnectRequest = {
+  email: string;
+  appPassword: string;
+  senderAllowlist?: string[];
+};
+
+export type ConnectResponse = {
+  accountId: number;
+  status: "active";
+  emailAddress: string;
+};
+
+export type ImapStatusResponse =
+  | { connected: false }
+  | {
+      connected: true;
+      accountId: number;
+      emailAddress: string;
+      status: "active" | "paused" | "error";
+      lastPolledAt: number | null;
+      lastError: string | null;
+      pollIntervalSeconds: number;
+      senderAllowlist: string[];
+    };
+
+export type SyncedEntryDTO = {
+  id: number;
+  merchant: string | null;
+  cents: number;
+  currency: string;
+  category: string | null;
+  occurredAt: number;
+  recurring: boolean;
+  emailFrom: string | null;
+};
+
+export type SyncEntriesResponse = {
+  accountId: number | null;
+  entries: SyncedEntryDTO[];
+  hasMore: boolean;
+  cursor: number;
+};
