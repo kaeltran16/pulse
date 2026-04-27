@@ -149,3 +149,42 @@ export type SyncEntriesResponse = {
   hasMore: boolean;
   cursor: number;
 };
+
+// --- /suggest-rituals + /nudge-today (SP5e) ---
+
+export type RitualCadence = 'morning' | 'evening' | 'all_day' | 'weekdays' | 'daily';
+export type RitualColor   = 'rituals' | 'accent' | 'move' | 'money' | 'cyan';
+
+export const RITUAL_ICON_SHORTLIST = [
+  'book.closed.fill', 'tray.fill', 'character.book.closed.fill',
+  'dumbbell.fill', 'books.vertical.fill', 'heart.fill',
+  'sparkles', 'cup.and.saucer.fill', 'leaf.fill', 'moon.fill',
+  'figure.walk', 'drop.fill', 'fork.knife', 'music.note',
+  'bed.double.fill', 'sun.max.fill',
+] as const;
+export type RitualIcon = typeof RITUAL_ICON_SHORTLIST[number];
+
+export type SuggestRitualsRequest = {
+  active: Array<{ title: string; cadence: RitualCadence; color: RitualColor }>;
+  recentRitualEntries?: Array<{ title: string; occurredAt: number }>;
+};
+
+export type SuggestRitualsResponse = {
+  suggestions: Array<{
+    title: string;
+    reason: string;
+    icon: RitualIcon;
+    cadence: RitualCadence;
+    color: RitualColor;
+  }>;
+};
+
+export type NudgeTodayRequest = {
+  date: string;          // YYYY-MM-DD local
+  done: number;
+  total: number;
+  remaining: Array<{ title: string; streak: number; cadence: RitualCadence }>;
+  bestStreak?: { title: string; streak: number };
+};
+
+export type NudgeTodayResponse = { sub: string };

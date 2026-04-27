@@ -1,6 +1,4 @@
-// Inlined ahead of Task 12.
-type RitualCadence = 'morning' | 'evening' | 'all_day' | 'weekdays' | 'daily';
-type RitualColor   = 'rituals' | 'accent' | 'move' | 'money' | 'cyan';
+import type { RitualCadence, RitualColor } from '@/lib/api-types';
 
 export interface DefaultRitual {
   title: string;

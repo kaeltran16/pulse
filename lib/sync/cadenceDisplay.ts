@@ -1,6 +1,6 @@
-// Inlined ahead of Task 12 (which adds RitualCadence to lib/api-types.ts).
-export type RitualCadence = 'morning' | 'evening' | 'all_day' | 'weekdays' | 'daily';
+import type { RitualCadence } from '@/lib/api-types';
 
+export type { RitualCadence };  // re-export for convenience
 export type CadenceDisplayContext = 'today' | 'builder';
 
 export function cadenceDisplay(cadence: RitualCadence, context: CadenceDisplayContext): string {
