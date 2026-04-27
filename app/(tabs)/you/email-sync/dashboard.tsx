@@ -2,7 +2,11 @@ import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 
+import { db } from '@/lib/db/client';
+import { syncedStats } from '@/lib/db/queries/syncedEntries';
+import { spendingEntries } from '@/lib/db/schema';
 import { useImapStatus } from '@/lib/sync/useImapStatus';
 import { useRelativeTime } from '@/lib/sync/useRelativeTime';
 import { useTheme } from '@/lib/theme/provider';
@@ -14,6 +18,11 @@ export default function EmailSyncDashboard() {
   const palette = colors[resolved];
   const { status, isLoading } = useImapStatus();
   const lastPolledStr = useRelativeTime(status?.connected ? status.lastPolledAt : null);
+  const liveSpending = useLiveQuery(db.select().from(spendingEntries));
+  const stats = (() => {
+    void liveSpending.data;
+    return syncedStats(db);
+  })();
 
   // If status confirms disconnected, bounce to Intro.
   useEffect(() => {
@@ -77,6 +86,28 @@ export default function EmailSyncDashboard() {
                 </Text>
               </View>
             </View>
+          </View>
+        </View>
+
+        <View className="px-3 pb-3">
+          <View
+            className="rounded-2xl bg-surface flex-row"
+            style={{ borderWidth: 0.5, borderColor: palette.hair, paddingVertical: 16 }}
+          >
+            {[
+              { label: 'This month', value: stats.thisMonth, color: palette.accent },
+              { label: 'All time',   value: stats.allTime,   color: palette.money  },
+              { label: 'Recurring',  value: stats.recurringMerchants, color: palette.rituals },
+            ].map((tile, i, arr) => (
+              <View
+                key={tile.label}
+                className="flex-1 items-center"
+                style={{ borderRightWidth: i === arr.length - 1 ? 0 : 0.5, borderRightColor: palette.hair }}
+              >
+                <Text className="text-title2" style={{ color: tile.color, fontWeight: '700' }}>{tile.value}</Text>
+                <Text className="text-caption2 text-ink3 mt-1">{tile.label}</Text>
+              </View>
+            ))}
           </View>
         </View>
       </ScrollView>
