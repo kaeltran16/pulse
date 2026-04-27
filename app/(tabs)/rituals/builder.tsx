@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -11,12 +11,14 @@ import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { db } from '@/lib/db/client';
 import { rituals, ritualEntries, type Ritual } from '@/lib/db/schema';
 import {
+  insertRitual,
   reorderRitualPositions,
   restoreRitual,
   softDeleteRitual,
 } from '@/lib/db/queries/rituals';
 import { streakForRitual } from '@/lib/db/queries/streaks';
 import { cadenceDisplay } from '@/lib/sync/cadenceDisplay';
+import { usePalSuggestions } from '@/lib/sync/usePalSuggestions';
 import { useTheme } from '@/lib/theme/provider';
 import { colors } from '@/lib/theme/tokens';
 
@@ -67,6 +69,19 @@ export default function RitualsBuilderScreen() {
 
   const onRestore = async (r: Ritual) => {
     await restoreRitual(db, r.id);
+  };
+
+  const suggestions = usePalSuggestions(active, entriesLive.data);
+
+  const onAddSuggestion = async (s: typeof suggestions.suggestions[number]) => {
+    await insertRitual(db, {
+      title: s.title,
+      icon: s.icon,
+      cadence: s.cadence,
+      color: s.color,
+      active: true,
+    });
+    await suggestions.refresh();
   };
 
   return (
@@ -147,6 +162,59 @@ export default function RitualsBuilderScreen() {
           </View>
           <Text className="text-caption2 text-ink4 mt-1 px-1">Drag to reorder · swipe to remove</Text>
         </View>
+
+        {(suggestions.loading || suggestions.error || suggestions.suggestions.length > 0) && (
+          <View className="px-3 pb-2">
+            <View className="flex-row items-center justify-between px-1 mb-1">
+              <Text className="text-caption1 text-ink3 uppercase">Suggested by Pal</Text>
+              <Pressable onPress={() => suggestions.refresh()} hitSlop={8}>
+                <SymbolView name="arrow.clockwise" size={16} tintColor={palette.ink3} />
+              </Pressable>
+            </View>
+            <View className="rounded-xl bg-surface overflow-hidden">
+              {suggestions.loading ? (
+                <View className="px-4 py-6 items-center">
+                  <ActivityIndicator size="small" color={palette.ink3} />
+                </View>
+              ) : suggestions.error ? (
+                <View className="px-4 py-3 flex-row items-center">
+                  <Text className="flex-1 text-caption1 text-ink3">Couldn't load suggestions.</Text>
+                  <Pressable onPress={() => suggestions.refresh()} hitSlop={8}>
+                    <SymbolView name="arrow.clockwise" size={14} tintColor={palette.accent} />
+                  </Pressable>
+                </View>
+              ) : (
+                suggestions.suggestions.map((s, i) => {
+                  const tile = colorTokenToHex(s.color, palette);
+                  return (
+                    <View
+                      key={`${s.title}-${i}`}
+                      className="flex-row items-center px-4 py-3"
+                      style={{
+                        borderBottomWidth: i === suggestions.suggestions.length - 1 ? 0 : 0.5,
+                        borderBottomColor: palette.hair,
+                      }}
+                    >
+                      <View
+                        className="h-9 w-9 rounded-lg items-center justify-center mr-3"
+                        style={{ backgroundColor: tile }}
+                      >
+                        <SymbolView name={s.icon as never} size={17} tintColor="#fff" />
+                      </View>
+                      <View className="flex-1 min-w-0">
+                        <Text className="text-callout text-ink" numberOfLines={1}>{s.title}</Text>
+                        <Text className="text-caption1 text-ink3 mt-1" numberOfLines={2}>{s.reason}</Text>
+                      </View>
+                      <Pressable onPress={() => onAddSuggestion(s)} hitSlop={8}>
+                        <Text className="text-callout" style={{ color: palette.accent, fontWeight: '600' }}>Add</Text>
+                      </Pressable>
+                    </View>
+                  );
+                })
+              )}
+            </View>
+          </View>
+        )}
 
         {inactive.length > 0 && (
           <View className="px-3 pb-2">
