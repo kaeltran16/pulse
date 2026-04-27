@@ -42,7 +42,7 @@ These are settled inputs to the child specs and **not** open for relitigation in
 | Receipt parser | LLM via existing `POST /parse`. Sender allowlist + IMAP-UID dedupe gate `/parse` calls so cost is ~½¢ × *novel* emails only. | Reuses SP2's pipeline; per-bank regex extractors are cut as YAGNI for a single user with 1–3 banks. |
 | Sync model | Backend writes `synced_entries` rows; iOS pulls via `GET /sync/entries?since=<cursor>`, inserts into local `spending_entries`, persists cursor. Server-side rows retained as the canonical record (not pruned after ack). | Idempotent cursors give clean replay/recovery. |
 | Backend datastore | **SQLite on the droplet.** Drizzle + `better-sqlite3`. Schema lives in `backend/src/db/`. Daily file-copy backup. | Single-user volume; matches parent meta-spec §6 YAGNI posture. |
-| Process model | **Two systemd units** on the droplet: `pulse-backend.service` (HTTP) and `pulse-worker.service` (poller). Same SQLite file (worker is the only writer of `synced_entries`). | Crash isolation; cleanly bounded units. |
+| Process model | **Two compose services** on a shared bind-mounted volume: `backend` (HTTP) and `worker` (poller, added in 5b). Both run as the `pulse-backend` OS user (UID 1500) inside the container. Same SQLite file (worker is the only writer of `synced_entries`). One `pulse-stack.service` systemd unit on the droplet brings up the compose stack at boot. (Updated in SP5a.) | Crash isolation; cleanly bounded compose services; one OS user keeps file ownership simple at one-user scale. |
 | Scope | Full design handoff for v3. | Maximalist read of the parent meta-spec's "iOS v3" line. |
 | Triggers | All Reviews / Celebrations / Close-Out triggers are **app-foreground checks** comparing local DB state to last-seen value. **No `expo-notifications`, no permission prompts, no push.** | Notifications are a separate product surface; bundling them inflates SP5 ~2×. |
 
@@ -73,7 +73,7 @@ Seven child sub-projects. Order is dependency-driven; each from 5b onward consum
 
 ### Sub-slice status
 
-- **5a** Not started.
+- **5a** ✅ Code complete 2026-04-27 — three new tables (`imap_accounts`, `synced_entries`, `imap_uids`) via Drizzle + `better-sqlite3`; query modules + cascade tests; multi-stage Dockerfile (`node:22-slim`, `USER 1500`); compose stack at `/opt/pulse/` with `migrator` + `backend` services; daily `sqlite3 .backup` via systemd timer; GH Action rebuilt for GHCR + Docker. Cutover from `/srv/pulse-backend` rsync deploy to `/opt/pulse/` Docker deploy executed live. Parent meta-spec §6 amended; this spec's §2 row 8 + §4 row 3 amended. `npm test` green (102 SP2 + 25 SP5a tests).
 - **5b** Not started.
 - **5c** Not started.
 - **5d** Not started.
@@ -89,7 +89,7 @@ Seven child sub-projects. Order is dependency-driven; each from 5b onward consum
 |---|---|---|
 | Backend `/parse` endpoint | 5b only (worker calls in-process; not over HTTP) | Deployed in SP2; live deploy still gated on `OPENROUTER_API_KEY` per parent §8a row 2. **5b is blocked on a live `/parse` deploy.** 5a / 5e / 5f / 5g are not blocked. |
 | Backend `/review` endpoint | 5g — needs `period: 'weekly' \| 'monthly'` extension and a branched prompt builder | Deployed in SP2; same `OPENROUTER_API_KEY` gate as `/parse`. |
-| DO droplet, root access | 5a (initial SQLite + Drizzle install), 5b (new systemd unit) | Already provisioned (`root@178.128.81.14`). 5a's plan adds `/var/lib/pulse-backend/` and a `pulse-worker` user; 5b's plan adds `pulse-worker.service`. |
+| DO droplet, root access | 5a (initial SQLite + Drizzle install + Docker cutover), 5b (new compose service) | Already provisioned (`root@178.128.81.14`). 5a's plan stands up `/opt/pulse/`, the `pulse-backend` user (UID 1500), and the Docker-based deploy; 5b's plan adds the `worker` compose service alongside `backend`. |
 | `deploy-backend.yml` GH Action | Extended in 5a (rsync `db/` artifacts, run migrations) and 5b (start/restart `pulse-worker.service`) | Wired in SP2. |
 | Drizzle on backend (new) | 5a sets it up; 5b/5c consume | New stack addition. Same Drizzle SDK as iOS, different driver (`better-sqlite3` instead of `expo-sqlite`). |
 | Credential encryption primitive (Node `crypto` AES-GCM, or libsodium via `sodium-native`) | **Established in 5b** (worker reads, decrypts to poll IMAP); **reused by 5c**'s `POST /imap/connect` (writes, encrypts after IMAP-validation) | Picked in 5b's spec. Key derivation from a backend env secret + per-account salt; key never logged, never returned via any HTTP route. |
