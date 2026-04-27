@@ -15,7 +15,9 @@ export type SyncedRow = {
 };
 
 export function recentSynced(db: AnyDb, limit = 6): SyncedRow[] {
-  const rows = db
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const dx = db as any;
+  const rows = dx
     .select({
       id: spendingEntries.id,
       cents: spendingEntries.cents,
