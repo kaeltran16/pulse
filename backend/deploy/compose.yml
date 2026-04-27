@@ -1,7 +1,7 @@
 # backend/deploy/compose.yml — deployed to /opt/pulse/compose.yml
 services:
   migrator:
-    image: ghcr.io/<gh-user>/pulse-backend:${IMAGE_TAG:-latest}
+    image: ghcr.io/kaeltran16/pulse-backend:${IMAGE_TAG:-latest}
     command: node dist/backend/src/db/cli/migrate.js
     user: "1500:1500"
     env_file: .env
@@ -12,7 +12,7 @@ services:
     restart: "no"
 
   backend:
-    image: ghcr.io/<gh-user>/pulse-backend:${IMAGE_TAG:-latest}
+    image: ghcr.io/kaeltran16/pulse-backend:${IMAGE_TAG:-latest}
     user: "1500:1500"
     env_file: .env
     environment:
