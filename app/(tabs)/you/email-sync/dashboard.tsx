@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
+import { SymbolView } from 'expo-symbols';
 
 import { db } from '@/lib/db/client';
 import { recentSynced, subscriptionList, syncedStats, type SyncedRow } from '@/lib/db/queries/syncedEntries';
@@ -13,6 +14,35 @@ import { useTheme } from '@/lib/theme/provider';
 import { colors } from '@/lib/theme/tokens';
 
 type Palette = typeof colors.light | typeof colors.dark;
+
+function SettingsRow({
+  icon, iconBg, title, value, onPress, palette, isLast,
+}: {
+  icon: string;
+  iconBg: string;
+  title: string;
+  value: string;
+  onPress?: () => void;
+  palette: Palette;
+  isLast: boolean;
+}) {
+  const interactive = !!onPress;
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={!interactive}
+      className="flex-row items-center px-4 py-3"
+      style={{ borderBottomWidth: isLast ? 0 : 0.5, borderBottomColor: palette.hair }}
+    >
+      <View className="h-8 w-8 rounded-lg items-center justify-center mr-3" style={{ backgroundColor: iconBg }}>
+        <SymbolView name={icon as never} size={14} tintColor="#fff" />
+      </View>
+      <Text className="flex-1 text-callout text-ink">{title}</Text>
+      <Text className="text-callout text-ink3 mr-1">{value}</Text>
+      {interactive && <Text className="text-ink4">›</Text>}
+    </Pressable>
+  );
+}
 
 function RecentRow({ row, isLast, palette }: { row: SyncedRow; isLast: boolean; palette: Palette }) {
   const dollars = `−$${(row.cents / 100).toFixed(2)}`;
@@ -179,6 +209,45 @@ export default function EmailSyncDashboard() {
                 <RecentRow key={row.id} row={row} isLast={i === recent.length - 1} palette={palette} />
               ))
             )}
+          </View>
+        </View>
+
+        <View className="px-3 pb-3">
+          <Text className="text-caption1 text-ink3 uppercase mb-1 px-1">Sync settings</Text>
+          <View className="rounded-xl bg-surface overflow-hidden">
+            <SettingsRow
+              icon="arrow.triangle.2.circlepath"
+              iconBg={palette.accent}
+              title="Background sync"
+              value={`Every ${Math.round(status.pollIntervalSeconds / 60)} min`}
+              palette={palette}
+              isLast={false}
+            />
+            <SettingsRow
+              icon="bell.fill"
+              iconBg="#FF9500"
+              title="Notify on new detection"
+              value="Off"
+              palette={palette}
+              isLast={false}
+            />
+            <SettingsRow
+              icon="sparkles"
+              iconBg={palette.rituals}
+              title="Pal auto-categorize"
+              value="On"
+              palette={palette}
+              isLast={false}
+            />
+            <SettingsRow
+              icon="magnifyingglass"
+              iconBg={palette.money}
+              title="Detected senders"
+              value={`${status.senderAllowlist.length}`}
+              onPress={() => router.push('/(tabs)/you/email-sync/senders')}
+              palette={palette}
+              isLast
+            />
           </View>
         </View>
       </ScrollView>
