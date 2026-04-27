@@ -1,0 +1,27 @@
+# backend/deploy/compose.yml — deployed to /opt/pulse/compose.yml
+services:
+  migrator:
+    image: ghcr.io/<gh-user>/pulse-backend:${IMAGE_TAG:-latest}
+    command: node dist/backend/src/db/cli/migrate.js
+    user: "1500:1500"
+    env_file: .env
+    environment:
+      DB_PATH: /data/pulse.db
+    volumes:
+      - ./data:/data
+    restart: "no"
+
+  backend:
+    image: ghcr.io/<gh-user>/pulse-backend:${IMAGE_TAG:-latest}
+    user: "1500:1500"
+    env_file: .env
+    environment:
+      DB_PATH: /data/pulse.db
+    volumes:
+      - ./data:/data
+    ports:
+      - "3000:3000"
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+    restart: unless-stopped
