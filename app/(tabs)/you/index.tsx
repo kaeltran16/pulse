@@ -1,7 +1,10 @@
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import type { ReactNode } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 
+import { useImapStatus } from '@/lib/sync/useImapStatus';
 import { useTheme } from '@/lib/theme/provider';
 import { colors } from '@/lib/theme/tokens';
 
@@ -13,6 +16,7 @@ type Row = {
   iconBg: string;
   title: string;
   value?: string;
+  valueElement?: ReactNode;
   disabled?: boolean;
   onPress?: () => void;
 };
@@ -35,17 +39,36 @@ function ListRow({ row, isLast, palette }: { row: Row; isLast: boolean; palette:
         <SymbolView name={row.icon as never} size={16} tintColor="#fff" />
       </View>
       <Text className="flex-1 text-callout text-ink">{row.title}</Text>
-      {row.value !== undefined && (
+      {row.valueElement ?? (row.value !== undefined && (
         <Text className="text-callout text-ink3 mr-1">{row.value}</Text>
-      )}
+      ))}
       {!muted && <Text className="text-ink4">›</Text>}
     </Pressable>
   );
 }
 
 export default function YouTabLanding() {
+  const router = useRouter();
   const { resolved } = useTheme();
   const palette = colors[resolved];
+  const { status, isLoading } = useImapStatus();
+
+  const emailSyncPill = (() => {
+    if (isLoading || status === null) return { text: '—', color: palette.ink4, kind: 'loading' as const };
+    if (!status.connected) return { text: 'Not connected', color: palette.ink3, kind: 'idle' as const };
+    if (status.status === 'active') return { text: 'Gmail · On', color: palette.move, kind: 'idle' as const };
+    if (status.status === 'paused') return { text: 'Paused', color: palette.money, kind: 'idle' as const };
+    return { text: 'Error', color: '#FF3B30', kind: 'idle' as const };
+  })();
+
+  const onTapEmailSync = () => {
+    if (emailSyncPill.kind === 'loading') return;
+    if (status && status.connected) {
+      router.push('/(tabs)/you/email-sync/dashboard');
+    } else {
+      router.push('/(tabs)/you/email-sync/intro');
+    }
+  };
 
   const sections: Section[] = [
     {
@@ -65,7 +88,17 @@ export default function YouTabLanding() {
     {
       title: 'Integrations',
       rows: [
-        { key: 'email-sync', icon: 'tray.fill', iconBg: palette.accent, title: 'Email sync', value: 'Not connected', disabled: true },
+        {
+          key: 'email-sync',
+          icon: 'tray.fill',
+          iconBg: palette.accent,
+          title: 'Email sync',
+          valueElement: emailSyncPill.kind === 'loading'
+            ? <ActivityIndicator size="small" color={palette.ink3} style={{ marginRight: 4 }} />
+            : <Text className="text-callout mr-1" style={{ color: emailSyncPill.color }}>{emailSyncPill.text}</Text>,
+          disabled: emailSyncPill.kind === 'loading',
+          onPress: onTapEmailSync,
+        },
       ],
     },
     {
