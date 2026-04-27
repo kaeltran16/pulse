@@ -1,15 +1,16 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { asc } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { db } from '@/lib/db/client';
-import { rituals, ritualEntries, type Ritual } from '@/lib/db/schema';
+import { goals, rituals, ritualEntries, type Ritual } from '@/lib/db/schema';
 import {
   insertRitual,
   reorderRitualPositions,
@@ -19,6 +20,12 @@ import {
 import { streakForRitual } from '@/lib/db/queries/streaks';
 import { cadenceDisplay } from '@/lib/sync/cadenceDisplay';
 import { usePalSuggestions } from '@/lib/sync/usePalSuggestions';
+import {
+  cancelDailyReminder,
+  ensurePermission,
+  reminderBody,
+  scheduleDailyReminder,
+} from '@/lib/notifications/dailyReminder';
 import { useTheme } from '@/lib/theme/provider';
 import { colors } from '@/lib/theme/tokens';
 
@@ -82,6 +89,43 @@ export default function RitualsBuilderScreen() {
       active: true,
     });
     await suggestions.refresh();
+  };
+
+  const goalsLive = useLiveQuery(db.select().from(goals).where(eq(goals.id, 1)));
+  const goalRow = goalsLive.data[0];
+  const reminderTime = goalRow?.reminderTimeMinutes ?? null;
+  const dailyTarget = goalRow?.dailyRitualTarget ?? 0;
+
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [permissionDenied, setPermissionDenied] = useState(false);
+
+  const onTimeChange = async (_event: unknown, date?: Date) => {
+    setShowTimePicker(false);
+    if (!date) return;
+    const minutes = date.getHours() * 60 + date.getMinutes();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db as any).update(goals).set({ reminderTimeMinutes: minutes }).where(eq(goals.id, 1)).run();
+    const perm = await ensurePermission();
+    if (perm === 'granted') {
+      setPermissionDenied(false);
+      await scheduleDailyReminder(minutes, reminderBody(active));
+    } else {
+      setPermissionDenied(true);
+    }
+  };
+
+  const onTurnOff = async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db as any).update(goals).set({ reminderTimeMinutes: null }).where(eq(goals.id, 1)).run();
+    await cancelDailyReminder();
+  };
+
+  const formatTime = (minutes: number): string => {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    const period = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12}:${String(m).padStart(2, '0')} ${period}`;
   };
 
   return (
@@ -260,6 +304,69 @@ export default function RitualsBuilderScreen() {
             </View>
             <Text className="text-caption2 text-ink4 mt-1 px-1">Swipe right to restore</Text>
           </View>
+        )}
+
+        <View className="px-3 pb-3">
+          <Text className="text-caption1 text-ink3 uppercase mb-1 px-1">Preferences</Text>
+          <View className="rounded-xl bg-surface overflow-hidden">
+            <Pressable
+              onPress={() => setShowTimePicker(true)}
+              className="flex-row items-center px-4 py-3"
+              style={{ borderBottomWidth: 0.5, borderBottomColor: palette.hair }}
+            >
+              <View className="h-8 w-8 rounded-lg items-center justify-center mr-3" style={{ backgroundColor: '#FF3B30' }}>
+                <SymbolView name="bell.fill" size={14} tintColor="#fff" />
+              </View>
+              <Text className="flex-1 text-callout text-ink">Remind me</Text>
+              <Text className="text-callout text-ink3 mr-1">
+                {reminderTime != null ? formatTime(reminderTime) : 'Off'}
+              </Text>
+              <Text className="text-ink4">›</Text>
+            </Pressable>
+
+            {permissionDenied && (
+              <View className="px-4 py-2" style={{ borderBottomWidth: 0.5, borderBottomColor: palette.hair }}>
+                <Text className="text-caption1" style={{ color: '#FF3B30' }}>
+                  Notifications denied. Enable in iOS Settings → Pulse.
+                </Text>
+              </View>
+            )}
+
+            {reminderTime != null && (
+              <Pressable onPress={onTurnOff} className="px-4 py-2" style={{ borderBottomWidth: 0.5, borderBottomColor: palette.hair }}>
+                <Text className="text-caption1" style={{ color: palette.accent }}>Turn off</Text>
+              </Pressable>
+            )}
+
+            <Pressable
+              onPress={() => router.push('/(tabs)/rituals/goal')}
+              className="flex-row items-center px-4 py-3"
+            >
+              <View className="h-8 w-8 rounded-lg items-center justify-center mr-3" style={{ backgroundColor: palette.accent }}>
+                <SymbolView name="target" size={14} tintColor="#fff" />
+              </View>
+              <Text className="flex-1 text-callout text-ink">Daily goal</Text>
+              <Text className="text-callout text-ink3 mr-1">{dailyTarget} of {active.length}</Text>
+              <Text className="text-ink4">›</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {showTimePicker && (
+          <DateTimePicker
+            mode="time"
+            value={(() => {
+              const d = new Date();
+              if (reminderTime != null) {
+                d.setHours(Math.floor(reminderTime / 60), reminderTime % 60, 0, 0);
+              } else {
+                d.setHours(8, 0, 0, 0);
+              }
+              return d;
+            })()}
+            onChange={onTimeChange}
+            display="spinner"
+          />
         )}
       </ScrollView>
     </SafeAreaView>
