@@ -1,13 +1,15 @@
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { SymbolView } from 'expo-symbols';
 
 import { db } from '@/lib/db/client';
 import { recentSynced, subscriptionList, syncedStats, type SyncedRow } from '@/lib/db/queries/syncedEntries';
 import { spendingEntries } from '@/lib/db/schema';
+import { AuthError } from '@/lib/sync/errors';
+import { syncNow } from '@/lib/sync/syncNow';
 import { useImapStatus } from '@/lib/sync/useImapStatus';
 import { useRelativeTime } from '@/lib/sync/useRelativeTime';
 import { useTheme } from '@/lib/theme/provider';
@@ -66,7 +68,7 @@ export default function EmailSyncDashboard() {
   const router = useRouter();
   const { resolved } = useTheme();
   const palette = colors[resolved];
-  const { status, isLoading } = useImapStatus();
+  const { status, isLoading, refetch } = useImapStatus();
   const lastPolledStr = useRelativeTime(status?.connected ? status.lastPolledAt : null);
   const liveSpending = useLiveQuery(db.select().from(spendingEntries));
   const stats = (() => {
@@ -84,6 +86,34 @@ export default function EmailSyncDashboard() {
     const total = groups.reduce((s, g) => s + g.monthlyAmountCents, 0);
     return { count: groups.length, totalDollars: Math.round(total / 100) };
   })();
+
+  const [syncing, setSyncing] = useState(false);
+  const [chip, setChip] = useState<string | null>(null);
+
+  const showChip = (msg: string) => {
+    setChip(msg);
+    setTimeout(() => setChip(null), 2000);
+  };
+
+  const onSyncNow = async () => {
+    if (syncing) return;
+    setSyncing(true);
+    try {
+      const r = await syncNow(db);
+      showChip(r.inserted === 0
+        ? 'Up to date.'
+        : `Synced ${r.inserted} new entr${r.inserted === 1 ? 'y' : 'ies'}.`);
+    } catch (e) {
+      if (e instanceof AuthError) {
+        router.replace('/(tabs)/you/email-sync/intro');
+        return;
+      }
+      showChip('Sync failed — pull to refresh.');
+    } finally {
+      setSyncing(false);
+      void refetch();
+    }
+  };
 
   // If status confirms disconnected, bounce to Intro.
   useEffect(() => {
@@ -172,6 +202,23 @@ export default function EmailSyncDashboard() {
                 </Text>
               </View>
             </View>
+            <View className="flex-row mt-3">
+              <Pressable
+                onPress={onSyncNow}
+                disabled={syncing}
+                className="flex-1 rounded-xl py-3 items-center justify-center"
+                style={{ backgroundColor: syncing ? palette.fill : palette.ink }}
+              >
+                <Text className="text-callout" style={{ color: syncing ? palette.ink2 : palette.bg, fontWeight: '600' }}>
+                  {syncing ? 'Syncing…' : 'Sync now'}
+                </Text>
+              </Pressable>
+            </View>
+            {chip && (
+              <View className="mt-2 self-start rounded-full px-3 py-1.5" style={{ backgroundColor: palette.fill }}>
+                <Text className="text-caption1 text-ink2">{chip}</Text>
+              </View>
+            )}
           </View>
         </View>
 
