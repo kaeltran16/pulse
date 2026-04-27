@@ -13,16 +13,16 @@ concurrency:
   group: deploy-backend
   cancel-in-progress: false
 
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/pulse-backend
+
 jobs:
-  deploy:
+  test-and-build:
     runs-on: ubuntu-latest
-    env:
-      DEPLOY_HOST: root@178.128.81.14
-      DEPLOY_PATH: /srv/pulse-backend
-      DROPLET_IP: 178.128.81.14
-    defaults:
-      run:
-        working-directory: backend
     steps:
       - uses: actions/checkout@v4
 
@@ -33,13 +33,48 @@ jobs:
           cache-dependency-path: backend/package-lock.json
 
       - name: Install deps
+        working-directory: backend
         run: npm ci
 
       - name: Test
+        working-directory: backend
         run: npm test
 
-      - name: Build
+      - name: Build TS
+        working-directory: backend
         run: npm run build
+
+      - name: Set up Docker buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build + push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_HOST: root@178.128.81.14
+      DEPLOY_PATH: /opt/pulse
+      DROPLET_IP: 178.128.81.14
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Configure SSH
         run: |
@@ -48,24 +83,29 @@ jobs:
           printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H "$DROPLET_IP" >> ~/.ssh/known_hosts
-        working-directory: .
 
-      - name: Rsync to droplet
+      - name: Update compose.yml on droplet
         run: |
-          rsync -avz --delete \
-            --exclude node_modules \
-            --exclude .env \
-            --exclude .env.local \
-            --exclude test \
-            dist package.json package-lock.json deploy scripts \
-            "$DEPLOY_HOST:$DEPLOY_PATH/"
+          scp backend/deploy/compose.yml "$DEPLOY_HOST:$DEPLOY_PATH/compose.yml"
 
-      - name: Install prod deps + restart service
+      - name: Set IMAGE_TAG in remote .env
         run: |
-          ssh "$DEPLOY_HOST" "set -e; cd $DEPLOY_PATH && npm ci --omit=dev && systemctl restart pulse-backend && sleep 2 && systemctl is-active pulse-backend"
+          ssh "$DEPLOY_HOST" "sed -i '/^IMAGE_TAG=/d' $DEPLOY_PATH/.env && echo 'IMAGE_TAG=${{ github.sha }}' >> $DEPLOY_PATH/.env"
+
+      - name: Pull image on droplet
+        run: |
+          ssh "$DEPLOY_HOST" "cd $DEPLOY_PATH && docker compose pull"
+
+      - name: Run migrator
+        run: |
+          ssh "$DEPLOY_HOST" "cd $DEPLOY_PATH && docker compose run --rm migrator"
+
+      - name: Up backend
+        run: |
+          ssh "$DEPLOY_HOST" "cd $DEPLOY_PATH && docker compose up -d backend && docker compose ps"
 
       - name: Smoke test
         env:
           BASE_URL: http://178.128.81.14:3000
           DEV_JWT: ${{ secrets.DEV_JWT }}
-        run: bash scripts/smoke.sh
+        run: bash backend/scripts/smoke.sh
