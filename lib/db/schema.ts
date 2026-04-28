@@ -215,6 +215,22 @@ export const palCache = sqliteTable('pal_cache', {
 
 export type PalCacheRow = typeof palCache.$inferSelect;
 
+export const ritualStreakHighWater = sqliteTable('ritual_streak_high_water', {
+  ritualId: integer('ritual_id')
+    .primaryKey()
+    .references(() => rituals.id, { onDelete: 'cascade' }),
+  hwm: integer('hwm').notNull().default(0),
+  reachedAt: integer('reached_at').notNull(),
+});
+
+export const dismissedCloseOuts = sqliteTable('dismissed_close_outs', {
+  dateKey: text('date_key').primaryKey(),
+  dismissedAt: integer('dismissed_at').notNull(),
+});
+
+export type RitualStreakHighWaterRow = typeof ritualStreakHighWater.$inferSelect;
+export type DismissedCloseOutRow = typeof dismissedCloseOuts.$inferSelect;
+
 export type Goals = typeof goals.$inferSelect;
 export type Ritual = typeof rituals.$inferSelect;
 export type SpendingEntry = typeof spendingEntries.$inferSelect;
