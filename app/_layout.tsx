@@ -122,6 +122,13 @@ function Boot({ children }: { children: React.ReactNode }) {
         // eslint-disable-next-line no-console
         console.warn('[sync] startup failed:', e);
       }
+      try {
+        const { runForegroundChecks } = await import('@/lib/sync/foregroundChecks');
+        await runForegroundChecks({ db, router: router as unknown as { push: (p: string, q?: Record<string, unknown>) => void } });
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[sp5f] startup foreground checks failed:', e);
+      }
     })();
 
     const sub = AppState.addEventListener('change', async (state: AppStateStatus) => {
@@ -135,13 +142,20 @@ function Boot({ children }: { children: React.ReactNode }) {
         // eslint-disable-next-line no-console
         console.warn('[sync] foreground failed:', e);
       }
+      try {
+        const { runForegroundChecks } = await import('@/lib/sync/foregroundChecks');
+        await runForegroundChecks({ db, router: router as unknown as { push: (p: string, q?: Record<string, unknown>) => void } });
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[sp5f] foreground checks failed:', e);
+      }
     });
 
     return () => {
       mounted = false;
       sub.remove();
     };
-  }, [success]);
+  }, [success, router]);
 
   if (error) {
     throw error;
