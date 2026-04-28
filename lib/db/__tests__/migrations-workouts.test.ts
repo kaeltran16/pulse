@@ -11,12 +11,14 @@ describe('SP4a migration', () => {
       .all() as { name: string }[];
     const names = rows.map((r) => r.name).sort();
     expect(names).toEqual([
+      'dismissed_close_outs',
       'exercises',
       'goals',
       'movement_entries',
       'pal_cache',
       'prs',
       'ritual_entries',
+      'ritual_streak_high_water',
       'rituals',
       'routine_exercises',
       'routine_sets',

@@ -16,6 +16,7 @@ import { cadenceDisplay } from '@/lib/sync/cadenceDisplay';
 import { useRitualNudge } from '@/lib/sync/useRitualNudge';
 import { useTheme } from '@/lib/theme/provider';
 import { colors } from '@/lib/theme/tokens';
+import { StreakPill } from '@/components/StreakPill';
 
 type Palette = typeof colors.light | typeof colors.dark;
 
@@ -207,8 +208,11 @@ export default function RitualsTab() {
                   <View className="flex-1 min-w-0">
                     <Text className="text-callout text-ink" numberOfLines={1}>{r.title}</Text>
                     <Text className="text-caption1 text-ink3 mt-1" numberOfLines={1}>
-                      {cadenceDisplay(r.cadence, 'today')} · {streak}-day streak 🔥
+                      {cadenceDisplay(r.cadence, 'today')}
                     </Text>
+                  </View>
+                  <View className="mr-3">
+                    <StreakPill streak={streak} tone={r.color} />
                   </View>
                   <View
                     className="h-7 w-7 rounded-lg items-center justify-center"
