@@ -22,7 +22,9 @@ type BubbleMsg =
 let _seq = 0;
 const newId = () => `b${Date.now()}_${++_seq}`;
 
-export function PalComposer({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+export function PalComposer(
+  { visible, onClose, prefill }: { visible: boolean; onClose: () => void; prefill?: string },
+) {
   const [messages, setMessages] = useState<BubbleMsg[]>([]);
   const [input, setInput] = useState('');
   const [pending, setPending] = useState(false);
@@ -37,8 +39,10 @@ export function PalComposer({ visible, onClose }: { visible: boolean; onClose: (
       setMessages([]);
       setInput('');
       setPending(false);
+    } else if (prefill) {
+      setInput(prefill);
     }
-  }, [visible]);
+  }, [visible, prefill]);
 
   useEffect(() => {
     scrollRef.current?.scrollToEnd({ animated: true });
