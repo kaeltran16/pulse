@@ -2,6 +2,8 @@ import { and, eq, gte, lt, sql } from 'drizzle-orm';
 
 import { rituals, ritualEntries, type RitualCadence, type RitualColor } from '../schema';
 import { type AnyDb } from './onboarding';
+import { streakForRitual } from './streaks';
+import { bumpHwmIfHigher } from './streakHighWater';
 
 export interface InsertRitualInput {
   title: string;
@@ -134,10 +136,19 @@ export async function toggleRitualToday(db: AnyDb, ritualId: number, todayKey: s
         lt(ritualEntries.occurredAt, endMs),
       ))
       .run();
-  } else {
-    dx.insert(ritualEntries).values({
-      ritualId,
-      occurredAt: Date.now(),
-    }).run();
+    return;
   }
+  const nowMs = Date.now();
+  dx.insert(ritualEntries).values({ ritualId, occurredAt: nowMs }).run();
+
+  const allEntries = dx
+    .select({ ritualId: ritualEntries.ritualId, occurredAt: ritualEntries.occurredAt })
+    .from(ritualEntries)
+    .all() as Array<{ ritualId: number; occurredAt: number }>;
+  const current = streakForRitual({
+    ritualEntries: allEntries,
+    ritualId,
+    asOf: new Date(nowMs),
+  });
+  await bumpHwmIfHigher(db, ritualId, current, nowMs);
 }
