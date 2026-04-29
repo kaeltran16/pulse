@@ -1,6 +1,6 @@
 # SP5g — Weekly + Monthly Review Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Ship Weekly and Monthly Review screens (`app/reviews/{weekly,monthly}.tsx`), period-aware backend `POST /review`, and the local aggregate / signal computation that drives both.
 
@@ -64,15 +64,15 @@
 **Files:**
 - Modify: `lib/api-types.ts:52-55,93-106`
 
-- [ ] **Step 1: Open `lib/api-types.ts` and locate the existing aggregate types and review types**
+- [x] **Step 1: Open `lib/api-types.ts` and locate the existing aggregate types and review types**
 
 Lines 52-55 hold the legacy `WorkoutAggregate`, `FoodAggregate`, `SpendAggregate`, `RitualAggregate`. Lines 93-106 hold `ReviewRequest` and `ReviewResponse`. Both blocks are replaced wholesale.
 
-- [ ] **Step 2: Delete lines 52-55 (`WorkoutAggregate` … `RitualAggregate`)**
+- [x] **Step 2: Delete lines 52-55 (`WorkoutAggregate` … `RitualAggregate`)**
 
 These are unused outside the review path (verified by grep). Removing them now keeps the next step's diff clean.
 
-- [ ] **Step 3: Replace the `ReviewRequest` / `ReviewResponse` block (lines 93-106) with the new shape**
+- [x] **Step 3: Replace the `ReviewRequest` / `ReviewResponse` block (lines 93-106) with the new shape**
 
 ```ts
 // --- /review ---
@@ -135,12 +135,12 @@ export type ReviewResponse = {
 };
 ```
 
-- [ ] **Step 4: Run typecheck**
+- [x] **Step 4: Run typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: backend compile errors only at `backend/src/schemas/review.ts` and the test fixture (those get fixed in Tasks 2 and 5). Root errors should not exceed the baseline of 28.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/api-types.ts
@@ -154,7 +154,7 @@ git commit -m "refactor(sp5g): redefine ReviewRequest/Response in api-types"
 **Files:**
 - Modify: `backend/src/schemas/review.ts` (full rewrite)
 
-- [ ] **Step 1: Write a failing schema test**
+- [x] **Step 1: Write a failing schema test**
 
 Create `backend/test/unit/reviewSchema.test.ts`:
 
@@ -304,12 +304,12 @@ describe("ReviewResponseSchema", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test, expect it to fail**
+- [x] **Step 2: Run the test, expect it to fail**
 
 Run: `cd backend && npx vitest run test/unit/reviewSchema.test.ts`
 Expected: fails because the existing `backend/src/schemas/review.ts` has the legacy shape.
 
-- [ ] **Step 3: Replace `backend/src/schemas/review.ts` with the new shape**
+- [x] **Step 3: Replace `backend/src/schemas/review.ts` with the new shape**
 
 ```ts
 import { z } from "zod";
@@ -408,12 +408,12 @@ export const ReviewResponseSchema: z.ZodType<ReviewResponse> = z.object({
 });
 ```
 
-- [ ] **Step 4: Run the test, expect it to pass**
+- [x] **Step 4: Run the test, expect it to pass**
 
 Run: `cd backend && npx vitest run test/unit/reviewSchema.test.ts`
 Expected: all green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/schemas/review.ts backend/test/unit/reviewSchema.test.ts
@@ -428,7 +428,7 @@ git commit -m "feat(sp5g): period-aware /review request and response schemas"
 - Modify: `backend/src/lib/prompts/review.ts` (full rewrite)
 - Test: `backend/test/unit/reviewPrompt.test.ts` (new)
 
-- [ ] **Step 1: Write the failing prompt-builder test**
+- [x] **Step 1: Write the failing prompt-builder test**
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -504,12 +504,12 @@ describe("buildReviewMessages", () => {
 });
 ```
 
-- [ ] **Step 2: Run test, expect failure**
+- [x] **Step 2: Run test, expect failure**
 
 Run: `cd backend && npx vitest run test/unit/reviewPrompt.test.ts`
 Expected: fails — current prompt builder takes `(month, aggregates)`, not the new shape.
 
-- [ ] **Step 3: Replace `backend/src/lib/prompts/review.ts`**
+- [x] **Step 3: Replace `backend/src/lib/prompts/review.ts`**
 
 ```ts
 import type { ReviewRequest, ReviewSignalKey } from "@api-types";
@@ -568,12 +568,12 @@ export function buildReviewMessages(req: ReviewRequest): { system: string; user:
 }
 ```
 
-- [ ] **Step 4: Run test, expect pass**
+- [x] **Step 4: Run test, expect pass**
 
 Run: `cd backend && npx vitest run test/unit/reviewPrompt.test.ts`
 Expected: all green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/lib/prompts/review.ts backend/test/unit/reviewPrompt.test.ts
@@ -589,7 +589,7 @@ git commit -m "feat(sp5g): branched /review prompt builder for weekly + monthly"
 - Modify: `backend/test/fixtures/aggregates.ts` (replaced)
 - Modify: `backend/test/integration/review.test.ts` (rewritten)
 
-- [ ] **Step 1: Replace `backend/test/fixtures/aggregates.ts`**
+- [x] **Step 1: Replace `backend/test/fixtures/aggregates.ts`**
 
 ```ts
 import type { ReviewRequest } from "@api-types";
@@ -619,7 +619,7 @@ export const sampleSignals: ReviewRequest["signals"] = {
 };
 ```
 
-- [ ] **Step 2: Rewrite `backend/test/integration/review.test.ts`**
+- [x] **Step 2: Rewrite `backend/test/integration/review.test.ts`**
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -803,12 +803,12 @@ describe("POST /review", () => {
 });
 ```
 
-- [ ] **Step 3: Run integration tests, expect failures**
+- [x] **Step 3: Run integration tests, expect failures**
 
 Run: `cd backend && npx vitest run test/integration/review.test.ts`
 Expected: many failures — the current route still uses the old schema/prompt and rejects the new request shape; the "wrong-signal" test in particular requires new route logic.
 
-- [ ] **Step 4: Update `backend/src/routes/review.ts`**
+- [x] **Step 4: Update `backend/src/routes/review.ts`**
 
 ```ts
 import { Router, type Request, type Response, type NextFunction } from "express";
@@ -873,17 +873,17 @@ export function reviewRouter(deps: { llm: LlmClient; modelId: string }): Router 
 }
 ```
 
-- [ ] **Step 5: Run all backend tests**
+- [x] **Step 5: Run all backend tests**
 
 Run: `cd backend && npm test`
 Expected: all green. The full backend baseline is 226 tests + new tests from Tasks 2/3 + the rewritten integration tests.
 
-- [ ] **Step 6: Run backend typecheck**
+- [x] **Step 6: Run backend typecheck**
 
 Run: `cd backend && npx tsc --noEmit`
 Expected: 0 errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/src/routes/review.ts backend/test/integration/review.test.ts backend/test/fixtures/aggregates.ts
@@ -900,7 +900,7 @@ git commit -m "feat(sp5g): rewrite /review route for period-aware structured pro
 - Modify: `lib/db/migrations/migrations.js` (add the m0007 import + entry)
 - Modify: `lib/db/migrations/meta/*` (auto-updated by drizzle-kit)
 
-- [ ] **Step 1: Add `generatedReviews` to `lib/db/schema.ts`**
+- [x] **Step 1: Add `generatedReviews` to `lib/db/schema.ts`**
 
 Append at the end of the existing schema file (after the SP5f tables added in `0006_*.sql`):
 
@@ -921,7 +921,7 @@ export const generatedReviews = sqliteTable(
 
 (`uniqueIndex` is already imported at the top of `schema.ts`.)
 
-- [ ] **Step 2: Generate the migration**
+- [x] **Step 2: Generate the migration**
 
 Run: `npx drizzle-kit generate`
 Expected: drizzle creates `lib/db/migrations/0007_<some-name>.sql` and updates `lib/db/migrations/meta/_journal.json` + `0007_snapshot.json`. The SQL should look like:
@@ -939,7 +939,7 @@ CREATE UNIQUE INDEX `idx_generated_reviews_pk` ON `generated_reviews` (`period`,
 
 If the drizzle-generated SQL differs in cosmetic ways (CHECK clause placement, index naming), accept the generator's output — do not hand-edit.
 
-- [ ] **Step 3: Wire the new migration into `lib/db/migrations/migrations.js`**
+- [x] **Step 3: Wire the new migration into `lib/db/migrations/migrations.js`**
 
 This file lists imports manually (`m0000` through `m0006` today). Add `m0007`:
 
@@ -964,12 +964,12 @@ m0007
 
 (Match the exact filename emitted in Step 2.)
 
-- [ ] **Step 4: Run iOS tests to confirm migration applies cleanly**
+- [x] **Step 4: Run iOS tests to confirm migration applies cleanly**
 
 Run: `npm test -- lib/db/queries/__tests__/streakHighWater.test.ts`
 Expected: passes. `makeTestDb()` runs `migrate()` against an in-memory SQLite, so this is the cheapest end-to-end migration check we have.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/schema.ts lib/db/migrations/
@@ -984,7 +984,7 @@ git commit -m "chore(sp5g): generated_reviews table + migration 0007"
 - Create: `lib/db/queries/reviewAggregates.ts` (initial)
 - Create: `lib/db/queries/__tests__/reviewAggregates.test.ts`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 /** @jest-environment node */
@@ -1057,12 +1057,12 @@ describe('lastCompletedPeriodKey', () => {
 });
 ```
 
-- [ ] **Step 2: Run test, expect ImportError**
+- [x] **Step 2: Run test, expect ImportError**
 
 Run: `npm test -- lib/db/queries/__tests__/reviewAggregates.test.ts`
 Expected: fails — module not found.
 
-- [ ] **Step 3: Create `lib/db/queries/reviewAggregates.ts`**
+- [x] **Step 3: Create `lib/db/queries/reviewAggregates.ts`**
 
 ```ts
 export type ReviewPeriod = 'weekly' | 'monthly';
@@ -1119,12 +1119,12 @@ export function lastCompletedPeriodKey(period: ReviewPeriod, asOf: Date): string
 }
 ```
 
-- [ ] **Step 4: Run tests, expect pass**
+- [x] **Step 4: Run tests, expect pass**
 
 Run: `npm test -- lib/db/queries/__tests__/reviewAggregates.test.ts`
 Expected: 10 tests green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/queries/reviewAggregates.ts lib/db/queries/__tests__/reviewAggregates.test.ts
@@ -1139,7 +1139,7 @@ git commit -m "feat(sp5g): periodBounds and lastCompletedPeriodKey helpers"
 - Modify: `lib/db/queries/reviewAggregates.ts`
 - Modify: `lib/db/queries/__tests__/reviewAggregates.test.ts`
 
-- [ ] **Step 1: Append failing tests**
+- [x] **Step 1: Append failing tests**
 
 Append to the existing test file (after the existing `describe` blocks):
 
@@ -1221,12 +1221,12 @@ describe('computeReviewAggregates', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests, expect failure (function not exported)**
+- [x] **Step 2: Run tests, expect failure (function not exported)**
 
 Run: `npm test -- lib/db/queries/__tests__/reviewAggregates.test.ts`
 Expected: ImportError on `computeReviewAggregates`.
 
-- [ ] **Step 3: Implement `computeReviewAggregates`**
+- [x] **Step 3: Implement `computeReviewAggregates`**
 
 Append to `lib/db/queries/reviewAggregates.ts`. Note: Drizzle's typed `db` is parametrised over schema; in tests we pass `BetterSQLite3Database`, in the app we pass an Expo Drizzle instance. We accept both via `AnyDb` (mirror the pattern used in `lib/db/queries/onboarding.ts`).
 
@@ -1390,12 +1390,12 @@ export async function computeReviewAggregates(
 }
 ```
 
-- [ ] **Step 4: Run tests, expect pass**
+- [x] **Step 4: Run tests, expect pass**
 
 Run: `npm test -- lib/db/queries/__tests__/reviewAggregates.test.ts`
 Expected: all green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/queries/reviewAggregates.ts lib/db/queries/__tests__/reviewAggregates.test.ts
@@ -1410,7 +1410,7 @@ git commit -m "feat(sp5g): computeReviewAggregates over local SQLite"
 - Modify: `lib/db/queries/reviewAggregates.ts`
 - Modify: `lib/db/queries/__tests__/reviewAggregates.test.ts`
 
-- [ ] **Step 1: Append failing tests**
+- [x] **Step 1: Append failing tests**
 
 ```ts
 import { computeReviewSignals, isPeriodEmpty } from '../reviewAggregates';
@@ -1503,12 +1503,12 @@ describe('isPeriodEmpty', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests, expect ImportError**
+- [x] **Step 2: Run tests, expect ImportError**
 
 Run: `npm test -- lib/db/queries/__tests__/reviewAggregates.test.ts`
 Expected: fails on missing exports.
 
-- [ ] **Step 3: Append to `lib/db/queries/reviewAggregates.ts`**
+- [x] **Step 3: Append to `lib/db/queries/reviewAggregates.ts`**
 
 ```ts
 import type { ReviewSignals } from '../../api-types';
@@ -1603,12 +1603,12 @@ export function isPeriodEmpty(aggs: ReviewAggregates): boolean {
 }
 ```
 
-- [ ] **Step 4: Run tests, expect pass**
+- [x] **Step 4: Run tests, expect pass**
 
 Run: `npm test -- lib/db/queries/__tests__/reviewAggregates.test.ts`
 Expected: all green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/queries/reviewAggregates.ts lib/db/queries/__tests__/reviewAggregates.test.ts
@@ -1623,7 +1623,7 @@ git commit -m "feat(sp5g): computeReviewSignals + isPeriodEmpty"
 - Create: `lib/db/queries/generatedReviews.ts`
 - Create: `lib/db/queries/__tests__/generatedReviews.test.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 ```ts
 /** @jest-environment node */
@@ -1670,12 +1670,12 @@ describe('generatedReviews cache', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests, expect ImportError**
+- [x] **Step 2: Run tests, expect ImportError**
 
 Run: `npm test -- lib/db/queries/__tests__/generatedReviews.test.ts`
 Expected: fails — module missing.
 
-- [ ] **Step 3: Create `lib/db/queries/generatedReviews.ts`**
+- [x] **Step 3: Create `lib/db/queries/generatedReviews.ts`**
 
 ```ts
 import { and, eq } from 'drizzle-orm';
@@ -1729,12 +1729,12 @@ export async function clearCachedReview(
 }
 ```
 
-- [ ] **Step 4: Run tests, expect pass**
+- [x] **Step 4: Run tests, expect pass**
 
 Run: `npm test -- lib/db/queries/__tests__/generatedReviews.test.ts`
 Expected: all green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/db/queries/generatedReviews.ts lib/db/queries/__tests__/generatedReviews.test.ts
@@ -1749,7 +1749,7 @@ git commit -m "feat(sp5g): generated_reviews cache (get/put/clear)"
 - Create: `lib/sync/reviewClient.ts`
 - Create: `lib/sync/__tests__/reviewClient.test.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 ```ts
 /** @jest-environment node */
@@ -1813,12 +1813,12 @@ describe('reviewClient.postReview', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests, expect ImportError**
+- [x] **Step 2: Run tests, expect ImportError**
 
 Run: `npm test -- lib/sync/__tests__/reviewClient.test.ts`
 Expected: fails.
 
-- [ ] **Step 3: Create `lib/sync/reviewClient.ts`**
+- [x] **Step 3: Create `lib/sync/reviewClient.ts`**
 
 Mirror the pattern in `lib/sync/client.ts`:
 
@@ -1875,12 +1875,12 @@ export async function postReview(body: ReviewRequest): Promise<ReviewResponse> {
 }
 ```
 
-- [ ] **Step 4: Run tests, expect pass**
+- [x] **Step 4: Run tests, expect pass**
 
 Run: `npm test -- lib/sync/__tests__/reviewClient.test.ts`
 Expected: all green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/sync/reviewClient.ts lib/sync/__tests__/reviewClient.test.ts
@@ -1902,13 +1902,13 @@ These are pure presentational components. No tests at this layer (they're covere
 - Create: `app/components/reviews/ReviewEmptyState.tsx`
 - Create: `app/components/reviews/ReviewRetryCard.tsx`
 
-- [ ] **Step 1: Identify the existing token/style helpers**
+- [x] **Step 1: Identify the existing token/style helpers**
 
 Run: `grep -n "from '@/lib/theme/tokens'" app/(tabs)/rituals/index.tsx | head -5`
 
 Expected: a single import like `import { palette, radii, spacing, type } from '@/lib/theme/tokens';`. The new components use the same tokens. (If the alias `@/` isn't in use, fall back to `../../lib/theme/tokens`.)
 
-- [ ] **Step 2: Create `ThreeStatSummary.tsx`**
+- [x] **Step 2: Create `ThreeStatSummary.tsx`**
 
 ```tsx
 import { View, Text } from 'react-native';
@@ -1968,7 +1968,7 @@ export function ThreeStatSummary({ aggregates }: Props) {
 
 (If `palette`, `radii`, `spacing`, or `font` shapes differ from what's used elsewhere — for example `font.captionBold` doesn't exist — substitute the equivalent token used by `app/(tabs)/rituals/index.tsx`. Inline literal style objects are fine if there's no token; the goal is functional output, not perfect token reuse.)
 
-- [ ] **Step 3: Create `HeroCard.tsx`**
+- [x] **Step 3: Create `HeroCard.tsx`**
 
 ```tsx
 import { useState } from 'react';
@@ -2038,7 +2038,7 @@ export function HeroCard({ hero, onRegenerate, busy, cooldownMs = COOLDOWN_MS }:
 }
 ```
 
-- [ ] **Step 4: Create `PatternsList.tsx`**
+- [x] **Step 4: Create `PatternsList.tsx`**
 
 ```tsx
 import { View, Text } from 'react-native';
@@ -2097,7 +2097,7 @@ export function PatternsList({ patterns, signals }: Props) {
 }
 ```
 
-- [ ] **Step 5: Create `OneThingToTry.tsx`**
+- [x] **Step 5: Create `OneThingToTry.tsx`**
 
 ```tsx
 import { View, Text, Pressable } from 'react-native';
@@ -2172,7 +2172,7 @@ export function OneThingToTry({ markdown, askPalPrompt }: Props) {
 
 (If the actual PalComposer route isn't `/pal-composer`, locate it via `grep -rn "PalComposer" app/` and adjust. The 5f close-out screen calls PalComposer with a `prefill` prop — the same mechanism is reused here through query-param routing if PalComposer supports it; otherwise wire it via a context/event used by 5f.)
 
-- [ ] **Step 6: Create `ByTheNumbers.tsx`**
+- [x] **Step 6: Create `ByTheNumbers.tsx`**
 
 ```tsx
 import { View, Text } from 'react-native';
@@ -2253,7 +2253,7 @@ export function ByTheNumbers({ aggregates, bestStreakDays }: Props) {
 }
 ```
 
-- [ ] **Step 7: Create `ReviewEmptyState.tsx`**
+- [x] **Step 7: Create `ReviewEmptyState.tsx`**
 
 ```tsx
 import { View, Text } from 'react-native';
@@ -2285,7 +2285,7 @@ export function ReviewEmptyState({ period }: Props) {
 }
 ```
 
-- [ ] **Step 8: Create `ReviewRetryCard.tsx`**
+- [x] **Step 8: Create `ReviewRetryCard.tsx`**
 
 ```tsx
 import { View, Text, Pressable } from 'react-native';
@@ -2331,12 +2331,12 @@ export function ReviewRetryCard({ onRetry, busy }: Props) {
 }
 ```
 
-- [ ] **Step 9: Run typecheck**
+- [x] **Step 9: Run typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: root errors not above the baseline of 28. If individual components reference missing token keys, replace with literal styles or the closest matching token discovered via `grep`.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add app/components/reviews/
@@ -2353,7 +2353,7 @@ git commit -m "feat(sp5g): review screen presentational components"
 - Create: `app/reviews/weekly.tsx`
 - Create: `app/reviews/monthly.tsx`
 
-- [ ] **Step 1: Create `ReviewScreen.tsx`**
+- [x] **Step 1: Create `ReviewScreen.tsx`**
 
 ```tsx
 import { useCallback, useEffect, useState } from 'react';
@@ -2569,7 +2569,7 @@ function emptySignals(): ReviewSignals {
 
 (If the app's Drizzle instance is named differently — e.g. `getDb()` rather than `db` — adjust the import. Locate it via `grep -rn "drizzle.*expo-sqlite" lib/ | head -3`.)
 
-- [ ] **Step 2: Create `app/reviews/_layout.tsx`**
+- [x] **Step 2: Create `app/reviews/_layout.tsx`**
 
 ```tsx
 import { Stack } from 'expo-router';
@@ -2579,7 +2579,7 @@ export default function ReviewsLayout() {
 }
 ```
 
-- [ ] **Step 3: Create `app/reviews/weekly.tsx`**
+- [x] **Step 3: Create `app/reviews/weekly.tsx`**
 
 ```tsx
 import { useLocalSearchParams } from 'expo-router';
@@ -2591,7 +2591,7 @@ export default function WeeklyReviewRoute() {
 }
 ```
 
-- [ ] **Step 4: Create `app/reviews/monthly.tsx`**
+- [x] **Step 4: Create `app/reviews/monthly.tsx`**
 
 ```tsx
 import { useLocalSearchParams } from 'expo-router';
@@ -2603,12 +2603,12 @@ export default function MonthlyReviewRoute() {
 }
 ```
 
-- [ ] **Step 5: Run typecheck**
+- [x] **Step 5: Run typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: root error count not above the baseline of 28. Fix any ReviewScreen-internal type errors before committing.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/components/reviews/ReviewScreen.tsx app/reviews/
@@ -2622,13 +2622,13 @@ git commit -m "feat(sp5g): ReviewScreen body and weekly/monthly routes"
 **Files:**
 - Create: `app/components/reviews/__tests__/ReviewScreen.test.tsx`
 
-- [ ] **Step 1: Identify the existing testing-library pattern**
+- [x] **Step 1: Identify the existing testing-library pattern**
 
 Run: `grep -rn "@testing-library/react-native" lib/ app/ | head -5`
 
 Expected: at least one match in an existing screen test (the SP5e/5f work shipped tests). Use the same patterns. If no app-level screen tests exist yet, write a node-environment Jest test that imports the component directly with mocked dependencies (without rendering) and asserts the call shape on `postReview`.
 
-- [ ] **Step 2: Write the integration test**
+- [x] **Step 2: Write the integration test**
 
 ```tsx
 /** @jest-environment node */
@@ -2714,7 +2714,7 @@ describe('ReviewScreen orchestration', () => {
 });
 ```
 
-- [ ] **Step 3: Extract the orchestration into a reusable harness**
+- [x] **Step 3: Extract the orchestration into a reusable harness**
 
 Create `app/components/reviews/__tests__/orchestrationHarness.ts`:
 
@@ -2742,12 +2742,12 @@ export async function runOrchestration(params: { period: ReviewPeriod; periodKey
 
 The harness mirrors `ReviewScreen.tsx`'s `useEffect` orchestration so the component itself remains testable in isolation without React rendering. **If `ReviewScreen.tsx`'s orchestration ever changes, update both files together** — the cross-file consistency is the price of avoiding a full RN test renderer setup for SP5g.
 
-- [ ] **Step 4: Run tests, expect pass**
+- [x] **Step 4: Run tests, expect pass**
 
 Run: `npm test -- app/components/reviews/__tests__/ReviewScreen.test.tsx`
 Expected: 4 tests green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/components/reviews/__tests__/
@@ -2761,7 +2761,7 @@ git commit -m "test(sp5g): ReviewScreen orchestration coverage"
 **Files:**
 - Modify: `app/(tabs)/you/index.tsx`
 
-- [ ] **Step 1: Locate the Reviews block in `app/(tabs)/you/index.tsx`**
+- [x] **Step 1: Locate the Reviews block in `app/(tabs)/you/index.tsx`**
 
 Run: `grep -n "Reviews\|weekly\|monthly\|Coming soon" app/(tabs)/you/index.tsx`
 
@@ -2772,7 +2772,7 @@ Expected: lines 87-90 (verified earlier) hold the disabled rows. The exact list 
 { key: 'monthly', icon: 'chart.bar.fill', iconBg: palette.accent, title: 'Monthly review', value: 'Coming soon', disabled: true },
 ```
 
-- [ ] **Step 2: Replace those two entries**
+- [x] **Step 2: Replace those two entries**
 
 Drop `value` and `disabled`; add `onPress`. Read the existing list-row component to confirm it dispatches `onPress` (or routes via a `route` field). If the row component takes a `route` field instead, use that.
 
@@ -2783,12 +2783,12 @@ Drop `value` and `disabled`; add `onPress`. Read the existing list-row component
 
 If the file doesn't already import `useRouter`, add `import { useRouter } from 'expo-router';` at the top and `const router = useRouter();` inside the component.
 
-- [ ] **Step 3: Run typecheck**
+- [x] **Step 3: Run typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: root errors not above baseline.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/(tabs)/you/index.tsx
@@ -2801,17 +2801,17 @@ git commit -m "feat(sp5g): activate Weekly + Monthly rows in You tab"
 
 **Files:** none.
 
-- [ ] **Step 1: Run the full backend test suite**
+- [x] **Step 1: Run the full backend test suite**
 
 Run: `cd backend && npm test`
 Expected: green. Total ≈ 226 + new (Tasks 2/3/4 added ~17 tests).
 
-- [ ] **Step 2: Run the full iOS test suite**
+- [x] **Step 2: Run the full iOS test suite**
 
 Run: `npm test`
 Expected: green. iOS baseline at the start of SP5g was 435; this slice adds ~35-45 new tests.
 
-- [ ] **Step 3: Run typecheck**
+- [x] **Step 3: Run typecheck**
 
 Run: `cd backend && npx tsc --noEmit && cd .. && npx tsc --noEmit`
 Expected: backend 0 errors, root not above baseline 28.
@@ -2829,11 +2829,11 @@ In the browser:
 6. Reload the page on the same period — expect cached payload to render without a fetch (Network tab should show no `/review` POST).
 7. Repeat for `/reviews/monthly`.
 
-- [ ] **Step 5: Update the SP5 meta-spec status line for 5g**
+- [x] **Step 5: Update the SP5 meta-spec status line for 5g**
 
 Edit `docs/superpowers/specs/meta/2026-04-26-sp5-email-review-design.md` §3 "Sub-slice status" — replace `**5g** Not started.` with a code-complete line in the same style as 5a–5f. Include test-count delta, baselines, and the deferred-pass carryover note.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add docs/superpowers/specs/meta/2026-04-26-sp5-email-review-design.md
