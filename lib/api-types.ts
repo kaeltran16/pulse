@@ -49,11 +49,6 @@ export type TodaySummary = {
   totals?: { calories?: number; spendMinor?: number };
 };
 
-export type WorkoutAggregate = { sessions: number; totalVolume?: number };
-export type FoodAggregate = { avgCalories?: number; days: number };
-export type SpendAggregate = { totalMinor: number; currency: string; byCategory?: Record<string, number> };
-export type RitualAggregate = { streaks?: Record<string, number> };
-
 // --- /chat ---
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -90,19 +85,61 @@ export type ParseResponse =
 
 // --- /review ---
 
+export type ReviewPeriod = 'weekly' | 'monthly';
+
+export type ReviewSpendAggregate = {
+  totalMinor: number;
+  currency: string;
+  byCategory: Record<string, number>;
+  byDayOfWeek: number[]; // length 7, index 0 = Monday
+  topMerchant: { name: string; totalMinor: number } | null;
+};
+
+export type ReviewRitualsAggregate = {
+  kept: number;
+  goalTotal: number;
+  perRitual: Array<{ id: number; name: string; color: string; kept: number; streak: number }>;
+  bestStreakRitual: { name: string; streak: number; color: string } | null;
+};
+
+export type ReviewWorkoutsAggregate = {
+  sessions: number;
+  prCount: number;
+};
+
+export type ReviewAggregates = {
+  spend: ReviewSpendAggregate;
+  rituals: ReviewRitualsAggregate;
+  workouts: ReviewWorkoutsAggregate;
+};
+
+export type ReviewSignals = {
+  topSpendDay: { dayOfWeek: number; multiplier: number } | null;
+  ritualVsNonRitual: { sessionsOnRitualDays: number; sessionsOnNonRitualDays: number } | null;
+  bestStreak: { ritualName: string; streak: number; color: string } | null;
+  underBudget: { byMinor: number; budgetMinor: number } | null;
+};
+
+export type ReviewSignalKey = 'topSpendDay' | 'ritualVsNonRitual' | 'bestStreak' | 'underBudget';
+
 export type ReviewRequest = {
-  month: string; // "YYYY-MM"
-  aggregates: {
-    workouts: WorkoutAggregate;
-    food: FoodAggregate;
-    spend: SpendAggregate;
-    rituals: RitualAggregate;
-  };
+  period: ReviewPeriod;
+  periodKey: string; // 'YYYY-Www' (weekly) or 'YYYY-MM' (monthly)
+  aggregates: ReviewAggregates;
+  signals: ReviewSignals;
+};
+
+export type ReviewPatternProse = {
+  signal: ReviewSignalKey;
+  text: string;
 };
 
 export type ReviewResponse = {
-  markdown: string;
-  generatedAt: string; // ISO 8601 UTC
+  period: ReviewPeriod;
+  hero: string;
+  patterns: ReviewPatternProse[];
+  oneThingToTry: { markdown: string; askPalPrompt: string } | null;
+  generatedAt: string;
 };
 
 // --- SP5c — Email sync ---
