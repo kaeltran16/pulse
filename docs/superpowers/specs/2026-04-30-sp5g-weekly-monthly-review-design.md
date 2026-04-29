@@ -221,7 +221,7 @@ Signal definitions:
 - `topSpendDay`: for each `byDayOfWeek` index, `multiplier = thisDay / avg(other days with spend > 0)`. Null if fewer than 2 days have spend.
 - `ritualVsNonRitual`: count sessions on days where any ritual was logged vs days where none was. Null if `sessions === 0` in the period.
 - `bestStreak`: `aggs.rituals.bestStreakRitual` directly. Null when no ritual has a streak ≥ 2.
-- `underBudget`: requires `goals.monthlyBudget` (existing column) > 0 *and* period is monthly. Null on weekly periods (we don't have weekly budgets) or when no budget set or when over budget.
+- `underBudget`: derives `budgetMinor = goals.dailyBudgetCents × daysInPeriod` (the only budget column on `goals`). Null when `dailyBudgetCents <= 0` or when over budget. Available for **both** weekly and monthly periods.
 
 `isPeriodEmpty` is true iff `spend.totalMinor === 0 && rituals.kept === 0 && workouts.sessions === 0`.
 
@@ -350,7 +350,7 @@ Failure state: `<ReviewRetryCard/>` replaces hero + patterns. Three-stat summary
   - `topSpendDay` returns null when only one day has spend.
   - `topSpendDay` multiplier math: 1 day × $200, 4 days × $50 → multiplier = 4.
   - `ritualVsNonRitual` null when zero sessions.
-  - `underBudget` null on weekly; null on monthly when no budget; null when over budget; populated with positive `byMinor` when under.
+  - `underBudget` null when `dailyBudgetCents <= 0`; null when over budget; populated for both weekly and monthly when under.
 - `isPeriodEmpty` — true iff all three domains are zero; false when any is non-zero.
 
 ### 7.3 iOS — cache + client tests
@@ -397,7 +397,7 @@ Per meta-spec §5:
 | Dependency | Where consumed | Status |
 |---|---|---|
 | Backend `/review` route | This slice (rewritten in place) | Already deployed; no schema delta downstream because no client calls it today. Same `OPENROUTER_API_KEY` deploy gate as `/parse` — same carryover situation as 5b/5c. |
-| `goals.monthlyBudget` column | `computeReviewSignals` → `underBudget` | Built in SP3a; no schema delta. |
+| `goals.dailyBudgetCents` column | `computeReviewSignals` → `underBudget` (multiplied by `daysInPeriod`) | Built in SP3a; no schema delta. |
 | `streakForRitual` | `computeReviewAggregates` → `rituals.perRitual.streak`, `bestStreakRitual` | Built in SP3a; live-verified in 5f. |
 | PalComposer `prefill` prop | `<OneThingToTry>` "Ask Pal more" CTA | Added in 5f; this is the second consumer. |
 | `useLiveQuery` | `<ReviewScreen>` aggregates subscription | In use since SP3a. |
@@ -413,7 +413,7 @@ Explicitly out of scope for SP5g:
 | Item | Reason |
 |---|---|
 | Today-screen "Sunday review" banner / auto-trigger | Per §2 row 3. Earned via SP6 Polish if it earns its keep. |
-| Weekly budget tracking | Only monthly budgets exist on `goals`. Adding weekly budgets is a product change, not a review surface. |
+| Adding a separate weekly/monthly budget column | Only `dailyBudgetCents` exists on `goals`. Period budget is derived as `dailyBudgetCents × daysInPeriod` — adding a separate column is a product change, not a review surface. |
 | Comparison to prior period (weekly only) | Monthly review's `<ByTheNumbers>` shows month-over-month deltas. Weekly comparison ("vs last week") inflates the aggregate query and adds scope; cut for SP5g. |
 | Share / export of reviews | Handoff shows a share icon; out of scope. Add in SP6 if there's pull. |
 | "Edit / accept / reject" on Pal's patterns | The patterns are read-only narrative. No tagging UI. |
