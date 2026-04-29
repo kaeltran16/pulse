@@ -13,6 +13,7 @@ describe('SP4a migration', () => {
     expect(names).toEqual([
       'dismissed_close_outs',
       'exercises',
+      'generated_reviews',
       'goals',
       'movement_entries',
       'pal_cache',
@@ -39,6 +40,7 @@ describe('SP4a migration', () => {
       .all() as { name: string }[];
     const names = rows.map((r) => r.name).sort();
     expect(names).toEqual([
+      'idx_generated_reviews_pk',
       'idx_movement_occurred_at',
       'idx_ritual_entries_occurred_at',
       'idx_ritual_entries_ritual_id',
