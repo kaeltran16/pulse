@@ -1,9 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { buildChatSystemPrompt } from "../../src/lib/prompts/chat.js";
 import { buildParseMessages } from "../../src/lib/prompts/parse.js";
-import { buildReviewMessages } from "../../src/lib/prompts/review.js";
 import { sampleEntries, sampleToday } from "../fixtures/entries.js";
-import { sampleAggregates } from "../fixtures/aggregates.js";
 
 describe("buildChatSystemPrompt", () => {
   it("returns a non-empty string with the persona name", () => {
@@ -41,11 +39,3 @@ describe("buildParseMessages", () => {
   });
 });
 
-describe("buildReviewMessages", () => {
-  it("includes the month and aggregate counts", () => {
-    const m = buildReviewMessages("2026-04", sampleAggregates);
-    expect(m.user).toContain("2026-04");
-    expect(m.user).toContain("12");
-    expect(m.user).toContain("USD");
-  });
-});

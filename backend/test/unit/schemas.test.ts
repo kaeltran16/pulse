@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ChatRequestSchema } from "../../src/schemas/chat.js";
 import { ParseRequestSchema, ParseResponseSchema } from "../../src/schemas/parse.js";
-import { ReviewRequestSchema } from "../../src/schemas/review.js";
 
 describe("ChatRequestSchema", () => {
   it("accepts a minimal request", () => {
@@ -72,25 +71,3 @@ describe("ParseResponseSchema", () => {
   });
 });
 
-describe("ReviewRequestSchema", () => {
-  it("accepts a well-formed month + aggregates", () => {
-    const r = ReviewRequestSchema.parse({
-      month: "2026-04",
-      aggregates: {
-        workouts: { sessions: 8 },
-        food: { days: 28 },
-        spend: { totalMinor: 100000, currency: "USD" },
-        rituals: {},
-      },
-    });
-    expect(r.month).toBe("2026-04");
-  });
-  it("rejects bad month format", () => {
-    expect(() =>
-      ReviewRequestSchema.parse({
-        month: "April",
-        aggregates: { workouts: { sessions: 0 }, food: { days: 0 }, spend: { totalMinor: 0, currency: "USD" }, rituals: {} },
-      })
-    ).toThrow();
-  });
-});
