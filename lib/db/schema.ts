@@ -228,8 +228,22 @@ export const dismissedCloseOuts = sqliteTable('dismissed_close_outs', {
   dismissedAt: integer('dismissed_at').notNull(),
 });
 
+export const generatedReviews = sqliteTable(
+  'generated_reviews',
+  {
+    period: text('period', { enum: ['weekly', 'monthly'] }).notNull(),
+    periodKey: text('period_key').notNull(),
+    payload: text('payload').notNull(),
+    generatedAt: integer('generated_at').notNull(),
+  },
+  (t) => ({
+    pk: uniqueIndex('idx_generated_reviews_pk').on(t.period, t.periodKey),
+  }),
+);
+
 export type RitualStreakHighWaterRow = typeof ritualStreakHighWater.$inferSelect;
 export type DismissedCloseOutRow = typeof dismissedCloseOuts.$inferSelect;
+export type GeneratedReviewRow = typeof generatedReviews.$inferSelect;
 
 export type Goals = typeof goals.$inferSelect;
 export type Ritual = typeof rituals.$inferSelect;
