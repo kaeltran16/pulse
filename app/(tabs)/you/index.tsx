@@ -86,8 +86,8 @@ export default function YouTabLanding() {
     {
       title: 'Reviews',
       rows: [
-        { key: 'weekly', icon: 'calendar', iconBg: palette.rituals, title: 'Weekly review', value: 'Coming soon', disabled: true },
-        { key: 'monthly', icon: 'chart.bar.fill', iconBg: palette.accent, title: 'Monthly review', value: 'Coming soon', disabled: true },
+        { key: 'weekly', icon: 'calendar', iconBg: palette.rituals, title: 'Weekly review', onPress: () => router.push('/reviews/weekly') },
+        { key: 'monthly', icon: 'chart.bar.fill', iconBg: palette.accent, title: 'Monthly review', onPress: () => router.push('/reviews/monthly') },
       ],
     },
     {
