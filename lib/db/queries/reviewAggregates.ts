@@ -205,3 +205,94 @@ export async function computeReviewAggregates(
     workouts: { sessions: sessionCount, prCount },
   };
 }
+
+import type { ReviewSignals } from '../../api-types';
+
+function localDayKey(ms: number): string {
+  const d = new Date(ms);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+export async function computeReviewSignals(
+  db: AnyDb,
+  period: ReviewPeriod,
+  aggs: ReviewAggregates,
+  periodKey: string,
+): Promise<ReviewSignals> {
+  const bounds = boundsForKey(period, periodKey);
+  const { startMs, endMs } = bounds;
+
+  // ─── topSpendDay ────────────────────────────────────
+  const daysWithSpend = aggs.spend.byDayOfWeek.filter((v) => v > 0);
+  let topSpendDay: ReviewSignals['topSpendDay'] = null;
+  if (daysWithSpend.length >= 2) {
+    let topIdx = 0;
+    for (let i = 1; i < 7; i++) if (aggs.spend.byDayOfWeek[i] > aggs.spend.byDayOfWeek[topIdx]) topIdx = i;
+    const top = aggs.spend.byDayOfWeek[topIdx];
+    const others = aggs.spend.byDayOfWeek.filter((v, i) => i !== topIdx && v > 0);
+    if (others.length >= 1) {
+      const avg = others.reduce((s, v) => s + v, 0) / others.length;
+      topSpendDay = { dayOfWeek: topIdx, multiplier: top / avg };
+    }
+  }
+
+  // ─── ritualVsNonRitual ──────────────────────────────
+  let ritualVsNonRitual: ReviewSignals['ritualVsNonRitual'] = null;
+  if (aggs.workouts.sessions > 0) {
+    const ritualEntryRows = (db as any)
+      .select({ occurredAt: ritualEntries.occurredAt })
+      .from(ritualEntries)
+      .where(and(gte(ritualEntries.occurredAt, startMs), lt(ritualEntries.occurredAt, endMs)))
+      .all() as Array<{ occurredAt: number }>;
+
+    const ritualDayKeys = new Set<string>();
+    for (const e of ritualEntryRows) ritualDayKeys.add(localDayKey(e.occurredAt));
+
+    const sessionRows = (db as any)
+      .select({ startedAt: sessions.startedAt })
+      .from(sessions)
+      .where(
+        and(
+          eq(sessions.status, 'completed'),
+          gte(sessions.startedAt, startMs),
+          lt(sessions.startedAt, endMs),
+        ),
+      )
+      .all() as Array<{ startedAt: number }>;
+
+    let onRitual = 0;
+    let offRitual = 0;
+    for (const s of sessionRows) {
+      if (ritualDayKeys.has(localDayKey(s.startedAt))) onRitual++;
+      else offRitual++;
+    }
+    ritualVsNonRitual = { sessionsOnRitualDays: onRitual, sessionsOnNonRitualDays: offRitual };
+  }
+
+  // ─── bestStreak ─────────────────────────────────────
+  const bestStreak: ReviewSignals['bestStreak'] = aggs.rituals.bestStreakRitual
+    ? {
+        ritualName: aggs.rituals.bestStreakRitual.name,
+        streak: aggs.rituals.bestStreakRitual.streak,
+        color: aggs.rituals.bestStreakRitual.color,
+      }
+    : null;
+
+  // ─── underBudget ────────────────────────────────────
+  const goalsRow = (db as any).select().from(goalsTable).limit(1).all() as Array<{ dailyBudgetCents: number }>;
+  const daily = goalsRow[0]?.dailyBudgetCents ?? 0;
+  let underBudget: ReviewSignals['underBudget'] = null;
+  if (daily > 0) {
+    const days = daysInPeriod(bounds);
+    const budgetMinor = daily * days;
+    if (aggs.spend.totalMinor < budgetMinor) {
+      underBudget = { byMinor: budgetMinor - aggs.spend.totalMinor, budgetMinor };
+    }
+  }
+
+  return { topSpendDay, ritualVsNonRitual, bestStreak, underBudget };
+}
+
+export function isPeriodEmpty(aggs: ReviewAggregates): boolean {
+  return aggs.spend.totalMinor === 0 && aggs.rituals.kept === 0 && aggs.workouts.sessions === 0;
+}

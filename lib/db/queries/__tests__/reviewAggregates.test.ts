@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import { periodBounds, lastCompletedPeriodKey, computeReviewAggregates } from '../reviewAggregates';
+import { periodBounds, lastCompletedPeriodKey, computeReviewAggregates, computeReviewSignals, isPeriodEmpty } from '../reviewAggregates';
 import { makeTestDb } from '../../__tests__/test-helpers';
 import { rituals, ritualEntries, spendingEntries, sessions, prs, exercises, goals } from '../../schema';
 
@@ -137,5 +137,91 @@ describe('computeReviewAggregates', () => {
     const aggs = await computeReviewAggregates(db as any, 'monthly', '2026-04');
     expect(aggs.workouts.sessions).toBe(1);
     expect(aggs.workouts.prCount).toBe(1);
+  });
+});
+
+describe('computeReviewSignals', () => {
+  function emptyAggs() {
+    return {
+      spend: { totalMinor: 0, currency: 'USD', byCategory: {}, byDayOfWeek: [0,0,0,0,0,0,0], topMerchant: null },
+      rituals: { kept: 0, goalTotal: 7, perRitual: [], bestStreakRitual: null },
+      workouts: { sessions: 0, prCount: 0 },
+    };
+  }
+
+  it('topSpendDay null when fewer than 2 days have spend', async () => {
+    const { db } = makeTestDb();
+    db.insert(goals).values({ id: 1, dailyBudgetCents: 0, dailyMoveMinutes: 0, dailyRitualTarget: 1 }).run();
+    const aggs = emptyAggs();
+    aggs.spend.byDayOfWeek[5] = 5000;
+    const sig = await computeReviewSignals(db as any, 'weekly', aggs as any, '2026-W18');
+    expect(sig.topSpendDay).toBeNull();
+  });
+
+  it('topSpendDay multiplier: 1 day at $200, 4 days at $50 → 4', async () => {
+    const { db } = makeTestDb();
+    db.insert(goals).values({ id: 1, dailyBudgetCents: 0, dailyMoveMinutes: 0, dailyRitualTarget: 1 }).run();
+    const aggs = emptyAggs();
+    aggs.spend.byDayOfWeek = [5000, 5000, 5000, 5000, 20000, 0, 0];
+    const sig = await computeReviewSignals(db as any, 'weekly', aggs as any, '2026-W18');
+    expect(sig.topSpendDay?.dayOfWeek).toBe(4);
+    expect(sig.topSpendDay?.multiplier).toBeCloseTo(4, 5);
+  });
+
+  it('ritualVsNonRitual null when no sessions in period', async () => {
+    const { db } = makeTestDb();
+    db.insert(goals).values({ id: 1, dailyBudgetCents: 0, dailyMoveMinutes: 0, dailyRitualTarget: 1 }).run();
+    const aggs = emptyAggs();
+    const sig = await computeReviewSignals(db as any, 'weekly', aggs as any, '2026-W18');
+    expect(sig.ritualVsNonRitual).toBeNull();
+  });
+
+  it('underBudget populated when dailyBudget × days > totalMinor', async () => {
+    const { db } = makeTestDb();
+    db.insert(goals).values({ id: 1, dailyBudgetCents: 5000, dailyMoveMinutes: 0, dailyRitualTarget: 1 }).run();
+    const aggs = emptyAggs();
+    aggs.spend.totalMinor = 20000;
+    const sig = await computeReviewSignals(db as any, 'weekly', aggs as any, '2026-W18');
+    expect(sig.underBudget).toEqual({ byMinor: 15000, budgetMinor: 35000 });
+  });
+
+  it('underBudget null when over budget', async () => {
+    const { db } = makeTestDb();
+    db.insert(goals).values({ id: 1, dailyBudgetCents: 5000, dailyMoveMinutes: 0, dailyRitualTarget: 1 }).run();
+    const aggs = emptyAggs();
+    aggs.spend.totalMinor = 50000;
+    const sig = await computeReviewSignals(db as any, 'weekly', aggs as any, '2026-W18');
+    expect(sig.underBudget).toBeNull();
+  });
+
+  it('underBudget null when dailyBudgetCents is 0', async () => {
+    const { db } = makeTestDb();
+    db.insert(goals).values({ id: 1, dailyBudgetCents: 0, dailyMoveMinutes: 0, dailyRitualTarget: 1 }).run();
+    const aggs = emptyAggs();
+    aggs.spend.totalMinor = 100;
+    const sig = await computeReviewSignals(db as any, 'weekly', aggs as any, '2026-W18');
+    expect(sig.underBudget).toBeNull();
+  });
+});
+
+describe('isPeriodEmpty', () => {
+  it('true when all three domains are zero', () => {
+    expect(
+      isPeriodEmpty({
+        spend: { totalMinor: 0, currency: 'USD', byCategory: {}, byDayOfWeek: [0,0,0,0,0,0,0], topMerchant: null },
+        rituals: { kept: 0, goalTotal: 7, perRitual: [], bestStreakRitual: null },
+        workouts: { sessions: 0, prCount: 0 },
+      }),
+    ).toBe(true);
+  });
+
+  it('false when any domain has activity', () => {
+    expect(
+      isPeriodEmpty({
+        spend: { totalMinor: 0, currency: 'USD', byCategory: {}, byDayOfWeek: [0,0,0,0,0,0,0], topMerchant: null },
+        rituals: { kept: 1, goalTotal: 7, perRitual: [], bestStreakRitual: null },
+        workouts: { sessions: 0, prCount: 0 },
+      }),
+    ).toBe(false);
   });
 });
