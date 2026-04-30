@@ -7,6 +7,7 @@ WORKDIR /app/backend
 RUN npm ci
 COPY backend/tsconfig.json ./
 COPY backend/src ./src
+COPY backend/scripts ./scripts
 RUN npm run build
 RUN npm prune --omit=dev
 

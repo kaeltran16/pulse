@@ -28,9 +28,9 @@ grep -q '"ok":true' /tmp/pulse_health.json
 
 # 2. /parse happy
 status=$(curl -s -o /tmp/pulse_parse.json -w "%{http_code}" -X POST "${BASE_URL}/parse" "${AUTH[@]}" "${JSON[@]}" \
-  -d '{"text":"ate 2 eggs and toast"}')
+  -d '{"text":"spent 5.75 at starbucks"}')
 check_status "POST /parse" 200 "${status}"
-grep -q '"kind":"food"' /tmp/pulse_parse.json
+grep -q '"kind":"spend"' /tmp/pulse_parse.json
 
 # 3. /chat SSE — fetch first chunk
 status=$(curl -s -N -o /tmp/pulse_chat.txt -w "%{http_code}" -X POST "${BASE_URL}/chat" "${AUTH[@]}" "${JSON[@]}" \
@@ -42,9 +42,9 @@ grep -q '^event: done'  /tmp/pulse_chat.txt
 
 # 4. /review happy
 status=$(curl -s -o /tmp/pulse_review.json -w "%{http_code}" -X POST "${BASE_URL}/review" "${AUTH[@]}" "${JSON[@]}" \
-  -d '{"month":"2026-04","aggregates":{"workouts":{"sessions":1},"food":{"days":1},"spend":{"totalMinor":0,"currency":"USD"},"rituals":{}}}')
+  -d '{"period":"weekly","periodKey":"2026-W18","aggregates":{"spend":{"totalMinor":0,"currency":"USD","byCategory":{},"byDayOfWeek":[0,0,0,0,0,0,0],"topMerchant":null},"rituals":{"kept":0,"goalTotal":0,"perRitual":[],"bestStreakRitual":null},"workouts":{"sessions":0,"prCount":0}},"signals":{"topSpendDay":null,"ritualVsNonRitual":null,"bestStreak":null,"underBudget":null}}')
 check_status "POST /review" 200 "${status}"
-grep -q '"markdown"' /tmp/pulse_review.json
+grep -q '"hero"' /tmp/pulse_review.json
 
 # 5. /chat without auth → 401
 status=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${BASE_URL}/chat" "${JSON[@]}" \
