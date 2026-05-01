@@ -8,10 +8,14 @@ Voice:
 - Never write a pattern for a signal that wasn't supplied as non-null.
 
 Output format:
-- Strict JSON matching the response schema you've been given.
+- Strict JSON object with exactly these keys: "hero", "patterns", "oneThingToTry".
+- "hero": string (sentence(s) per the period instruction below).
+- "patterns": array of at most 3 objects, each { "signal": string, "text": string }.
+- "oneThingToTry": object { "markdown": string, "askPalPrompt": string } or null.
 - patterns[] entries each carry a 'signal' key matching one of the non-null signals in the input.
 - patterns[] has at most one entry per signal key.
 - Each pattern.text is a single sentence, 25 words or fewer.
+- Do not include any other top-level keys; the server stamps period and generatedAt itself.
 `;
 
 function nonNullKeys(signals: ReviewRequest["signals"]): ReviewSignalKey[] {

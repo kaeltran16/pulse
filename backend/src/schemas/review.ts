@@ -92,3 +92,16 @@ export const ReviewResponseSchema: z.ZodType<ReviewResponse> = z.object({
     .nullable(),
   generatedAt: z.string().min(1),
 });
+
+export const ReviewModelOutputSchema = z.object({
+  hero: z.string().min(1),
+  patterns: z
+    .array(PatternProse)
+    .max(3)
+    .refine((arr) => new Set(arr.map((p) => p.signal)).size === arr.length, {
+      message: "patterns must have unique signal keys",
+    }),
+  oneThingToTry: z
+    .object({ markdown: z.string().min(1), askPalPrompt: z.string().min(1) })
+    .nullable(),
+});

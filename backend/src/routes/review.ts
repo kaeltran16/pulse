@@ -1,5 +1,5 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
-import { ReviewRequestSchema, ReviewResponseSchema } from "../schemas/review.js";
+import { ReviewRequestSchema, ReviewModelOutputSchema } from "../schemas/review.js";
 import { buildReviewMessages } from "../lib/prompts/review.js";
 import { UpstreamError } from "../middleware/errorHandler.js";
 import type { LlmClient } from "../lib/openrouter.js";
@@ -34,7 +34,15 @@ export function reviewRouter(deps: { llm: LlmClient; modelId: string }): Router 
       } catch {
         throw new UpstreamError("review output was not valid JSON");
       }
-      const validated = ReviewResponseSchema.safeParse(parsed);
+      const parsedObj =
+        parsed && typeof parsed === "object" && !Array.isArray(parsed)
+          ? { ...(parsed as Record<string, unknown>) }
+          : parsed;
+      if (parsedObj && typeof parsedObj === "object") {
+        delete (parsedObj as Record<string, unknown>).period;
+        delete (parsedObj as Record<string, unknown>).generatedAt;
+      }
+      const validated = ReviewModelOutputSchema.safeParse(parsedObj);
       if (!validated.success) {
         throw new UpstreamError(`review output failed schema: ${validated.error.message}`);
       }
@@ -45,11 +53,11 @@ export function reviewRouter(deps: { llm: LlmClient; modelId: string }): Router 
         throw new UpstreamError(`review pattern referenced absent signal: ${stray.signal}`);
       }
 
-      if (validated.data.period !== body.period) {
-        throw new UpstreamError(`review period mismatch: req=${body.period} resp=${validated.data.period}`);
-      }
-
-      res.status(200).json(validated.data);
+      res.status(200).json({
+        ...validated.data,
+        period: body.period,
+        generatedAt: new Date().toISOString(),
+      });
     } catch (err) {
       next(err);
     }
